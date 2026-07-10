@@ -6,7 +6,7 @@
 // (e.g. flipping NoSuits Labs to enabled) requires zero changes here.
 
 import React from 'react';
-import { X, Chrome, Facebook, Sparkles, Loader2 } from 'lucide-react';
+import { X, Google, Facebook, Sparkles, Loader2 } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from './TelemetryLog';
