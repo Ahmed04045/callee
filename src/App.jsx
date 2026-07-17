@@ -1,6 +1,7 @@
 // src/App.jsx
 
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 
 import themeConfig from './theme/themeConfig';
@@ -35,36 +36,36 @@ function BrandMark({ size = 'sm' }) {
 }
 
 function AppShell() {
-  const [activeTab, setActiveTab] = useState('main');
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
   const { status } = useAuth();
-
-  const handleTabChange = (tabId) => {
-    logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
-    setActiveTab(tabId);
-  };
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const openAuthModal = () => setAuthModalOpen(true);
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  const activeLabel = NAV_ITEMS.find((item) => item.id === activeTab)?.label ?? '';
+  // Derive which item is active based on the actual browser URL path
+  const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname) || NAV_ITEMS[0];
+  const activeLabel = currentItem.label;
+
+  const handleTabChange = (tabId) => {
+    const targetItem = NAV_ITEMS.find((item) => item.id === tabId);
+    if (targetItem) {
+      logUserAction('NAVIGATE_TAB', { from: currentItem.id, to: tabId });
+      navigate(targetItem.path);
+    }
+  };
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
-      <SidebarNav
-        activeTab={activeTab}
-        onNavigate={handleTabChange}
-        brandMark={<BrandMark />}
-      />
+      <SidebarNav brandMark={<BrandMark />} />
 
-      {/* Content column — offset by the fixed sidebar on desktop, padded
-          above the fixed bottom bar on mobile. */}
       <div className={`flex flex-col min-h-screen ${layout.sidebarOffset} ${layout.mobileNavOffset}`}>
         <header
           className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
         >
-          {/* Brand shows here on mobile only (sidebar carries it on desktop) */}
           <div className="md:hidden">
             <BrandMark />
           </div>
@@ -86,15 +87,13 @@ function AppShell() {
         </header>
 
         <main className={`flex-1 w-full ${layout.contentMaxWidth} mx-auto px-6 py-8`}>
-          {activeTab === 'main' && (
-            <MainFeedView events={featuredEvents} gigs={allRecruitment} onNavigate={handleTabChange} />
-          )}
-          {activeTab === 'recruit' && <RecruitView gigs={allRecruitment} />}
-          {activeTab === 'discover' && <DiscoverView events={featuredEvents} />}
-          {activeTab === 'announcements' && (
-            <AnnouncementsView systemUpdates={systemUpdates} localNews={localNews} />
-          )}
-          {activeTab === 'profile' && <ProfileView onOpenAuthModal={openAuthModal} />}
+          <Routes>
+            <Route path="/" element={<MainFeedView events={featuredEvents} gigs={allRecruitment} onNavigate={handleTabChange} />} />
+            <Route path="/recruit" element={<RecruitView gigs={allRecruitment} />} />
+            <Route path="/discover" element={<DiscoverView events={featuredEvents} />} />
+            <Route path="/updates" element={<AnnouncementsView systemUpdates={systemUpdates} localNews={localNews} />} />
+            <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
+          </Routes>
         </main>
       </div>
 
@@ -106,7 +105,9 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <Router>
+        <AppShell />
+      </Router>
     </AuthProvider>
   );
 }
