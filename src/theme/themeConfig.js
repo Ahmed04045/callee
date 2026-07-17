@@ -88,7 +88,6 @@ const themeConfig = {
     sidebarOffset: 'md:pl-20 lg:pl-24',
     mobileNavHeight: 'h-16',
     mobileNavOffset: 'pb-16 md:pb-0',
-    contentMaxWidth: 'max-w-5xl',
     topBarHeight: 'h-16',
   },
 
