@@ -78,6 +78,31 @@ const themeConfig = {
     mono: 'font-mono',
   },
 
+  // Structural measurements for the app shell. Kept separate from spacing
+  // (which is for in-content padding) since these drive layout offsets that
+  // multiple components need to agree on (sidebar + main content + mobile bar).
+  layout: {
+    sidebarWidth: 'w-20',
+    sidebarWidthLg: 'lg:w-24',
+    sidebarOffset: 'md:pl-20 lg:pl-24',
+    mobileNavHeight: 'h-16',
+    mobileNavOffset: 'pb-16 md:pb-0',
+    contentMaxWidth: 'max-w-5xl',
+    topBarHeight: 'h-16',
+  },
+
+  // Semantic states for navigation items specifically, so SidebarNav (and
+  // any future nav surface) never hard-codes an "active" look inline.
+  nav: {
+    itemText: 'text-neutral-500',
+    itemHoverText: 'group-hover:text-neutral-200',
+    itemActiveText: 'text-cyan-400',
+    itemActiveBg: 'bg-neutral-800/70',
+    itemHoverBg: 'hover:bg-neutral-900/60',
+    indicatorBg: 'bg-cyan-500',
+    itemRadius: 'rounded-xl',
+  },
+
   transition: 'transition duration-150',
 };
 
