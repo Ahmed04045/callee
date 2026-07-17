@@ -13,7 +13,18 @@ export default function RecruitView({ gigs = [] }) {
     logUserAction('APPLY_SUBMIT', { gigId: gig.id, role: gig.role, postedBy: gig.postedBy });
     setSubmittedIds((prev) => (prev.includes(gig.id) ? prev : [...prev, gig.id]));
   };
-
+  if (!gigs || gigs.length === 0) {
+    return (
+      <div className="space-y-6 w-full">
+        <div className={`border-b ${colors.border} pb-3`}>
+          <h2 className={`text-xl font-bold ${colors.textWhite}`}>Active Recruitment Pipeline</h2>
+        </div>
+        <p className={`text-sm ${colors.textMuted} text-center py-12`}>
+          No active gigs found. Check your mockData configuration.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6 w-full">
       <div className={`border-b ${colors.border} pb-3`}>
