@@ -15,7 +15,7 @@ export default function RecruitView({ gigs = [] }) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 w-full">
       <div className={`border-b ${colors.border} pb-3`}>
         <h2 className={`text-xl font-bold ${colors.textWhite}`}>Active Recruitment Pipeline</h2>
         <p className={`text-xs ${colors.textFaint} mt-1`}>

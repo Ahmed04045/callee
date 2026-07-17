@@ -22,7 +22,7 @@ export default function AnnouncementsView({ systemUpdates = [], localNews = [] }
   const { colors } = themeConfig;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="w-full space-y-8">
       <div className={`border-b ${colors.border} pb-3`}>
         <h2 className={`text-xl font-bold ${colors.textWhite}`}>Broadcast Announcements</h2>
         <p className={`text-xs ${colors.textFaint} mt-1`}>

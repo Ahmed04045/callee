@@ -12,7 +12,7 @@ export default function ProfileView({ onOpenAuthModal }) {
   const isAuthenticated = status === 'authenticated' && user;
 
   return (
-    <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
       {/* Account card */}
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
         <div
