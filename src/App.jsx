@@ -86,7 +86,7 @@ function AppShell() {
           )}
         </header>
 
-        <main className={`flex-1 w-full ${layout.contentMaxWidth} mx-auto px-6 py-8`}>
+        <main className="flex-1 w-full min-w-0 overflow-x-hidden px-4 md:px-6 py-8">
           <Routes>
             <Route path="/" element={<MainFeedView events={featuredEvents} gigs={allRecruitment} onNavigate={handleTabChange} />} />
             <Route path="/recruit" element={<RecruitView gigs={allRecruitment} />} />
