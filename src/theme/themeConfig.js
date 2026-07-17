@@ -82,6 +82,7 @@ const themeConfig = {
   // (which is for in-content padding) since these drive layout offsets that
   // multiple components need to agree on (sidebar + main content + mobile bar).
   layout: {
+    contentMaxWidth: 'w-full',
     sidebarWidth: 'w-20',
     sidebarWidthLg: 'lg:w-24',
     sidebarOffset: 'md:pl-20 lg:pl-24',
