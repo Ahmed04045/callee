@@ -101,8 +101,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppShell />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppShell />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
