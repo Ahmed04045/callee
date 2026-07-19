@@ -87,11 +87,13 @@ function AppShell() {
         <main
           className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
         >
-          {activeTab === 'main' && <MainFeedView onNavigate={handleTabChange} />}
-          {activeTab === 'recruit' && <RecruitView onOpenAuthModal={openAuthModal} />}
-          {activeTab === 'discover' && <DiscoverView />}
-          {activeTab === 'announcements' && <AnnouncementsView />}
-          {activeTab === 'profile' && <ProfileView onOpenAuthModal={openAuthModal} />}
+          <Routes>
+          <Route path="/" element={<MainFeedView />} />
+          <Route path="/recruit" element={<RecruitView onOpenAuthModal={openAuthModal} />} />
+          <Route path="/discover" element={<DiscoverView />} />
+          <Route path="/announcements" element={<AnnouncementsView />} />
+          <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
+          </Routes>
         </main>
       </div>
 
