@@ -1,4 +1,5 @@
 // src/App.jsx
+import { BrowserRouter } from 'react-router-dom';
 
 import React, { useState } from 'react';
 import { LogIn } from 'lucide-react';
