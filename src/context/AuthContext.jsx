@@ -1,101 +1,73 @@
 // src/context/AuthContext.jsx
 //
-// Small state machine that owns "who is signed in and how." AuthModal only
-// ever talks to `providers` and `signIn(providerId)` — it never branches on
-// which provider it's calling. That means wiring in the real NoSuits Labs
-// unified sign-in API later is a matter of implementing one entry's
-// `authenticate()` function below, not touching any component markup.
+// Real Supabase auth: email/password sign-in and sign-up, session restored
+// on load, session kept in sync via onAuthStateChange. The old mock
+// provider-registry (Google/Facebook placeholders, NoSuits Labs stub) is
+// gone — those weren't functional and this is a real backend now. Adding
+// Supabase OAuth later (Google, GitHub, etc.) is a `supabase.auth.signInWithOAuth`
+// call once you configure the provider in the Supabase dashboard; ping me
+// when you're ready and I'll wire the button in.
 
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 const AuthContext = createContext(null);
 
-// Registry of sign-in providers. Each entry describes how it should render
-// in AuthModal (label/icon key/enabled) and how to perform the sign-in.
-// Swap out `authenticate` with a real network call when the provider goes
-// live — the modal's button list and click handling stay identical.
-const PROVIDERS = {
-  google: {
-    id: 'google',
-    label: 'Continue with Google',
-    enabled: true,
-    authenticate: async () =>
-      mockAuthenticate({ id: 'google-mock-user', provider: 'google', name: 'Google User' }),
-  },
-  facebook: {
-    id: 'facebook',
-    label: 'Continue with Facebook',
-    enabled: true,
-    authenticate: async () =>
-      mockAuthenticate({ id: 'facebook-mock-user', provider: 'facebook', name: 'Facebook User' }),
-  },
-  noSuitsLabs: {
-    id: 'noSuitsLabs',
-    label: 'Continue with NoSuits Labs',
-    enabled: false, // Flip to true once the unified sign-in API ships.
-    comingSoon: true,
-    authenticate: async () => {
-      throw new Error('NoSuits Labs unified sign-in is not available yet.');
-    },
-  },
-};
-
-// Placeholder network delay so the UI's pending state is exercised even
-// though nothing real is being called yet.
-function mockAuthenticate(user) {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(user), 600);
-  });
-}
-
 export function AuthProvider({ children }) {
-  // status: 'idle' | 'pending' | 'authenticated' | 'error'
-  const [status, setStatus] = useState('idle');
-  const [user, setUser] = useState(null);
+  // status: 'loading' (initial session check) | 'authenticated' | 'unauthenticated'
+  const [status, setStatus] = useState('loading');
+  const [session, setSession] = useState(null);
   const [error, setError] = useState(null);
-  const [activeProviderId, setActiveProviderId] = useState(null);
 
-  const signIn = useCallback(async (providerId) => {
-    const provider = PROVIDERS[providerId];
-    if (!provider || !provider.enabled) {
-      setStatus('error');
-      setError(`"${providerId}" is not available yet.`);
-      return;
-    }
+  useEffect(() => {
+    let isMounted = true;
 
-    setStatus('pending');
-    setActiveProviderId(providerId);
-    setError(null);
+    supabase.auth.getSession().then(({ data }) => {
+      if (!isMounted) return;
+      setSession(data.session);
+      setStatus(data.session ? 'authenticated' : 'unauthenticated');
+    });
 
-    try {
-      const authedUser = await provider.authenticate();
-      setUser(authedUser);
-      setStatus('authenticated');
-    } catch (err) {
-      setStatus('error');
-      setError(err.message || 'Sign-in failed.');
-    } finally {
-      setActiveProviderId(null);
-    }
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setStatus(nextSession ? 'authenticated' : 'unauthenticated');
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  const signOut = useCallback(() => {
-    setUser(null);
-    setStatus('idle');
+  const signUp = useCallback(async (email, password) => {
     setError(null);
+    const { error: signUpError } = await supabase.auth.signUp({ email, password });
+    if (signUpError) setError(signUpError.message);
+    return { error: signUpError };
+  }, []);
+
+  const signIn = useCallback(async (email, password) => {
+    setError(null);
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    if (signInError) setError(signInError.message);
+    return { error: signInError };
+  }, []);
+
+  const signOut = useCallback(async () => {
+    await supabase.auth.signOut();
   }, []);
 
   const value = useMemo(
     () => ({
       status,
-      user,
+      user: session?.user ?? null,
+      session,
       error,
-      activeProviderId,
-      providers: Object.values(PROVIDERS),
       signIn,
+      signUp,
       signOut,
     }),
-    [status, user, error, activeProviderId, signIn, signOut]
+    [status, session, error, signIn, signUp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,7 +1,6 @@
 // src/App.jsx
 
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { LogIn } from 'lucide-react';
 
 import themeConfig from './theme/themeConfig';
@@ -15,8 +14,6 @@ import RecruitView from './views/RecruitView';
 import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
-
-import { featuredEvents, allRecruitment, systemUpdates, localNews } from './data/mockData';
 
 function BrandMark({ size = 'sm' }) {
   const { colors, font, brand } = themeConfig;
@@ -36,36 +33,36 @@ function BrandMark({ size = 'sm' }) {
 }
 
 function AppShell() {
+  const [activeTab, setActiveTab] = useState('main');
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
   const { status } = useAuth();
-  
-  const location = useLocation();
-  const navigate = useNavigate();
+
+  const handleTabChange = (tabId) => {
+    logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
+    setActiveTab(tabId);
+  };
 
   const openAuthModal = () => setAuthModalOpen(true);
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  // Derive which item is active based on the actual browser URL path
-  const currentItem = NAV_ITEMS.find((item) => item.path === location.pathname) || NAV_ITEMS[0];
-  const activeLabel = currentItem.label;
-
-  const handleTabChange = (tabId) => {
-    const targetItem = NAV_ITEMS.find((item) => item.id === tabId);
-    if (targetItem) {
-      logUserAction('NAVIGATE_TAB', { from: currentItem.id, to: tabId });
-      navigate(targetItem.path);
-    }
-  };
+  const activeLabel = NAV_ITEMS.find((item) => item.id === activeTab)?.label ?? '';
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
-      <SidebarNav brandMark={<BrandMark />} />
+      <SidebarNav
+        activeTab={activeTab}
+        onNavigate={handleTabChange}
+        brandMark={<BrandMark />}
+      />
 
+      {/* Content column — offset by the fixed sidebar on desktop, padded
+          above the fixed bottom bar on mobile. */}
       <div className={`flex flex-col min-h-screen ${layout.sidebarOffset} ${layout.mobileNavOffset}`}>
         <header
           className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
         >
+          {/* Brand shows here on mobile only (sidebar carries it on desktop) */}
           <div className="md:hidden">
             <BrandMark />
           </div>
@@ -73,7 +70,7 @@ function AppShell() {
             {activeLabel}
           </h2>
 
-          {status !== 'authenticated' && (
+          {status === 'unauthenticated' && (
             <button
               onClick={() => {
                 logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
@@ -86,14 +83,14 @@ function AppShell() {
           )}
         </header>
 
-        <main className="flex-1 w-full min-w-0 overflow-x-hidden px-4 md:px-6 py-8">
-          <Routes>
-            <Route path="/" element={<MainFeedView events={featuredEvents} gigs={allRecruitment} onNavigate={handleTabChange} />} />
-            <Route path="/recruit" element={<RecruitView gigs={allRecruitment} />} />
-            <Route path="/discover" element={<DiscoverView events={featuredEvents} />} />
-            <Route path="/updates" element={<AnnouncementsView systemUpdates={systemUpdates} localNews={localNews} />} />
-            <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
-          </Routes>
+        <main
+          className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
+        >
+          {activeTab === 'main' && <MainFeedView onNavigate={handleTabChange} />}
+          {activeTab === 'recruit' && <RecruitView onOpenAuthModal={openAuthModal} />}
+          {activeTab === 'discover' && <DiscoverView />}
+          {activeTab === 'announcements' && <AnnouncementsView />}
+          {activeTab === 'profile' && <ProfileView onOpenAuthModal={openAuthModal} />}
         </main>
       </div>
 
@@ -105,9 +102,7 @@ function AppShell() {
 export default function App() {
   return (
     <AuthProvider>
-      <Router>
-        <AppShell />
-      </Router>
+      <AppShell />
     </AuthProvider>
   );
 }

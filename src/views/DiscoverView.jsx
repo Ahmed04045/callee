@@ -1,18 +1,22 @@
 // src/views/DiscoverView.jsx
 //
-// Mock-rendered map. Pin data comes entirely from useMapPins, so dropping
-// in the real Google Maps SDK later means implementing that hook — this
-// component's JSX does not need to change.
+// Mock-rendered map, real data. Pin data comes from useMapPins fed by a
+// live `events` query — dropping in the real Google Maps SDK later means
+// implementing useMapPins differently; this component's JSX stays as-is.
 
 import React from 'react';
 import { Map, MapPin } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useMapPins } from '../hooks/useMapPins';
+import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
 
-export default function DiscoverView({ events = [] }) {
+export default function DiscoverView() {
   const { colors, radius } = themeConfig;
-  const { pins, status } = useMapPins(events);
+  const { data: events, status: eventsStatus } = useSupabaseTable('events', {
+    orderBy: 'event_date',
+  });
+  const { pins, status: pinStatus } = useMapPins(events);
 
   const handlePinClick = (pin) => {
     logUserAction('MAP_PIN_CLICK', { eventId: pin.id, title: pin.label });
@@ -32,7 +36,7 @@ export default function DiscoverView({ events = [] }) {
         >
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
 
-          {status === 'ready' &&
+          {pinStatus === 'ready' &&
             pins.map((pin) => (
               <button
                 key={pin.id}
@@ -47,7 +51,7 @@ export default function DiscoverView({ events = [] }) {
           <p
             className={`text-xs ${colors.textFaint} z-10 font-mono tracking-widest uppercase ${colors.bgPill} px-3 py-1.5 ${radius.md} border ${colors.borderStrong}`}
           >
-            {status === 'loading' ? 'Loading map data…' : 'Native Map SDK slot — mock view'}
+            {eventsStatus === 'loading' ? 'Loading events…' : 'Native Map SDK slot — mock view'}
           </p>
         </div>
 
@@ -64,6 +68,17 @@ export default function DiscoverView({ events = [] }) {
             Nearby You
           </h3>
         </div>
+
+        {eventsStatus === 'loading' && (
+          <p className={`text-xs ${colors.textFaint}`}>Loading events…</p>
+        )}
+        {eventsStatus === 'error' && (
+          <p className="text-xs text-red-400">Couldn't load events. Try refreshing.</p>
+        )}
+        {eventsStatus === 'ready' && events.length === 0 && (
+          <p className={`text-xs ${colors.textFaint}`}>No nearby events posted yet.</p>
+        )}
+
         {events.map((event) => (
           <div
             key={event.id}

@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 /**
- * @param {Array<{id:string,title:string,location:string,coordinates:{lat:number,lng:number},tag?:string}>} sourceEvents
+ * @param {Array<{id:string,title:string,location:string,lat?:number,lng?:number,tag?:string}>} sourceEvents
  */
 export function useMapPins(sourceEvents = []) {
   const [status, setStatus] = useState('idle'); // 'idle' | 'loading' | 'ready' | 'error'
@@ -21,7 +21,7 @@ export function useMapPins(sourceEvents = []) {
         label: event.title,
         location: event.location,
         tag: event.tag,
-        coordinates: event.coordinates,
+        coordinates: event.lat != null && event.lng != null ? { lat: event.lat, lng: event.lng } : null,
         // Deterministic mock screen-position so the placeholder map looks
         // intentional instead of random on every render. A real SDK
         // integration would replace this with a lat/lng -> pixel projection.

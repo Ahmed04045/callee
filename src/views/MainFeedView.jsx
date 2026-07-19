@@ -3,19 +3,34 @@
 import React, { useState } from 'react';
 import { Search, Flame, Briefcase, MapPin, ArrowRight } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
+import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
 
-export default function MainFeedView({ events = [], gigs = [], onNavigate }) {
+function formatDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return dateString;
+  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+export default function MainFeedView({ onNavigate }) {
   const { colors, radius, font, brand } = themeConfig;
   const [searchQuery, setSearchQuery] = useState('');
+
+  const { data: events, status: eventsStatus } = useSupabaseTable('events', {
+    orderBy: 'event_date',
+  });
+  const { data: featuredGigs, status: gigsStatus } = useSupabaseTable('gigs', {
+    filters: { featured: true },
+    orderBy: 'created_at',
+    ascending: false,
+  });
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     logUserAction('SEARCH_SUBMIT', { query: searchQuery.trim() });
   };
-
-  const featuredGigs = gigs.filter((gig) => gig.featured);
 
   return (
     <div className="space-y-10">
@@ -47,6 +62,17 @@ export default function MainFeedView({ events = [], gigs = [], onNavigate }) {
           >
             <Flame size={14} className={colors.warning} /> Trending Events
           </h3>
+
+          {eventsStatus === 'loading' && (
+            <p className={`text-xs ${colors.textFaint}`}>Loading events…</p>
+          )}
+          {eventsStatus === 'error' && (
+            <p className="text-xs text-red-400">Couldn't load events. Try refreshing.</p>
+          )}
+          {eventsStatus === 'ready' && events.length === 0 && (
+            <p className={`text-xs ${colors.textFaint}`}>No events posted yet — check back soon.</p>
+          )}
+
           <div className="grid grid-cols-1 gap-4">
             {events.map((event) => (
               <div
@@ -70,7 +96,7 @@ export default function MainFeedView({ events = [], gigs = [], onNavigate }) {
                 <div
                   className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} font-mono pt-3 border-t ${colors.border}`}
                 >
-                  <div>{event.date}</div>
+                  <div>{formatDate(event.event_date)}</div>
                   <div className="flex items-center gap-1">
                     <MapPin size={12} /> {event.location}
                   </div>
@@ -87,6 +113,12 @@ export default function MainFeedView({ events = [], gigs = [], onNavigate }) {
           >
             <Briefcase size={14} className={colors.secondary} /> Top Recruitment Calls
           </h3>
+
+          {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
+          {gigsStatus === 'ready' && featuredGigs.length === 0 && (
+            <p className={`text-xs ${colors.textFaint}`}>No featured roles right now.</p>
+          )}
+
           {featuredGigs.map((gig) => (
             <div
               key={gig.id}
@@ -99,7 +131,7 @@ export default function MainFeedView({ events = [], gigs = [], onNavigate }) {
                   {gig.compensation}
                 </span>
                 <h4 className={`text-sm font-bold ${colors.textWhite} mt-1.5`}>{gig.role}</h4>
-                <p className={`text-[11px] ${colors.textFaint}`}>{gig.postedBy}</p>
+                <p className={`text-[11px] ${colors.textFaint}`}>{gig.posted_by}</p>
               </div>
               <p className={`text-xs ${colors.textMuted} line-clamp-2 leading-relaxed`}>
                 {gig.details}

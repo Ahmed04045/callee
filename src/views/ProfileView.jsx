@@ -10,6 +10,7 @@ export default function ProfileView({ onOpenAuthModal }) {
   const { colors, radius, font, brand } = themeConfig;
   const { status, user, signOut } = useAuth();
   const isAuthenticated = status === 'authenticated' && user;
+  const isLoadingSession = status === 'loading';
 
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -18,15 +19,18 @@ export default function ProfileView({ onOpenAuthModal }) {
         <div
           className={`w-20 h-20 ${colors.gradientBrand} ${radius.full} mx-auto flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
         >
-          {isAuthenticated ? user.name?.[0]?.toUpperCase() ?? 'U' : 'U'}
+          {isAuthenticated ? user.email?.[0]?.toUpperCase() ?? 'U' : 'U'}
         </div>
 
-        {isAuthenticated ? (
+        {isLoadingSession ? (
           <div>
-            <h3 className={`text-lg font-bold ${colors.textWhite}`}>{user.name}</h3>
-            <p className={`text-xs ${colors.textFaint} font-mono`}>
-              Signed in via {user.provider}
-            </p>
+            <h3 className={`text-lg font-bold ${colors.textWhite}`}>Loading…</h3>
+            <p className={`text-xs ${colors.textFaint} font-mono`}>Checking your session</p>
+          </div>
+        ) : isAuthenticated ? (
+          <div>
+            <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{user.email}</h3>
+            <p className={`text-xs ${colors.textFaint} font-mono`}>Signed in</p>
           </div>
         ) : (
           <div>
@@ -60,7 +64,8 @@ export default function ProfileView({ onOpenAuthModal }) {
               logUserAction('OPEN_AUTH_MODAL', { source: 'profile' });
               onOpenAuthModal?.();
             }}
-            className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} ${radius.sm} py-2 transition`}
+            disabled={isLoadingSession}
+            className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} ${radius.sm} py-2 transition disabled:opacity-50`}
           >
             <LogIn size={14} /> Sign in
           </button>
