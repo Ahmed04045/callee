@@ -21,7 +21,7 @@ export default function MainFeedView({ onNavigate }) {
     orderBy: 'event_date',
   });
   const { data: featuredGigs, status: gigsStatus } = useSupabaseTable('gigs', {
-    filters: { featured: true },
+    filters: { featured: true, status: 'approved' },
     orderBy: 'created_at',
     ascending: false,
   });

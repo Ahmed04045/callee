@@ -1,10 +1,8 @@
 // src/App.jsx
-import { BrowserRouter } from 'react-router-dom';
 
-import { Routes, Route } from 'react-router-dom';
-
-import React, { useState } from 'react';
-import { LogIn } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { LogIn, ClipboardCheck } from 'lucide-react';
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -17,6 +15,15 @@ import RecruitView from './views/RecruitView';
 import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
+import AdminView from './views/AdminView';
+
+const ADMIN_NAV_ITEM = {
+  id: 'admin',
+  label: 'Admin',
+  path: '/admin',
+  iconType: 'svg',
+  iconSource: ClipboardCheck,
+};
 
 function BrandMark({ size = 'sm' }) {
   const { colors, font, brand } = themeConfig;
@@ -36,20 +43,44 @@ function BrandMark({ size = 'sm' }) {
 }
 
 function AppShell() {
-  const [activeTab, setActiveTab] = useState('main');
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
-  const { status } = useAuth();
+  const { status, isAdmin } = useAuth();
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Map the current URL path back to the tab ID for SidebarNav highlight
+  const currentTabPath = location.pathname;
+  const activeTab = currentTabPath === '/admin' ? 'admin' 
+    : currentTabPath === '/recruit' ? 'recruit'
+    : currentTabPath === '/discover' ? 'discover'
+    : currentTabPath === '/announcements' ? 'announcements'
+    : currentTabPath === '/profile' ? 'profile'
+    : 'main';
 
   const handleTabChange = (tabId) => {
     logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
-    setActiveTab(tabId);
+    const targetPath = tabId === 'main' ? '/' : `/${tabId}`;
+    navigate(targetPath);
   };
 
   const openAuthModal = () => setAuthModalOpen(true);
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  const activeLabel = NAV_ITEMS.find((item) => item.id === activeTab)?.label ?? '';
+  const navItems = useMemo(
+    () => (isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS),
+    [isAdmin]
+  );
+
+  // Auto-redirect out of admin path if user loses admin rights or signs out
+  useEffect(() => {
+    if (location.pathname === '/admin' && !isAdmin) {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, isAdmin, navigate]);
+
+  const activeLabel = navItems.find((item) => item.id === activeTab)?.label ?? '';
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
@@ -57,15 +88,13 @@ function AppShell() {
         activeTab={activeTab}
         onNavigate={handleTabChange}
         brandMark={<BrandMark />}
+        items={navItems}
       />
 
-      {/* Content column — offset by the fixed sidebar on desktop, padded
-          above the fixed bottom bar on mobile. */}
       <div className={`flex flex-col min-h-screen ${layout.sidebarOffset} ${layout.mobileNavOffset}`}>
         <header
           className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
         >
-          {/* Brand shows here on mobile only (sidebar carries it on desktop) */}
           <div className="md:hidden">
             <BrandMark />
           </div>
@@ -90,11 +119,12 @@ function AppShell() {
           className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
         >
           <Routes>
-          <Route path="/" element={<MainFeedView />} />
-          <Route path="/recruit" element={<RecruitView onOpenAuthModal={openAuthModal} />} />
-          <Route path="/discover" element={<DiscoverView />} />
-          <Route path="/announcements" element={<AnnouncementsView />} />
-          <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/" element={<MainFeedView onNavigate={handleTabChange} />} />
+            <Route path="/recruit" element={<RecruitView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/discover" element={<DiscoverView />} />
+            <Route path="/announcements" element={<AnnouncementsView />} />
+            <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/admin" element={<AdminView />} />
           </Routes>
         </main>
       </div>

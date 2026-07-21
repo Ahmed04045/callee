@@ -18,6 +18,8 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading');
   const [session, setSession] = useState(null);
   const [error, setError] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -39,9 +41,46 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  // Admin status is never trusted from anything client-side — it's asked
+  // of the database via a SECURITY DEFINER function (is_admin(), see
+  // supabase/migrations/002_gig_moderation.sql) every time the session
+  // changes. Postgres is the actual gate; this is just so the UI knows
+  // whether to show admin-only surfaces.
+  useEffect(() => {
+    let isMounted = true;
+    const userId = session?.user?.id;
+
+    if (!userId) {
+      setIsAdmin(false);
+      setIsAdminLoading(false);
+      return;
+    }
+
+    setIsAdminLoading(true);
+    supabase.rpc('is_admin').then(({ data, error: rpcError }) => {
+      if (!isMounted) return;
+      setIsAdmin(!rpcError && data === true);
+      setIsAdminLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session?.user?.id]);
+
   const signUp = useCallback(async (email, password) => {
     setError(null);
-    const { error: signUpError } = await supabase.auth.signUp({ email, password });
+    // window.location.origin resolves to whatever the app is actually
+    // running on right now — http://localhost:5173 in dev, your real
+    // domain in production — so this never needs a hardcoded URL. Supabase
+    // still requires that URL to be allow-listed in the dashboard (see
+    // Authentication -> URL Configuration -> Redirect URLs) or it silently
+    // falls back to the Site URL default.
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
     if (signUpError) setError(signUpError.message);
     return { error: signUpError };
   }, []);
@@ -63,11 +102,13 @@ export function AuthProvider({ children }) {
       user: session?.user ?? null,
       session,
       error,
+      isAdmin,
+      isAdminLoading,
       signIn,
       signUp,
       signOut,
     }),
-    [status, session, error, signIn, signUp, signOut]
+    [status, session, error, isAdmin, isAdminLoading, signIn, signUp, signOut]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -13,6 +13,7 @@ export default function RecruitView({ onOpenAuthModal }) {
   const { user } = useAuth();
 
   const { data: gigs, status: gigsStatus } = useSupabaseTable('gigs', {
+    filters: { status: 'approved' },
     orderBy: 'created_at',
     ascending: false,
   });

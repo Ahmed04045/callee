@@ -1,10 +1,21 @@
 // src/components/SidebarNav.jsx
+//
+// One config, two renders. NAV_ITEMS drives both the desktop left rail and
+// the mobile bottom bar (pure CSS breakpoints via `hidden md:flex` /
+// `flex md:hidden` — no resize listeners, no layout flash). Add, remove, or
+// reorder tabs by editing NAV_ITEMS only; nothing else in this file needs
+// to change.
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
 import { Flame, Briefcase, Compass, Megaphone, User } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 
+// --- Plug-and-play nav config -----------------------------------------
+// iconType 'svg'   -> iconSource is a Lucide-react component, e.g. Flame
+// iconType 'image' -> iconSource is a string path to a static asset, e.g.
+//                     '/assets/icons/custom-logo.png'. Swap any entry's
+//                     iconType/iconSource to drop in custom artwork later
+//                     without touching the render logic below.
 export const NAV_ITEMS = [
   { id: 'main', label: 'Feed', path: '/', iconType: 'svg', iconSource: Flame },
   { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'svg', iconSource: Briefcase },
@@ -12,6 +23,7 @@ export const NAV_ITEMS = [
   { id: 'announcements', label: 'Updates', path: '/updates', iconType: 'svg', iconSource: Megaphone },
   { id: 'profile', label: 'Profile', path: '/profile', iconType: 'svg', iconSource: User },
 ];
+// ------------------------------------------------------------------------
 
 function NavIcon({ item, active, size = 20 }) {
   const { nav } = themeConfig;
@@ -33,13 +45,13 @@ function NavIcon({ item, active, size = 20 }) {
   return <Icon size={size} strokeWidth={active ? 2.25 : 1.75} className={`transition-colors ${stateClass}`} />;
 }
 
-function NavLinkItem({ item, isActive, orientation }) {
+function NavButton({ item, isActive, onSelect, orientation }) {
   const { nav, radius } = themeConfig;
   const isVertical = orientation === 'vertical';
 
   return (
-    <Link
-      to={item.path}
+    <button
+      onClick={() => onSelect(item.id)}
       aria-current={isActive ? 'page' : undefined}
       title={item.label}
       className={`group relative flex items-center transition-colors ${nav.itemRadius}
@@ -68,13 +80,12 @@ function NavLinkItem({ item, isActive, orientation }) {
       >
         {item.label}
       </span>
-    </Link>
+    </button>
   );
 }
 
-export default function SidebarNav({ brandMark }) {
+export default function SidebarNav({ activeTab, onNavigate, brandMark, items = NAV_ITEMS }) {
   const { colors, layout } = themeConfig;
-  const location = useLocation();
 
   return (
     <>
@@ -89,11 +100,12 @@ export default function SidebarNav({ brandMark }) {
         )}
 
         <nav className="flex-1 flex flex-col gap-1 px-2 py-4">
-          {NAV_ITEMS.map((item) => (
-            <NavLinkItem
+          {items.map((item) => (
+            <NavButton
               key={item.id}
               item={item}
-              isActive={location.pathname === item.path}
+              isActive={activeTab === item.id}
+              onSelect={onNavigate}
               orientation="vertical"
             />
           ))}
@@ -104,11 +116,12 @@ export default function SidebarNav({ brandMark }) {
       <nav
         className={`flex md:hidden fixed bottom-0 left-0 right-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
       >
-        {NAV_ITEMS.map((item) => (
-          <NavLinkItem
+        {items.map((item) => (
+          <NavButton
             key={item.id}
             item={item}
-            isActive={location.pathname === item.path}
+            isActive={activeTab === item.id}
+            onSelect={onNavigate}
             orientation="horizontal"
           />
         ))}
