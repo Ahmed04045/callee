@@ -1,14 +1,14 @@
 // src/App.jsx
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { LogIn, ClipboardCheck } from 'lucide-react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
+import Icon from './components/Icon';
 
 import MainFeedView from './views/MainFeedView';
 import RecruitView from './views/RecruitView';
@@ -16,14 +16,39 @@ import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
 import AdminView from './views/AdminView';
+import AboutView from './views/AboutView';
 
 const ADMIN_NAV_ITEM = {
   id: 'admin',
   label: 'Admin',
   path: '/admin',
-  iconType: 'svg',
-  iconSource: ClipboardCheck,
+  iconType: 'material',
+  iconSource: 'fact_check',
 };
+
+// One switch, keyed by nav item id, mapping each tab to its view. Combined
+// with `path` on every nav item (NAV_ITEMS / ADMIN_NAV_ITEM), this is the
+// ONLY place that pairs a tab with anything — routes, highlighting, and
+// navigation below all derive from item.path, never a hardcoded string.
+// Add a tab by adding one NAV_ITEMS entry + one case here.
+function renderView(tabId, handlers) {
+  switch (tabId) {
+    case 'main':
+      return <MainFeedView onNavigate={handlers.navigateToTab} />;
+    case 'recruit':
+      return <RecruitView onOpenAuthModal={handlers.openAuthModal} />;
+    case 'discover':
+      return <DiscoverView />;
+    case 'announcements':
+      return <AnnouncementsView />;
+    case 'profile':
+      return <ProfileView onOpenAuthModal={handlers.openAuthModal} />;
+    case 'admin':
+      return <AdminView />;
+    default:
+      return null;
+  }
+}
 
 function BrandMark({ size = 'sm' }) {
   const { colors, font, brand } = themeConfig;
@@ -44,28 +69,16 @@ function BrandMark({ size = 'sm' }) {
 
 function AppShell() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('signIn');
   const { colors, layout, font } = themeConfig;
   const { status, isAdmin } = useAuth();
-  
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Map the current URL path back to the tab ID for SidebarNav highlight
-  const currentTabPath = location.pathname;
-  const activeTab = currentTabPath === '/admin' ? 'admin' 
-    : currentTabPath === '/recruit' ? 'recruit'
-    : currentTabPath === '/discover' ? 'discover'
-    : currentTabPath === '/announcements' ? 'announcements'
-    : currentTabPath === '/profile' ? 'profile'
-    : 'main';
-
-  const handleTabChange = (tabId) => {
-    logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
-    const targetPath = tabId === 'main' ? '/' : `/${tabId}`;
-    navigate(targetPath);
+  const openAuthModal = (mode = 'signIn') => {
+    setAuthModalMode(mode);
+    setAuthModalOpen(true);
   };
-
-  const openAuthModal = () => setAuthModalOpen(true);
   const closeAuthModal = () => setAuthModalOpen(false);
 
   const navItems = useMemo(
@@ -73,20 +86,33 @@ function AppShell() {
     [isAdmin]
   );
 
-  // Auto-redirect out of admin path if user loses admin rights or signs out
+  const activeItem = navItems.find((item) => item.path === location.pathname);
+  const activeTab = activeItem?.id ?? 'main';
+  const activeLabel = activeItem?.label ?? '';
+
+  const navigateToTab = (tabId) => {
+    const target = navItems.find((item) => item.id === tabId);
+    if (!target) return;
+    logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
+    navigate(target.path);
+  };
+
+  // Bounce out of /admin if admin rights are lost mid-session (sign-out,
+  // different account). The page itself would refuse data regardless —
+  // this is just so the UI doesn't sit on a dead end.
   useEffect(() => {
-    if (location.pathname === '/admin' && !isAdmin) {
-      navigate('/', { replace: true });
+    if (location.pathname === ADMIN_NAV_ITEM.path && !isAdmin) {
+      navigate(NAV_ITEMS[0].path, { replace: true });
     }
   }, [location.pathname, isAdmin, navigate]);
 
-  const activeLabel = navItems.find((item) => item.id === activeTab)?.label ?? '';
+  const handlers = { navigateToTab, openAuthModal };
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
       <SidebarNav
         activeTab={activeTab}
-        onNavigate={handleTabChange}
+        onNavigate={navigateToTab}
         brandMark={<BrandMark />}
         items={navItems}
       />
@@ -110,7 +136,7 @@ function AppShell() {
               }}
               className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition`}
             >
-              <LogIn size={14} /> Sign in
+              <Icon name="login" size={14} className="text-inherit" /> Sign in
             </button>
           )}
         </header>
@@ -119,17 +145,16 @@ function AppShell() {
           className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
         >
           <Routes>
-            <Route path="/" element={<MainFeedView onNavigate={handleTabChange} />} />
-            <Route path="/recruit" element={<RecruitView onOpenAuthModal={openAuthModal} />} />
-            <Route path="/discover" element={<DiscoverView />} />
-            <Route path="/announcements" element={<AnnouncementsView />} />
-            <Route path="/profile" element={<ProfileView onOpenAuthModal={openAuthModal} />} />
-            <Route path="/admin" element={<AdminView />} />
+            {navItems.map((item) => (
+              <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
+            ))}
+            <Route path="/about" element={<AboutView />} />
+            <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
       </div>
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
+      <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
     </div>
   );
 }

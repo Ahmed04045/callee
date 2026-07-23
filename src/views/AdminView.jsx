@@ -10,12 +10,12 @@
 // Never add a feature here that skips #2 and relies on #1 alone.
 
 import React, { useState } from 'react';
-import { CheckCircle, XCircle, RotateCcw, ShieldAlert } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
+import Icon from '../components/Icon';
 
 const STATUS_TABS = [
   { id: 'pending', label: 'Pending' },
@@ -52,7 +52,7 @@ export default function AdminView() {
   if (!isAdmin) {
     return (
       <div className="max-w-md mx-auto text-center py-16">
-        <ShieldAlert size={28} className={`mx-auto mb-3 ${colors.textFaint}`} />
+        <Icon name="gpp_maybe" size={28} className={`mx-auto mb-3 ${colors.textFaint}`} />
         <h2 className={`text-lg font-bold ${colors.textWhite}`}>Admin access required</h2>
         <p className={`text-xs ${colors.textFaint} mt-2 leading-relaxed`}>
           This account isn't in <code className={colors.accent}>app_admins</code>. That's
@@ -77,10 +77,10 @@ export default function AdminView() {
           <button
             key={tab.id}
             onClick={() => setStatusFilter(tab.id)}
-            className={`text-xs font-bold px-3 py-1.5 ${radius.sm} border transition ${
+            className={`text-xs font-bold px-3.5 py-1.5 ${radius.full} border transition ${
               statusFilter === tab.id
                 ? `${colors.accentBg} ${colors.accentOn} border-transparent`
-                : `${colors.textFaint} ${colors.borderStrong} hover:text-white`
+                : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
             }`}
           >
             {tab.label}
@@ -90,7 +90,7 @@ export default function AdminView() {
 
       {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
       {gigsStatus === 'error' && (
-        <p className="text-xs text-red-400">Couldn't load gigs. Try refreshing.</p>
+        <p className={`text-xs ${colors.error}`}>Couldn't load gigs. Try refreshing.</p>
       )}
       {gigsStatus === 'ready' && gigs.length === 0 && (
         <p className={`text-xs ${colors.textFaint}`}>Nothing in "{statusFilter}" right now.</p>
@@ -110,7 +110,7 @@ export default function AdminView() {
                 </p>
               </div>
               <span
-                className={`text-[10px] font-mono uppercase px-2 py-1 rounded shrink-0 ${colors.bgPanel} border ${colors.borderStrong} ${colors.textFaint}`}
+                className={`text-[10px] font-mono uppercase px-2.5 py-1 ${radius.full} shrink-0 ${colors.bgInset} border ${colors.borderStrong} ${colors.textFaint}`}
               >
                 {gig.status}
               </span>
@@ -122,7 +122,7 @@ export default function AdminView() {
               {(gig.tags ?? []).map((tag) => (
                 <span
                   key={tag}
-                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2 py-1 rounded border ${colors.border}`}
+                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
                 >
                   #{tag}
                 </span>
@@ -133,25 +133,25 @@ export default function AdminView() {
               {gig.status !== 'approved' && (
                 <button
                   onClick={() => updateStatus(gig, 'approved')}
-                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.sm} ${colors.success} ${colors.bgPanel} border ${colors.borderStrong} hover:border-emerald-700 transition`}
+                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.success} ${colors.bgInset} border ${colors.borderStrong} hover:border-emerald-700 transition`}
                 >
-                  <CheckCircle size={12} /> Approve
+                  <Icon name="check_circle" size={13} className="text-inherit" /> Approve
                 </button>
               )}
               {gig.status !== 'rejected' && (
                 <button
                   onClick={() => updateStatus(gig, 'rejected')}
-                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.sm} text-red-400 ${colors.bgPanel} border ${colors.borderStrong} hover:border-red-800 transition`}
+                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.error} ${colors.bgInset} border ${colors.borderStrong} hover:border-red-400 transition`}
                 >
-                  <XCircle size={12} /> Reject
+                  <Icon name="cancel" size={13} className="text-inherit" /> Reject
                 </button>
               )}
               {gig.status !== 'pending' && (
                 <button
                   onClick={() => updateStatus(gig, 'pending')}
-                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.sm} ${colors.textFaint} ${colors.bgPanel} border ${colors.borderStrong} hover:text-white transition`}
+                  className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.textFaint} ${colors.bgInset} border ${colors.borderStrong} ${colors.textHoverStrong} transition`}
                 >
-                  <RotateCcw size={12} /> Reset
+                  <Icon name="restart_alt" size={13} className="text-inherit" /> Reset
                 </button>
               )}
             </div>

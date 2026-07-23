@@ -1,34 +1,24 @@
 // src/components/SidebarNav.jsx
 //
-// One config, two renders. NAV_ITEMS drives both the desktop left rail and
-// the mobile bottom bar (pure CSS breakpoints via `hidden md:flex` /
-// `flex md:hidden` — no resize listeners, no layout flash). Add, remove, or
-// reorder tabs by editing NAV_ITEMS only; nothing else in this file needs
-// to change.
+// One config, two renders (desktop rail + mobile bottom bar, pure CSS
+// breakpoints, no resize listeners). Icons are Google Material Symbols
+// (fonts.google.com/icons) via the shared <Icon> component — iconType
+// 'material' takes a symbol name string; iconType 'image' still works for
+// a custom asset path if you ever want to drop one in for a specific item.
 
 import React from 'react';
-import { Flame, Briefcase, Compass, Megaphone, User } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
+import Icon from './Icon';
 
-// --- Plug-and-play nav config -----------------------------------------
-// iconType 'svg'   -> iconSource is a Lucide-react component, e.g. Flame
-// iconType 'image' -> iconSource is a string path to a static asset, e.g.
-//                     '/assets/icons/custom-logo.png'. Swap any entry's
-//                     iconType/iconSource to drop in custom artwork later
-//                     without touching the render logic below.
 export const NAV_ITEMS = [
-  { id: 'main', label: 'Feed', path: '/', iconType: 'svg', iconSource: Flame },
-  { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'svg', iconSource: Briefcase },
-  { id: 'discover', label: 'Discover', path: '/discover', iconType: 'svg', iconSource: Compass },
-  { id: 'announcements', label: 'Updates', path: '/updates', iconType: 'svg', iconSource: Megaphone },
-  { id: 'profile', label: 'Profile', path: '/profile', iconType: 'svg', iconSource: User },
+  { id: 'main', label: 'Feed', path: '/', iconType: 'material', iconSource: 'local_fire_department' },
+  { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'material', iconSource: 'work' },
+  { id: 'discover', label: 'Discover', path: '/discover', iconType: 'material', iconSource: 'explore' },
+  { id: 'announcements', label: 'Updates', path: '/updates', iconType: 'material', iconSource: 'campaign' },
+  { id: 'profile', label: 'Profile', path: '/profile', iconType: 'material', iconSource: 'person' },
 ];
-// ------------------------------------------------------------------------
 
-function NavIcon({ item, active, size = 20 }) {
-  const { nav } = themeConfig;
-  const stateClass = active ? nav.itemActiveText : `${nav.itemText} ${nav.itemHoverText}`;
-
+function NavGlyph({ item, active, size = 18 }) {
   if (item.iconType === 'image') {
     return (
       <img
@@ -36,17 +26,15 @@ function NavIcon({ item, active, size = 20 }) {
         alt=""
         aria-hidden="true"
         style={{ width: size, height: size }}
-        className={`object-contain transition-opacity ${active ? 'opacity-100' : 'opacity-50 group-hover:opacity-90'}`}
+        className={`object-contain transition-opacity ${active ? 'opacity-100' : 'opacity-60 group-hover:opacity-90'}`}
       />
     );
   }
-
-  const Icon = item.iconSource;
-  return <Icon size={size} strokeWidth={active ? 2.25 : 1.75} className={`transition-colors ${stateClass}`} />;
+  return <Icon name={item.iconSource} size={size} active={active} />;
 }
 
 function NavButton({ item, isActive, onSelect, orientation }) {
-  const { nav, radius } = themeConfig;
+  const { nav } = themeConfig;
   const isVertical = orientation === 'vertical';
 
   return (
@@ -55,24 +43,19 @@ function NavButton({ item, isActive, onSelect, orientation }) {
       aria-current={isActive ? 'page' : undefined}
       title={item.label}
       className={`group relative flex items-center transition-colors ${nav.itemRadius}
-        ${isVertical ? 'w-full flex-col gap-1.5 py-3' : 'flex-col gap-1 px-3 py-2 flex-1'}
-        ${isActive ? nav.itemActiveBg : `${nav.itemHoverBg}`}`}
+        ${isVertical ? 'w-full flex-col gap-1 py-2' : 'flex-col gap-0.5 py-1.5 flex-1'}
+        ${nav.itemHoverBg}`}
     >
-      {/* Premium active indicator */}
-      {isActive && isVertical && (
-        <span
-          aria-hidden="true"
-          className={`absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] ${radius.full} ${nav.indicatorBg}`}
-        />
-      )}
-      {isActive && !isVertical && (
-        <span
-          aria-hidden="true"
-          className={`absolute top-0 left-1/2 -translate-x-1/2 h-[3px] w-8 ${radius.full} ${nav.indicatorBg}`}
-        />
-      )}
+      {/* Google-style pill indicator directly behind the icon, filled only
+          when active */}
+      <span
+        className={`flex items-center justify-center rounded-full transition-colors duration-200 ${
+          isVertical ? 'w-9 h-7' : 'w-11 h-6'
+        } ${isActive ? nav.itemIndicatorBg : 'bg-transparent'}`}
+      >
+        <NavGlyph item={item} active={isActive} size={18} />
+      </span>
 
-      <NavIcon item={item} active={isActive} />
       <span
         className={`text-[10px] font-semibold tracking-wide transition-colors ${
           isActive ? nav.itemActiveText : `${nav.itemText} ${nav.itemHoverText}`
@@ -94,12 +77,12 @@ export default function SidebarNav({ activeTab, onNavigate, brandMark, items = N
         className={`hidden md:flex flex-col fixed left-0 top-0 h-screen ${layout.sidebarWidth} ${layout.sidebarWidthLg} ${colors.bgPanel} border-r ${colors.border} z-40`}
       >
         {brandMark && (
-          <div className={`flex items-center justify-center py-5 border-b ${colors.border}`}>
+          <div className={`flex items-center justify-center py-4 border-b ${colors.border}`}>
             {brandMark}
           </div>
         )}
 
-        <nav className="flex-1 flex flex-col gap-1 px-2 py-4">
+        <nav className="flex-1 flex flex-col gap-0.5 px-1.5 py-3">
           {items.map((item) => (
             <NavButton
               key={item.id}

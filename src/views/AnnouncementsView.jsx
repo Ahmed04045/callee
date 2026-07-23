@@ -1,9 +1,9 @@
 // src/views/AnnouncementsView.jsx
 
 import React, { useMemo } from 'react';
-import { Megaphone, Newspaper } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
+import Icon from '../components/Icon';
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -53,7 +53,7 @@ export default function AnnouncementsView() {
 
       {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
       {status === 'error' && (
-        <p className="text-xs text-red-400">Couldn't load announcements. Try refreshing.</p>
+        <p className={`text-xs ${colors.error}`}>Couldn't load announcements. Try refreshing.</p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -61,7 +61,7 @@ export default function AnnouncementsView() {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Megaphone size={14} className={colors.accent} /> App System Updates
+            <Icon name="campaign" size={16} className={colors.accent} /> App System Updates
           </h3>
           {status === 'ready' && systemUpdates.length === 0 && (
             <p className={`text-xs ${colors.textFaint}`}>No updates yet.</p>
@@ -77,7 +77,7 @@ export default function AnnouncementsView() {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Newspaper size={14} className={colors.secondary} /> Local Ecosystem News
+            <Icon name="newspaper" size={16} className={colors.secondary} /> Local Ecosystem News
           </h3>
           {status === 'ready' && localNews.length === 0 && (
             <p className={`text-xs ${colors.textFaint}`}>No local news yet.</p>

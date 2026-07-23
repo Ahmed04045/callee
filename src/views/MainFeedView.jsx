@@ -1,10 +1,10 @@
 // src/views/MainFeedView.jsx
 
 import React, { useState } from 'react';
-import { Search, Flame, Briefcase, MapPin, ArrowRight } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
+import Icon from '../components/Icon';
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -43,13 +43,17 @@ export default function MainFeedView({ onNavigate }) {
         </h2>
 
         <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto relative mt-4">
-          <Search className={`absolute left-4 top-3.5 ${colors.textFaint}`} size={18} />
+          <Icon
+            name="search"
+            size={18}
+            className={`absolute left-4 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
+          />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search coding gigs, video editing, local events..."
-            className={`w-full ${colors.bgPanel} border ${colors.border} ${radius.md} pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500 ${colors.transition}`}
+            className={`w-full ${colors.bgCard} border ${colors.border} ${radius.full} pl-12 pr-4 py-3 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
           />
         </form>
       </div>
@@ -60,14 +64,14 @@ export default function MainFeedView({ onNavigate }) {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Flame size={14} className={colors.warning} /> Trending Events
+            <Icon name="local_fire_department" size={16} className={colors.warning} /> Trending Events
           </h3>
 
           {eventsStatus === 'loading' && (
             <p className={`text-xs ${colors.textFaint}`}>Loading events…</p>
           )}
           {eventsStatus === 'error' && (
-            <p className="text-xs text-red-400">Couldn't load events. Try refreshing.</p>
+            <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>
           )}
           {eventsStatus === 'ready' && events.length === 0 && (
             <p className={`text-xs ${colors.textFaint}`}>No events posted yet — check back soon.</p>
@@ -77,12 +81,12 @@ export default function MainFeedView({ onNavigate }) {
             {events.map((event) => (
               <div
                 key={event.id}
-                className={`${colors.bgCard} border ${colors.border} ${radius.md} p-5 ${colors.borderHover} transition`}
+                className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 ${colors.borderHover} transition`}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <span
-                      className={`text-[10px] font-mono ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2 py-0.5 rounded`}
+                      className={`text-[10px] font-mono ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2.5 py-0.5 ${radius.full}`}
                     >
                       {event.tag}
                     </span>
@@ -98,7 +102,7 @@ export default function MainFeedView({ onNavigate }) {
                 >
                   <div>{formatDate(event.event_date)}</div>
                   <div className="flex items-center gap-1">
-                    <MapPin size={12} /> {event.location}
+                    <Icon name="location_on" size={13} /> {event.location}
                   </div>
                 </div>
               </div>
@@ -111,7 +115,7 @@ export default function MainFeedView({ onNavigate }) {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Briefcase size={14} className={colors.secondary} /> Top Recruitment Calls
+            <Icon name="work" size={16} className={colors.secondary} /> Top Recruitment Calls
           </h3>
 
           {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
@@ -122,11 +126,11 @@ export default function MainFeedView({ onNavigate }) {
           {featuredGigs.map((gig) => (
             <div
               key={gig.id}
-              className={`${colors.bgCardSoft} border ${colors.border} ${radius.md} p-4 space-y-3`}
+              className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-3`}
             >
               <div>
                 <span
-                  className={`text-[9px] font-mono font-bold ${colors.secondarySoftBg} ${colors.secondary} px-2 py-0.5 ${radius.full}`}
+                  className={`text-[9px] font-mono font-bold ${colors.secondarySoftBg} ${colors.secondary} px-2.5 py-0.5 ${radius.full}`}
                 >
                   {gig.compensation}
                 </span>
@@ -141,7 +145,7 @@ export default function MainFeedView({ onNavigate }) {
                   logUserAction('NAVIGATE_TAB', { from: 'main', to: 'recruit', via: gig.id });
                   onNavigate?.('recruit');
                 }}
-                className={`w-full text-center text-[11px] font-bold ${colors.accent} ${colors.bgPanel} hover:bg-neutral-800 py-2 ${radius.sm} transition border ${colors.borderStrong}`}
+                className={`w-full text-center text-[11px] font-bold ${colors.accent} ${colors.bgCard} ${colors.bgHoverInset} py-2 ${radius.full} transition border ${colors.borderStrong}`}
               >
                 View Details
               </button>

@@ -1,16 +1,73 @@
 // src/views/ProfileView.jsx
 
-import React from 'react';
-import { Settings, FileText, Shield, LogOut, LogIn } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from '../components/TelemetryLog';
+import Icon from '../components/Icon';
+
+const LEGAL_TABS = [
+  { id: 'tos', label: 'Terms of Service' },
+  { id: 'privacy', label: 'Privacy Policy' },
+];
+
+// Placeholder copy only — swap these two strings for your real ToS/Privacy
+// text whenever you have it. Keeping it as plain text here (rather than,
+// say, markdown rendering) on purpose since it's a couple of paragraphs;
+// revisit if the real documents end up long enough to want that.
+const LEGAL_PLACEHOLDER = {
+  tos: 'Terms of Service content goes here. Replace this placeholder with your actual terms before launch — Google Ads and most payment providers will want to see a real one.',
+  privacy: "Privacy Policy content goes here. Replace this placeholder with your actual policy — cover what you collect (account email, applications, telemetry events) and why.",
+};
 
 export default function ProfileView({ onOpenAuthModal }) {
   const { colors, radius, font, brand } = themeConfig;
   const { status, user, signOut } = useAuth();
   const isAuthenticated = status === 'authenticated' && user;
   const isLoadingSession = status === 'loading';
+  const [legalTab, setLegalTab] = useState('tos');
+
+  if (isLoadingSession) {
+    return <p className={`text-sm ${colors.textFaint}`}>Checking your session…</p>;
+  }
+
+  // Guest state: just the one clear call to action, nothing else.
+  if (!isAuthenticated) {
+    return (
+      <div className="w-full max-w-sm mx-auto text-center py-16 space-y-5">
+        <div
+          className={`w-16 h-16 mx-auto ${colors.bgInset} ${radius.full} flex items-center justify-center ${colors.textFaint}`}
+        >
+          <Icon name="person" size={28} />
+        </div>
+        <div>
+          <h2 className={`text-lg font-bold ${colors.textWhite}`}>You're not signed in</h2>
+          <p className={`text-xs ${colors.textFaint} mt-1.5 leading-relaxed`}>
+            Create an account to apply to gigs, save events, and track your submissions.
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            logUserAction('OPEN_AUTH_MODAL', { source: 'profile', mode: 'signUp' });
+            onOpenAuthModal?.('signUp');
+          }}
+          className={`inline-flex items-center justify-center gap-2 text-sm font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} ${radius.full} px-6 py-2.5 transition`}
+        >
+          <Icon name="person_add" size={16} className="text-inherit" /> Sign up
+        </button>
+        <p className={`text-xs ${colors.textFaint}`}>
+          Already have an account?{' '}
+          <button
+            onClick={() => onOpenAuthModal?.('signIn')}
+            className={`font-semibold ${colors.accent}`}
+          >
+            Sign in
+          </button>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -19,57 +76,22 @@ export default function ProfileView({ onOpenAuthModal }) {
         <div
           className={`w-20 h-20 ${colors.gradientBrand} ${radius.full} mx-auto flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
         >
-          {isAuthenticated ? user.email?.[0]?.toUpperCase() ?? 'U' : 'U'}
+          {user.email?.[0]?.toUpperCase() ?? 'U'}
+        </div>
+        <div>
+          <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{user.email}</h3>
+          <p className={`text-xs ${colors.textFaint} font-mono`}>Signed in</p>
         </div>
 
-        {isLoadingSession ? (
-          <div>
-            <h3 className={`text-lg font-bold ${colors.textWhite}`}>Loading…</h3>
-            <p className={`text-xs ${colors.textFaint} font-mono`}>Checking your session</p>
-          </div>
-        ) : isAuthenticated ? (
-          <div>
-            <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{user.email}</h3>
-            <p className={`text-xs ${colors.textFaint} font-mono`}>Signed in</p>
-          </div>
-        ) : (
-          <div>
-            <h3 className={`text-lg font-bold ${colors.textWhite}`}>Guest Workspace</h3>
-            <p className={`text-xs ${colors.textFaint} font-mono`}>Not signed in</p>
-          </div>
-        )}
-
-        <div className={`${colors.bgInset} border ${colors.border} p-3 ${radius.md} text-left text-xs ${colors.textMuted} space-y-1`}>
-          <div>
-            <span className={colors.textDim}>Status:</span> {isAuthenticated ? 'Active Account' : 'Basic Sandbox'}
-          </div>
-          <div>
-            <span className={colors.textDim}>Region:</span> Qatar Local Node
-          </div>
-        </div>
-
-        {isAuthenticated ? (
-          <button
-            onClick={() => {
-              logUserAction('SIGN_OUT_CLICK', {});
-              signOut();
-            }}
-            className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.textMuted} border ${colors.borderStrong} ${radius.sm} py-2 hover:text-white transition`}
-          >
-            <LogOut size={14} /> Sign out
-          </button>
-        ) : (
-          <button
-            onClick={() => {
-              logUserAction('OPEN_AUTH_MODAL', { source: 'profile' });
-              onOpenAuthModal?.();
-            }}
-            disabled={isLoadingSession}
-            className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} ${radius.sm} py-2 transition disabled:opacity-50`}
-          >
-            <LogIn size={14} /> Sign in
-          </button>
-        )}
+        <button
+          onClick={() => {
+            logUserAction('SIGN_OUT_CLICK', {});
+            signOut();
+          }}
+          className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.textMuted} border ${colors.borderStrong} ${radius.full} py-2 ${colors.textHoverStrong} transition`}
+        >
+          <Icon name="logout" size={14} /> Sign out
+        </button>
       </div>
 
       {/* Settings + legal */}
@@ -78,20 +100,20 @@ export default function ProfileView({ onOpenAuthModal }) {
           <h3
             className={`text-sm font-bold ${colors.textPrimary} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Settings size={14} /> Global App Settings
+            <Icon name="settings" size={16} /> App Settings
           </h3>
           <div className={`space-y-3 text-xs ${colors.textMuted}`}>
             <label
               className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
             >
               <span>Enable push notifications for nearby events</span>
-              <input type="checkbox" defaultChecked className="accent-cyan-500" />
+              <input type="checkbox" defaultChecked className="accent-md3-primary" />
             </label>
             <label
               className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
             >
               <span>Visible in recruitment pools for startups</span>
-              <input type="checkbox" defaultChecked className="accent-cyan-500" />
+              <input type="checkbox" defaultChecked className="accent-md3-primary" />
             </label>
           </div>
         </div>
@@ -100,31 +122,38 @@ export default function ProfileView({ onOpenAuthModal }) {
           <h3
             className={`text-sm font-bold ${colors.textPrimary} uppercase tracking-wider flex items-center gap-2`}
           >
-            <FileText size={14} /> Legal Foundations
+            <Icon name="gavel" size={16} /> Legal
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div
-              className={`p-4 ${colors.bgInset} border ${colors.border} ${radius.md} ${colors.borderHover} transition cursor-pointer`}
-            >
-              <div className={`flex items-center gap-2 ${colors.textWhite} font-bold text-xs`}>
-                <Shield size={12} className={colors.accent} /> Terms of Service
-              </div>
-              <p className={`text-[11px] ${colors.textFaint} mt-1 leading-normal`}>
-                Platform rules, safe-recruitment standards, and youth protection guidelines.
-              </p>
-            </div>
-            <div
-              className={`p-4 ${colors.bgInset} border ${colors.border} ${radius.md} ${colors.borderHover} transition cursor-pointer`}
-            >
-              <div className={`flex items-center gap-2 ${colors.textWhite} font-bold text-xs`}>
-                <Shield size={12} className={colors.secondary} /> Privacy Policy
-              </div>
-              <p className={`text-[11px] ${colors.textFaint} mt-1 leading-normal`}>
-                What {brand.name} collects, why, and how account and guardian data is handled.
-              </p>
-            </div>
+
+          <div className="flex gap-2">
+            {LEGAL_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setLegalTab(tab.id)}
+                className={`text-xs font-bold px-3.5 py-1.5 ${radius.full} border transition ${
+                  legalTab === tab.id
+                    ? `${colors.accentBg} ${colors.accentOn} border-transparent`
+                    : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className={`${colors.bgInset} border ${colors.border} ${radius.md} p-4`}>
+            <p className={`text-xs ${colors.textFaint} italic leading-relaxed`}>
+              {LEGAL_PLACEHOLDER[legalTab]}
+            </p>
           </div>
         </div>
+
+        <Link
+          to="/about"
+          className={`inline-flex items-center gap-1.5 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition`}
+        >
+          <Icon name="info" size={14} /> About {brand.name}
+        </Link>
       </div>
     </div>
   );

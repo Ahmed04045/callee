@@ -1,12 +1,12 @@
 // src/views/RecruitView.jsx
 
 import React, { useMemo } from 'react';
-import { ArrowRight, CheckCircle, ShieldCheck, LogIn } from 'lucide-react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
+import Icon from '../components/Icon';
 
 export default function RecruitView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
@@ -61,7 +61,7 @@ export default function RecruitView({ onOpenAuthModal }) {
 
       {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading roles…</p>}
       {gigsStatus === 'error' && (
-        <p className="text-xs text-red-400">Couldn't load roles. Try refreshing.</p>
+        <p className={`text-xs ${colors.error}`}>Couldn't load roles. Try refreshing.</p>
       )}
       {gigsStatus === 'ready' && gigs.length === 0 && (
         <p className={`text-xs ${colors.textFaint}`}>No active roles right now — check back soon.</p>
@@ -80,7 +80,7 @@ export default function RecruitView({ onOpenAuthModal }) {
               <div>
                 <div className="flex items-center gap-2">
                   <h3
-                    className={`text-lg font-bold ${colors.textWhite} hover:${colors.accent} cursor-pointer transition`}
+                    className={`text-lg font-bold ${colors.textWhite} ${colors.textHoverAccent} cursor-pointer transition`}
                   >
                     {gig.role}
                   </h3>
@@ -89,14 +89,14 @@ export default function RecruitView({ onOpenAuthModal }) {
                       title="Organizer identity verified"
                       className={`flex items-center gap-1 text-[10px] font-mono ${colors.success}`}
                     >
-                      <ShieldCheck size={12} /> Verified
+                      <Icon name="verified" size={13} /> Verified
                     </span>
                   )}
                 </div>
                 <p className={`text-xs ${colors.textMuted}`}>Posted by: {gig.posted_by}</p>
               </div>
               <span
-                className={`text-xs font-mono ${colors.bgPanel} border ${colors.borderStrong} ${colors.success} px-2 py-1 rounded`}
+                className={`text-xs font-mono ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full}`}
               >
                 {gig.compensation}
               </span>
@@ -108,7 +108,7 @@ export default function RecruitView({ onOpenAuthModal }) {
               {(gig.tags ?? []).map((tag) => (
                 <span
                   key={tag}
-                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2 py-1 rounded border ${colors.border}`}
+                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
                 >
                   #{tag}
                 </span>
@@ -123,24 +123,24 @@ export default function RecruitView({ onOpenAuthModal }) {
                 <button
                   onClick={() => handleApply(gig)}
                   disabled={isSubmitted || isCheckingApplied}
-                  className={`flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider px-4 py-2 ${radius.sm} transition
+                  className={`flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider px-4 py-2 ${radius.full} transition
                     ${
                       isSubmitted
-                        ? `${colors.success} ${colors.bgPanel} border ${colors.borderStrong} cursor-default`
+                        ? `${colors.success} ${colors.bgInset} border ${colors.borderStrong} cursor-default`
                         : `${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover}`
                     }`}
                 >
                   {isSubmitted ? (
                     <>
-                      Submitted <CheckCircle size={12} />
+                      Submitted <Icon name="check_circle" size={13} className="text-inherit" />
                     </>
                   ) : user ? (
                     <>
-                      Submit Project Request <ArrowRight size={12} />
+                      Submit Project Request <Icon name="arrow_forward" size={13} className="text-inherit" />
                     </>
                   ) : (
                     <>
-                      Sign In to Apply <LogIn size={12} />
+                      Sign In to Apply <Icon name="login" size={13} className="text-inherit" />
                     </>
                   )}
                 </button>

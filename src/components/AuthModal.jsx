@@ -1,24 +1,29 @@
 // src/components/AuthModal.jsx
 //
 // Email/password sign-in and sign-up, backed by AuthContext's Supabase
-// calls. Google/Facebook buttons removed — they weren't wired to anything.
-// Supabase OAuth is a real, quick add later if you want it back.
+// calls.
 
-import React, { useState } from 'react';
-import { X, Mail, Lock, Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from './TelemetryLog';
+import Icon from './Icon';
 
-export default function AuthModal({ isOpen, onClose }) {
+export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
   const { colors, radius, spacing, font, brand } = themeConfig;
   const { signIn, signUp, error } = useAuth();
 
-  const [mode, setMode] = useState('signIn'); // 'signIn' | 'signUp'
+  const [mode, setMode] = useState(initialMode); // 'signIn' | 'signUp'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState(null);
+
+  // Whoever opened the modal (topbar vs. Profile's guest CTA vs. Recruit's
+  // "sign in to apply") gets to pick which mode it opens in.
+  useEffect(() => {
+    if (isOpen) setMode(initialMode);
+  }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
 
@@ -56,20 +61,20 @@ export default function AuthModal({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-950/80 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-md3-onSurface/40 backdrop-blur-sm px-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
     >
       <div
-        className={`w-full max-w-sm ${colors.bgPanel} border ${colors.borderStrong} ${radius.lg} ${spacing.card} relative`}
+        className={`w-full max-w-sm ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} ${spacing.card} relative shadow-xl`}
       >
         <button
           onClick={resetAndClose}
           aria-label="Close sign-in dialog"
-          className={`absolute top-4 right-4 ${colors.textFaint} hover:text-white transition`}
+          className={`absolute top-4 right-4 ${colors.textFaint} ${colors.textHoverStrong} transition`}
         >
-          <X size={18} />
+          <Icon name="close" size={18} />
         </button>
 
         <div className="text-center space-y-1 mb-6">
@@ -87,7 +92,11 @@ export default function AuthModal({ isOpen, onClose }) {
           <label className="block text-left">
             <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Email</span>
             <div className="relative mt-1">
-              <Mail size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+              <Icon
+                name="mail"
+                size={16}
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
+              />
               <input
                 type="email"
                 required
@@ -95,7 +104,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 ${colors.transition}`}
+                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             </div>
           </label>
@@ -103,7 +112,11 @@ export default function AuthModal({ isOpen, onClose }) {
           <label className="block text-left">
             <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Password</span>
             <div className="relative mt-1">
-              <Lock size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+              <Icon
+                name="lock"
+                size={16}
+                className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
+              />
               <input
                 type="password"
                 required
@@ -112,7 +125,7 @@ export default function AuthModal({ isOpen, onClose }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500 ${colors.transition}`}
+                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             </div>
           </label>
@@ -122,17 +135,19 @@ export default function AuthModal({ isOpen, onClose }) {
             disabled={isSubmitting}
             className={`w-full flex items-center justify-center gap-2 ${radius.md} py-2.5 text-sm font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} transition disabled:opacity-60`}
           >
-            {isSubmitting && <Loader2 size={16} className="animate-spin" />}
+            {isSubmitting && (
+              <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
+            )}
             {mode === 'signIn' ? 'Sign in' : 'Create account'}
           </button>
         </form>
 
-        {error && <p className="mt-3 text-xs text-red-400 text-center">{error}</p>}
-        {notice && <p className="mt-3 text-xs text-emerald-400 text-center">{notice}</p>}
+        {error && <p className={`mt-3 text-xs ${colors.error} text-center`}>{error}</p>}
+        {notice && <p className={`mt-3 text-xs ${colors.success} text-center`}>{notice}</p>}
 
         <button
           onClick={toggleMode}
-          className={`mt-5 w-full text-center text-xs ${colors.textFaint} hover:text-white transition`}
+          className={`mt-5 w-full text-center text-xs ${colors.textFaint} ${colors.textHoverStrong} transition`}
         >
           {mode === 'signIn' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
         </button>
