@@ -110,7 +110,7 @@ export default function AdminView() {
                 </p>
               </div>
               <span
-                className={`text-[10px] font-mono uppercase px-2.5 py-1 ${radius.full} shrink-0 ${colors.bgInset} border ${colors.borderStrong} ${colors.textFaint}`}
+                className={`text-[10px] uppercase px-2.5 py-1 ${radius.full} shrink-0 ${colors.bgInset} border ${colors.borderStrong} ${colors.textFaint}`}
               >
                 {gig.status}
               </span>
@@ -122,7 +122,7 @@ export default function AdminView() {
               {(gig.tags ?? []).map((tag) => (
                 <span
                   key={tag}
-                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
+                  className={`text-[10px] ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
                 >
                   #{tag}
                 </span>

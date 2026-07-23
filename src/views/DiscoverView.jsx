@@ -49,7 +49,7 @@ export default function DiscoverView() {
             ))}
 
           <p
-            className={`text-xs ${colors.textFaint} z-10 font-mono tracking-widest uppercase ${colors.bgPill} px-3 py-1.5 ${radius.md} border ${colors.borderStrong}`}
+            className={`text-xs ${colors.textFaint} z-10 tracking-widest uppercase ${colors.bgPill} px-3 py-1.5 ${radius.md} border ${colors.borderStrong}`}
           >
             {eventsStatus === 'loading' ? 'Loading events…' : 'Native Map SDK slot — mock view'}
           </p>

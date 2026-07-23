@@ -87,7 +87,7 @@ export default function RecruitView({ onOpenAuthModal }) {
                   {gig.verified && (
                     <span
                       title="Organizer identity verified"
-                      className={`flex items-center gap-1 text-[10px] font-mono ${colors.success}`}
+                      className={`flex items-center gap-1 text-[10px] ${colors.success}`}
                     >
                       <Icon name="verified" size={13} /> Verified
                     </span>
@@ -96,7 +96,7 @@ export default function RecruitView({ onOpenAuthModal }) {
                 <p className={`text-xs ${colors.textMuted}`}>Posted by: {gig.posted_by}</p>
               </div>
               <span
-                className={`text-xs font-mono ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full}`}
+                className={`text-xs ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full}`}
               >
                 {gig.compensation}
               </span>
@@ -108,7 +108,7 @@ export default function RecruitView({ onOpenAuthModal }) {
               {(gig.tags ?? []).map((tag) => (
                 <span
                   key={tag}
-                  className={`text-[10px] font-mono ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
+                  className={`text-[10px] ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
                 >
                   #{tag}
                 </span>

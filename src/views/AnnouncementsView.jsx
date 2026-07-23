@@ -16,7 +16,7 @@ function AnnouncementCard({ item }) {
   const { colors, radius } = themeConfig;
   return (
     <article className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 space-y-3`}>
-      <div className={`flex justify-between items-center text-xs font-mono ${colors.textFaint}`}>
+      <div className={`flex justify-between items-center text-xs ${colors.textFaint}`}>
         <span className={`${colors.textWhite} font-bold`}>{item.author}</span>
         <span>{formatDate(item.published_at)}</span>
       </div>

@@ -96,7 +96,6 @@ const themeConfig = {
   font: {
     base: 'font-sans',
     heading: 'font-black',
-    mono: 'font-mono',
   },
 
   // Structural measurements for the app shell.

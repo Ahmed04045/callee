@@ -86,19 +86,19 @@ export default function MainFeedView({ onNavigate }) {
                 <div className="flex justify-between items-start">
                   <div>
                     <span
-                      className={`text-[10px] font-mono ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2.5 py-0.5 ${radius.full}`}
+                      className={`text-[10px] ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2.5 py-0.5 ${radius.full}`}
                     >
                       {event.tag}
                     </span>
                     <h4 className={`text-lg font-bold ${colors.textWhite} mt-2`}>{event.title}</h4>
                     <p className={`text-xs ${colors.textMuted} mt-0.5`}>By {event.organizer}</p>
                   </div>
-                  <span className={`text-[10px] font-mono ${colors.textFaint}`}>
+                  <span className={`text-[10px] ${colors.textFaint}`}>
                     {event.spots} spots left
                   </span>
                 </div>
                 <div
-                  className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} font-mono pt-3 border-t ${colors.border}`}
+                  className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} pt-3 border-t ${colors.border}`}
                 >
                   <div>{formatDate(event.event_date)}</div>
                   <div className="flex items-center gap-1">
@@ -130,7 +130,7 @@ export default function MainFeedView({ onNavigate }) {
             >
               <div>
                 <span
-                  className={`text-[9px] font-mono font-bold ${colors.secondarySoftBg} ${colors.secondary} px-2.5 py-0.5 ${radius.full}`}
+                  className={`text-[9px] font-bold ${colors.secondarySoftBg} ${colors.secondary} px-2.5 py-0.5 ${radius.full}`}
                 >
                   {gig.compensation}
                 </span>

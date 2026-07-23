@@ -80,7 +80,7 @@ export default function ProfileView({ onOpenAuthModal }) {
         </div>
         <div>
           <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{user.email}</h3>
-          <p className={`text-xs ${colors.textFaint} font-mono`}>Signed in</p>
+          <p className={`text-xs ${colors.textFaint}`}>Signed in</p>
         </div>
 
         <button
