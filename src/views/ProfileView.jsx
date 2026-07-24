@@ -1,32 +1,29 @@
 // src/views/ProfileView.jsx
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../hooks/useProfile';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
 
-const LEGAL_TABS = [
-  { id: 'tos', label: 'Terms of Service' },
-  { id: 'privacy', label: 'Privacy Policy' },
+const MENU_ITEMS = [
+  { id: 'edit-profile', label: 'Edit Profile', path: '/profile/edit', icon: 'edit' },
+  { id: 'account', label: 'Account', path: '/profile/settings', icon: 'manage_accounts' },
+  { id: 'theme', label: 'Theme', path: '/profile/theme', icon: 'dark_mode' },
+  { id: 'terms', label: 'Terms of Service', path: '/profile/terms', icon: 'description' },
+  { id: 'privacy', label: 'Privacy Policy', path: '/profile/privacy', icon: 'privacy_tip' },
+  { id: 'about', label: 'About Captee', path: '/about', icon: 'info' },
 ];
 
-// Placeholder copy only — swap these two strings for your real ToS/Privacy
-// text whenever you have it. Keeping it as plain text here (rather than,
-// say, markdown rendering) on purpose since it's a couple of paragraphs;
-// revisit if the real documents end up long enough to want that.
-const LEGAL_PLACEHOLDER = {
-  tos: 'Terms of Service content goes here. Replace this placeholder with your actual terms before launch — Google Ads and most payment providers will want to see a real one.',
-  privacy: "Privacy Policy content goes here. Replace this placeholder with your actual policy — cover what you collect (account email, applications, telemetry events) and why.",
-};
-
 export default function ProfileView({ onOpenAuthModal }) {
-  const { colors, radius, font, brand } = themeConfig;
+  const { colors, radius, font } = themeConfig;
   const { status, user, signOut } = useAuth();
+  const { profile } = useProfile();
   const isAuthenticated = status === 'authenticated' && user;
   const isLoadingSession = status === 'loading';
-  const [legalTab, setLegalTab] = useState('tos');
+  const displayName = profile?.display_name?.trim();
 
   if (isLoadingSession) {
     return <p className={`text-sm ${colors.textFaint}`}>Checking your session…</p>;
@@ -70,17 +67,19 @@ export default function ProfileView({ onOpenAuthModal }) {
   }
 
   return (
-    <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8">
-      {/* Account card */}
+    <div className="w-full max-w-md mx-auto space-y-6">
+      {/* Account identity */}
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
         <div
           className={`w-20 h-20 ${colors.gradientBrand} ${radius.full} mx-auto flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
         >
-          {user.email?.[0]?.toUpperCase() ?? 'U'}
+          {(displayName || user.email)?.[0]?.toUpperCase() ?? 'U'}
         </div>
         <div>
-          <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{user.email}</h3>
-          <p className={`text-xs ${colors.textFaint}`}>Signed in</p>
+          <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>
+            {displayName || user.email}
+          </h3>
+          <p className={`text-xs ${colors.textFaint}`}>{displayName ? user.email : 'Signed in'}</p>
         </div>
 
         <button
@@ -94,66 +93,23 @@ export default function ProfileView({ onOpenAuthModal }) {
         </button>
       </div>
 
-      {/* Settings + legal */}
-      <div className="md:col-span-2 space-y-6">
-        <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
-          <h3
-            className={`text-sm font-bold ${colors.textPrimary} uppercase tracking-wider flex items-center gap-2`}
+      {/* Menu */}
+      <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} overflow-hidden`}>
+        {MENU_ITEMS.map((item, index) => (
+          <Link
+            key={item.id}
+            to={item.path}
+            className={`flex items-center justify-between px-5 py-4 ${colors.bgHoverInset} transition ${
+              index !== MENU_ITEMS.length - 1 ? `border-b ${colors.border}` : ''
+            }`}
           >
-            <Icon name="settings" size={16} /> App Settings
-          </h3>
-          <div className={`space-y-3 text-xs ${colors.textMuted}`}>
-            <label
-              className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
-            >
-              <span>Enable push notifications for nearby events</span>
-              <input type="checkbox" defaultChecked className="accent-md3-primary" />
-            </label>
-            <label
-              className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
-            >
-              <span>Visible in recruitment pools for startups</span>
-              <input type="checkbox" defaultChecked className="accent-md3-primary" />
-            </label>
-          </div>
-        </div>
-
-        <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
-          <h3
-            className={`text-sm font-bold ${colors.textPrimary} uppercase tracking-wider flex items-center gap-2`}
-          >
-            <Icon name="gavel" size={16} /> Legal
-          </h3>
-
-          <div className="flex gap-2">
-            {LEGAL_TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setLegalTab(tab.id)}
-                className={`text-xs font-bold px-3.5 py-1.5 ${radius.full} border transition ${
-                  legalTab === tab.id
-                    ? `${colors.accentBg} ${colors.accentOn} border-transparent`
-                    : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className={`${colors.bgInset} border ${colors.border} ${radius.md} p-4`}>
-            <p className={`text-xs ${colors.textFaint} italic leading-relaxed`}>
-              {LEGAL_PLACEHOLDER[legalTab]}
-            </p>
-          </div>
-        </div>
-
-        <Link
-          to="/about"
-          className={`inline-flex items-center gap-1.5 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition`}
-        >
-          <Icon name="info" size={14} /> About {brand.name}
-        </Link>
+            <span className={`flex items-center gap-3 text-sm font-semibold ${colors.textWhite}`}>
+              <Icon name={item.icon} size={18} className={colors.textFaint} />
+              {item.label}
+            </span>
+            <Icon name="chevron_right" size={18} className={colors.textFaint} />
+          </Link>
+        ))}
       </div>
     </div>
   );

@@ -7,24 +7,15 @@
 // the "who is behind this" part specifically.
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
-import Icon from '../components/Icon';
+import SubPageHeader from '../components/SubPageHeader';
 
 export default function AboutView() {
-  const { colors, radius, font, brand } = themeConfig;
+  const { colors, radius, brand } = themeConfig;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-8">
-      <div className={`border-b ${colors.border} pb-4`}>
-        <Link
-          to="/"
-          className={`inline-flex items-center gap-1 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition mb-4`}
-        >
-          <Icon name="arrow_back" size={14} /> Back to {brand.name}
-        </Link>
-        <h1 className={`text-2xl ${font.heading} ${colors.textWhite}`}>Who we are</h1>
-      </div>
+      <SubPageHeader title="Who we are" backTo="/" backLabel={`Back to ${brand.name}`} />
 
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>

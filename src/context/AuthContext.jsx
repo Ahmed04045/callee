@@ -96,6 +96,17 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
   }, []);
 
+  const updatePassword = useCallback(async (newPassword) => {
+    setError(null);
+    // Works for an already-signed-in session (no old password needed) —
+    // this is "change password" while logged in, not the forgot-password
+    // email flow (that's a separate supabase.auth.resetPasswordForEmail
+    // call, for when someone isn't signed in at all).
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) setError(updateError.message);
+    return { error: updateError };
+  }, []);
+
   const value = useMemo(
     () => ({
       status,
@@ -107,8 +118,9 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      updatePassword,
     }),
-    [status, session, error, isAdmin, isAdminLoading, signIn, signUp, signOut]
+    [status, session, error, isAdmin, isAdminLoading, signIn, signUp, signOut, updatePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

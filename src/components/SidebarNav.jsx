@@ -11,14 +11,14 @@ import themeConfig from '../theme/themeConfig';
 import Icon from './Icon';
 
 export const NAV_ITEMS = [
-  { id: 'main', label: 'Feed', path: '/', iconType: 'material', iconSource: 'local_fire_department' },
+  { id: 'main', label: 'Feed', path: '/', iconType: 'material', iconSource: 'home' },
   { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'material', iconSource: 'work' },
   { id: 'discover', label: 'Discover', path: '/discover', iconType: 'material', iconSource: 'explore' },
   { id: 'announcements', label: 'Updates', path: '/updates', iconType: 'material', iconSource: 'campaign' },
   { id: 'profile', label: 'Profile', path: '/profile', iconType: 'material', iconSource: 'person' },
 ];
 
-function NavGlyph({ item, active, size = 18 }) {
+function NavGlyph({ item, active, size = 22 }) {
   if (item.iconType === 'image') {
     return (
       <img
@@ -43,21 +43,21 @@ function NavButton({ item, isActive, onSelect, orientation }) {
       aria-current={isActive ? 'page' : undefined}
       title={item.label}
       className={`group relative flex items-center transition-colors ${nav.itemRadius}
-        ${isVertical ? 'w-full flex-col gap-1 py-2' : 'flex-col gap-0.5 py-1.5 flex-1'}
+        ${isVertical ? 'w-full flex-col gap-0.5 py-1.5' : 'flex-col gap-0.5 py-1 flex-1'}
         ${nav.itemHoverBg}`}
     >
       {/* Google-style pill indicator directly behind the icon, filled only
           when active */}
       <span
         className={`flex items-center justify-center rounded-full transition-colors duration-200 ${
-          isVertical ? 'w-9 h-7' : 'w-11 h-6'
+          isVertical ? 'w-11 h-8' : 'w-12 h-7'
         } ${isActive ? nav.itemIndicatorBg : 'bg-transparent'}`}
       >
-        <NavGlyph item={item} active={isActive} size={18} />
+        <NavGlyph item={item} active={isActive} size={22} />
       </span>
 
       <span
-        className={`text-[10px] font-semibold tracking-wide transition-colors ${
+        className={`text-[9px] font-semibold tracking-wide transition-colors ${
           isActive ? nav.itemActiveText : `${nav.itemText} ${nav.itemHoverText}`
         }`}
       >

@@ -5,14 +5,16 @@
 // hard-coding color/spacing utilities. Rebranding later means editing
 // this file only.
 //
-// Now on a Material 3 "Deep Purple" light scheme (primary #6750A4,
-// primaryContainer #EADDFF, surface #FEF7FF, outline #CAC4D0 — as
-// specified — plus the rest of the M3 role set filled in from Google's
-// standard baseline scheme). Token NAMES are unchanged from the previous
-// dark theme (e.g. `textWhite`) even though the values are no longer
-// literally white — components reference these names, not their meaning,
-// so repointing values here is what makes the single-file reskin work.
-// See tailwind.config.js for the raw `md3-*` hex values.
+// Material 3 "Deep Purple" DARK scheme is the default (same purple brand
+// seed as before — #6750A4 family — flipped to M3's dark-mode roles, true
+// black page background per spec). Token NAMES are unchanged from earlier
+// iterations (e.g. `textWhite`) even though the values aren't literally
+// white — components reference these names, not their meaning, so
+// repointing values here (or in tailwind.config.js, where the actual hex
+// values live) is what makes the single-file reskin work. A future light
+// mode toggle would mean adding a second palette and switching which one
+// tailwind.config.js points `md3-*` at — not touching this file or any
+// component.
 
 const themeConfig = {
   brand: {
@@ -26,12 +28,13 @@ const themeConfig = {
     // Surfaces
     bgPage: 'bg-md3-surface',
     bgHeader: 'bg-md3-surfaceContainerLow/90',
-    bgCard: 'bg-white',
+    bgCard: 'bg-md3-surfaceContainer',
     bgCardSoft: 'bg-md3-surfaceContainerLow',
-    bgCardStrong: 'bg-white',
+    bgCardStrong: 'bg-md3-surfaceContainer',
     bgPanel: 'bg-md3-surfaceContainerLow',
     bgInset: 'bg-md3-surfaceContainerHigh',
     bgPill: 'bg-md3-surfaceContainerHighest',
+    scrim: 'bg-md3-scrim/60',
 
     // Borders
     border: 'border-md3-outlineVariant',
@@ -70,7 +73,7 @@ const themeConfig = {
 
     success: 'text-md3-success',
     error: 'text-md3-error',
-    warning: 'text-amber-600',
+    warning: 'text-amber-400',
 
     gradientBrand: 'bg-gradient-to-tr from-md3-primary to-md3-secondary',
     gradientText: 'bg-gradient-to-r from-md3-primary to-md3-secondary bg-clip-text text-transparent',

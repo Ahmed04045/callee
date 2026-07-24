@@ -17,6 +17,11 @@ import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
 import AdminView from './views/AdminView';
 import AboutView from './views/AboutView';
+import SettingsView from './views/SettingsView';
+import ThemeView from './views/ThemeView';
+import TermsView from './views/TermsView';
+import PrivacyView from './views/PrivacyView';
+import EditProfileView from './views/EditProfileView';
 
 const ADMIN_NAV_ITEM = {
   id: 'admin',
@@ -86,7 +91,12 @@ function AppShell() {
     [isAdmin]
   );
 
-  const activeItem = navItems.find((item) => item.path === location.pathname);
+  // Prefix match (not exact) so a sub-page like /profile/settings still
+  // highlights the Profile nav item — except the root path, which would
+  // otherwise "match" every route as a prefix.
+  const activeItem = navItems.find((item) =>
+    item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
+  );
   const activeTab = activeItem?.id ?? 'main';
   const activeLabel = activeItem?.label ?? '';
 
@@ -149,6 +159,11 @@ function AppShell() {
               <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
             ))}
             <Route path="/about" element={<AboutView />} />
+            <Route path="/profile/edit" element={<EditProfileView />} />
+            <Route path="/profile/settings" element={<SettingsView />} />
+            <Route path="/profile/theme" element={<ThemeView />} />
+            <Route path="/profile/terms" element={<TermsView />} />
+            <Route path="/profile/privacy" element={<PrivacyView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>

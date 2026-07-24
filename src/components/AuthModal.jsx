@@ -61,7 +61,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-md3-onSurface/40 backdrop-blur-sm px-4"
+      className={`fixed inset-0 z-[100] flex items-center justify-center ${colors.scrim} backdrop-blur-sm px-4`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
