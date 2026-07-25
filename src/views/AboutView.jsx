@@ -15,7 +15,7 @@ export default function AboutView() {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-8">
-      <SubPageHeader title="Who we are" backTo="/" backLabel={`Back to ${brand.name}`} />
+      <SubPageHeader title="Who we are" fallbackTo="/" backLabel={`Back to ${brand.name}`} />
 
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
