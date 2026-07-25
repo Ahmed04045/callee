@@ -1,10 +1,4 @@
 // src/views/SettingsView.jsx
-//
-// App-wide settings hub — always in the nav, regardless of sign-in state.
-// Account only appears in the list when signed in; Theme/Legal/About are
-// generic and always available. This is a normal tab (nav stays visible
-// here) — its children (Account, Theme, Terms, Privacy, and the standalone
-// About page) are the ones that go full-screen/immersive.
 
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -13,13 +7,13 @@ import { useAuth } from '../context/AuthContext';
 import Icon from '../components/Icon';
 
 const ALWAYS_VISIBLE_ITEMS = [
-  { id: 'theme', label: 'Theme', path: '/settings/theme', icon: 'dark_mode' },
-  { id: 'terms', label: 'Terms of Service', path: '/settings/terms', icon: 'description' },
-  { id: 'privacy', label: 'Privacy Policy', path: '/settings/privacy', icon: 'privacy_tip' },
-  { id: 'about', label: 'About Captee', path: '/about', icon: 'info' },
+  { id: 'theme', label: 'Theme', path: '/theme', icon: 'dark_mode' },
+  { id: 'terms', label: 'Terms of Service', path: '/terms', icon: 'description' },
+  { id: 'privacy', label: 'Privacy Policy', path: '/privacy', icon: 'privacy_tip' },
+  { id: 'about', label: 'About', path: '/about', icon: 'info' },
 ];
 
-const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/settings/account', icon: 'manage_accounts' };
+const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/account', icon: 'manage_accounts' };
 
 export default function SettingsView() {
   const { colors, radius, font } = themeConfig;
