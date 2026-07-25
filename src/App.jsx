@@ -55,10 +55,10 @@ const ADMIN_NAV_ITEM = {
 // persistent nav/topbar hide on these — SubPageHeader's own back button is
 // the only way to navigate while on one.
 const IMMERSIVE_PATHS = [
-  '/settings/account',
-  '/settings/theme',
-  '/settings/terms',
-  '/settings/privacy',
+  '/account',
+  '/theme',
+  '/terms',
+  '/privacy',
   '/about',
 ];
 
@@ -211,10 +211,10 @@ function AppShell() {
               <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
             ))}
             <Route path="/about" element={<AboutView />} />
-            <Route path="/settings/account" element={<AccountView />} />
-            <Route path="/settings/theme" element={<ThemeView />} />
-            <Route path="/settings/terms" element={<TermsView />} />
-            <Route path="/settings/privacy" element={<PrivacyView />} />
+            <Route path="/account" element={<AccountView />} />
+            <Route path="/theme" element={<ThemeView />} />
+            <Route path="/terms" element={<TermsView />} />
+            <Route path="/privacy" element={<PrivacyView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
