@@ -11,7 +11,7 @@ import Icon from './Icon';
 // actually came from," not a fixed destination. React Router marks the
 // very first history entry of a session with location.key === 'default';
 // that's the signal there's nothing behind it to navigate(-1) into.
-export default function SubPageHeader({ title, fallbackTo = '/profile', backLabel = 'Back' }) {
+export default function SubPageHeader({ title, fallbackTo = '/settings', backLabel = 'Back' }) {
   const { colors, font } = themeConfig;
   const navigate = useNavigate();
   const location = useLocation();

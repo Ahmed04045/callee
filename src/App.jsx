@@ -15,14 +15,33 @@ import RecruitView from './views/RecruitView';
 import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
+import SettingsView from './views/SettingsView';
 import AdminView from './views/AdminView';
 import AboutView from './views/AboutView';
-import SettingsView from './views/SettingsView';
+import AccountView from './views/AccountView';
 import ThemeView from './views/ThemeView';
 import TermsView from './views/TermsView';
 import PrivacyView from './views/PrivacyView';
-import EditProfileView from './views/EditProfileView';
 
+// Conditional nav items — only added to the visible tab list when the
+// condition holds (Profile: signed in. Admin: is an admin). Everything in
+// base NAV_ITEMS (Feed/Recruit/Discover/Updates) is unconditional; Settings
+// is unconditional too but lives here since, unlike the base four, it's
+// not something every part of the app needs to import.
+const PROFILE_NAV_ITEM = {
+  id: 'profile',
+  label: 'Profile',
+  path: '/profile',
+  iconType: 'material',
+  iconSource: 'person',
+};
+const SETTINGS_NAV_ITEM = {
+  id: 'settings',
+  label: 'Settings',
+  path: '/settings',
+  iconType: 'material',
+  iconSource: 'settings',
+};
 const ADMIN_NAV_ITEM = {
   id: 'admin',
   label: 'Admin',
@@ -31,11 +50,23 @@ const ADMIN_NAV_ITEM = {
   iconSource: 'fact_check',
 };
 
+// Full-screen "detail" pages, reached by drilling into a Settings row (or,
+// for About, a direct link) rather than being tabs themselves. The
+// persistent nav/topbar hide on these — SubPageHeader's own back button is
+// the only way to navigate while on one.
+const IMMERSIVE_PATHS = [
+  '/settings/account',
+  '/settings/theme',
+  '/settings/terms',
+  '/settings/privacy',
+  '/about',
+];
+
 // One switch, keyed by nav item id, mapping each tab to its view. Combined
-// with `path` on every nav item (NAV_ITEMS / ADMIN_NAV_ITEM), this is the
-// ONLY place that pairs a tab with anything — routes, highlighting, and
-// navigation below all derive from item.path, never a hardcoded string.
-// Add a tab by adding one NAV_ITEMS entry + one case here.
+// with `path` on every nav item, this is the ONLY place that pairs a tab
+// with anything — routes, highlighting, and navigation all derive from
+// item.path, never a hardcoded string. Add a tab by adding one nav item
+// constant + one case here.
 function renderView(tabId, handlers) {
   switch (tabId) {
     case 'main':
@@ -47,7 +78,9 @@ function renderView(tabId, handlers) {
     case 'announcements':
       return <AnnouncementsView />;
     case 'profile':
-      return <ProfileView onOpenAuthModal={handlers.openAuthModal} />;
+      return <ProfileView />;
+    case 'settings':
+      return <SettingsView />;
     case 'admin':
       return <AdminView />;
     default:
@@ -76,9 +109,12 @@ function AppShell() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
   const { colors, layout, font } = themeConfig;
-  const { status, isAdmin } = useAuth();
+  const { status, isAdmin, isAdminLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isAuthenticated = status === 'authenticated';
+  const isImmersive = IMMERSIVE_PATHS.includes(location.pathname);
 
   const openAuthModal = (mode = 'signIn') => {
     setAuthModalMode(mode);
@@ -86,13 +122,16 @@ function AppShell() {
   };
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  const navItems = useMemo(
-    () => (isAdmin ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS),
-    [isAdmin]
-  );
+  const navItems = useMemo(() => {
+    const items = [...NAV_ITEMS];
+    if (isAuthenticated) items.push(PROFILE_NAV_ITEM);
+    items.push(SETTINGS_NAV_ITEM);
+    if (isAdmin) items.push(ADMIN_NAV_ITEM);
+    return items;
+  }, [isAuthenticated, isAdmin]);
 
-  // Prefix match (not exact) so a sub-page like /profile/settings still
-  // highlights the Profile nav item — except the root path, which would
+  // Prefix match (not exact) so a detail page like /settings/theme still
+  // highlights the Settings nav item — except the root path, which would
   // otherwise "match" every route as a prefix.
   const activeItem = navItems.find((item) =>
     item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
@@ -107,49 +146,62 @@ function AppShell() {
     navigate(target.path);
   };
 
-  // Bounce out of /admin if admin rights are lost mid-session (sign-out,
-  // different account). The page itself would refuse data regardless —
-  // this is just so the UI doesn't sit on a dead end.
+  // Bounce out of /admin if admin rights are lost mid-session, and out of
+  // /profile if signed out mid-session. Both wait for their respective
+  // check to actually finish first (isAdminLoading / status !== 'loading')
+  // — bouncing an admin out of /admin during the brief window before the
+  // is_admin() RPC resolves would be a false negative, not a real one.
   useEffect(() => {
-    if (location.pathname === ADMIN_NAV_ITEM.path && !isAdmin) {
+    if (location.pathname === ADMIN_NAV_ITEM.path && !isAdminLoading && !isAdmin) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
-  }, [location.pathname, isAdmin, navigate]);
+    if (location.pathname === PROFILE_NAV_ITEM.path && status !== 'loading' && !isAuthenticated) {
+      navigate(NAV_ITEMS[0].path, { replace: true });
+    }
+  }, [location.pathname, isAdmin, isAdminLoading, status, isAuthenticated, navigate]);
 
   const handlers = { navigateToTab, openAuthModal };
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
-      <SidebarNav
-        activeTab={activeTab}
-        onNavigate={navigateToTab}
-        brandMark={<BrandMark />}
-        items={navItems}
-      />
+      {!isImmersive && (
+        <SidebarNav
+          activeTab={activeTab}
+          onNavigate={navigateToTab}
+          brandMark={<BrandMark />}
+          items={navItems}
+        />
+      )}
 
-      <div className={`flex flex-col min-h-screen ${layout.sidebarOffset} ${layout.mobileNavOffset}`}>
-        <header
-          className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
-        >
-          <div className="md:hidden">
-            <BrandMark />
-          </div>
-          <h2 className={`hidden md:block text-sm font-semibold ${colors.textMuted} tracking-wide uppercase`}>
-            {activeLabel}
-          </h2>
+      <div
+        className={`flex flex-col min-h-screen ${
+          isImmersive ? '' : `${layout.sidebarOffset} ${layout.mobileNavOffset}`
+        }`}
+      >
+        {!isImmersive && (
+          <header
+            className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
+          >
+            <div className="md:hidden">
+              <BrandMark />
+            </div>
+            <h2 className={`hidden md:block text-sm font-semibold ${colors.textMuted} tracking-wide uppercase`}>
+              {activeLabel}
+            </h2>
 
-          {status === 'unauthenticated' && (
-            <button
-              onClick={() => {
-                logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
-                openAuthModal();
-              }}
-              className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition`}
-            >
-              <Icon name="login" size={14} className="text-inherit" /> Sign in
-            </button>
-          )}
-        </header>
+            {status === 'unauthenticated' && (
+              <button
+                onClick={() => {
+                  logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
+                  openAuthModal();
+                }}
+                className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition`}
+              >
+                <Icon name="login" size={14} className="text-inherit" /> Sign in
+              </button>
+            )}
+          </header>
+        )}
 
         <main
           className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
@@ -159,11 +211,10 @@ function AppShell() {
               <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
             ))}
             <Route path="/about" element={<AboutView />} />
-            <Route path="/profile/edit" element={<EditProfileView />} />
-            <Route path="/profile/settings" element={<SettingsView />} />
-            <Route path="/profile/theme" element={<ThemeView />} />
-            <Route path="/profile/terms" element={<TermsView />} />
-            <Route path="/profile/privacy" element={<PrivacyView />} />
+            <Route path="/settings/account" element={<AccountView />} />
+            <Route path="/settings/theme" element={<ThemeView />} />
+            <Route path="/settings/terms" element={<TermsView />} />
+            <Route path="/settings/privacy" element={<PrivacyView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
