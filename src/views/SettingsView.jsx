@@ -1,4 +1,10 @@
 // src/views/SettingsView.jsx
+//
+// App-wide settings hub — always in the nav, regardless of sign-in state.
+// Account only appears in the list when signed in; Theme/Legal/About are
+// generic and always available. This is a normal tab (nav stays visible
+// here) — its children (Account, Theme, Terms, Privacy, and the standalone
+// About page) are the ones that go full-screen/immersive.
 
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -10,15 +16,18 @@ const ALWAYS_VISIBLE_ITEMS = [
   { id: 'theme', label: 'Theme', path: '/theme', icon: 'dark_mode' },
   { id: 'terms', label: 'Terms of Service', path: '/terms', icon: 'description' },
   { id: 'privacy', label: 'Privacy Policy', path: '/privacy', icon: 'privacy_tip' },
-  { id: 'about', label: 'About', path: '/about', icon: 'info' },
 ];
 
 const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/account', icon: 'manage_accounts' };
 
 export default function SettingsView() {
-  const { colors, radius, font } = themeConfig;
+  const { colors, radius, font, brand } = themeConfig;
   const { status } = useAuth();
-  const menuItems = status === 'authenticated' ? [ACCOUNT_ITEM, ...ALWAYS_VISIBLE_ITEMS] : ALWAYS_VISIBLE_ITEMS;
+  const aboutItem = { id: 'about', label: `About ${brand.name}`, path: '/about', icon: 'info' };
+  const menuItems =
+    status === 'authenticated'
+      ? [ACCOUNT_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
+      : [...ALWAYS_VISIBLE_ITEMS, aboutItem];
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4">

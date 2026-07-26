@@ -5,8 +5,10 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useProfile } from './hooks/useProfile';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
+import CreatePostModal from './components/CreatePostModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
 import Icon from './components/Icon';
 
@@ -22,6 +24,11 @@ import AccountView from './views/AccountView';
 import ThemeView from './views/ThemeView';
 import TermsView from './views/TermsView';
 import PrivacyView from './views/PrivacyView';
+import OnboardingAccountTypeView from './views/OnboardingAccountTypeView';
+import GigDetailView from './views/GigDetailView';
+import EventDetailView from './views/EventDetailView';
+
+const ONBOARDING_PATH = '/onboarding/account-type';
 
 // Conditional nav items — only added to the visible tab list when the
 // condition holds (Profile: signed in. Admin: is an admin). Everything in
@@ -53,14 +60,10 @@ const ADMIN_NAV_ITEM = {
 // Full-screen "detail" pages, reached by drilling into a Settings row (or,
 // for About, a direct link) rather than being tabs themselves. The
 // persistent nav/topbar hide on these — SubPageHeader's own back button is
-// the only way to navigate while on one.
-const IMMERSIVE_PATHS = [
-  '/account',
-  '/theme',
-  '/terms',
-  '/privacy',
-  '/about',
-];
+// the only way to navigate while on one. Onboarding is included too for
+// the same visual effect (no nav chrome) even though it's a different kind
+// of full-screen page — a forced interstitial, not a drill-down detail.
+const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', ONBOARDING_PATH];
 
 // One switch, keyed by nav item id, mapping each tab to its view. Combined
 // with `path` on every nav item, this is the ONLY place that pairs a tab
@@ -70,7 +73,7 @@ const IMMERSIVE_PATHS = [
 function renderView(tabId, handlers) {
   switch (tabId) {
     case 'main':
-      return <MainFeedView onNavigate={handlers.navigateToTab} />;
+      return <MainFeedView />;
     case 'recruit':
       return <RecruitView onOpenAuthModal={handlers.openAuthModal} />;
     case 'discover':
@@ -108,8 +111,10 @@ function BrandMark({ size = 'sm' }) {
 function AppShell() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
+  const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
   const { status, isAdmin, isAdminLoading } = useAuth();
+  const { profile, status: profileStatus } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -130,7 +135,7 @@ function AppShell() {
     return items;
   }, [isAuthenticated, isAdmin]);
 
-  // Prefix match (not exact) so a detail page like /settings/theme still
+  // Prefix match (not exact) so a detail page like /theme still
   // highlights the Settings nav item — except the root path, which would
   // otherwise "match" every route as a prefix.
   const activeItem = navItems.find((item) =>
@@ -158,7 +163,28 @@ function AppShell() {
     if (location.pathname === PROFILE_NAV_ITEM.path && status !== 'loading' && !isAuthenticated) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
-  }, [location.pathname, isAdmin, isAdminLoading, status, isAuthenticated, navigate]);
+    // Onboarding: force it once account_type is confirmed null, and bounce
+    // away from it if account_type is already set (e.g. a direct revisit
+    // to the URL after already completing it). Waits for profileStatus to
+    // actually be 'ready' first — acting on a still-loading profile could
+    // misfire in either direction.
+    if (isAuthenticated && profileStatus === 'ready' && profile) {
+      if (!profile.account_type && location.pathname !== ONBOARDING_PATH) {
+        navigate(ONBOARDING_PATH, { replace: true });
+      } else if (profile.account_type && location.pathname === ONBOARDING_PATH) {
+        navigate(NAV_ITEMS[0].path, { replace: true });
+      }
+    }
+  }, [
+    location.pathname,
+    isAdmin,
+    isAdminLoading,
+    status,
+    isAuthenticated,
+    profileStatus,
+    profile,
+    navigate,
+  ]);
 
   const handlers = { navigateToTab, openAuthModal };
 
@@ -215,12 +241,29 @@ function AppShell() {
             <Route path="/theme" element={<ThemeView />} />
             <Route path="/terms" element={<TermsView />} />
             <Route path="/privacy" element={<PrivacyView />} />
+            <Route path={ONBOARDING_PATH} element={<OnboardingAccountTypeView />} />
+            <Route path="/gigs/:id" element={<GigDetailView />} />
+            <Route path="/events/:id" element={<EventDetailView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
       </div>
 
+      {isAuthenticated && !isImmersive && (
+        <button
+          onClick={() => {
+            logUserAction('OPEN_CREATE_POST', {});
+            setCreatePostOpen(true);
+          }}
+          aria-label="Create a post"
+          className={`fixed bottom-20 md:bottom-6 right-6 z-30 w-14 h-14 flex items-center justify-center ${colors.accentBg} ${colors.accentOn} rounded-2xl shadow-lg ${colors.accentBgHover} transition`}
+        >
+          <Icon name="add" size={26} className="text-inherit" />
+        </button>
+      )}
+
       <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
+      <CreatePostModal isOpen={isCreatePostOpen} onClose={() => setCreatePostOpen(false)} />
     </div>
   );
 }

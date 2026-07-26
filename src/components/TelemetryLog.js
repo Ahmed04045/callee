@@ -5,7 +5,7 @@
 // swapping this for a real analytics dispatch (e.g. POST to /api/telemetry)
 // later is a one-file change.
 //
-// NOTE ON MINOR USERS: Captee's audience is teens. Before wiring this up to
+// NOTE ON MINOR USERS: Povolum's audience is teens. Before wiring this up to
 // a real backend, make sure whatever is collected here (action type +
 // payload) is limited to what's actually needed, is covered by a clear
 // privacy policy, and follows applicable youth-data-privacy rules for

@@ -1,6 +1,6 @@
 // src/theme/themeConfig.js
 //
-// Single source of truth for Captee's visual language.
+// Single source of truth for Povolum's visual language.
 // Every view/component reads its Tailwind classes from here instead of
 // hard-coding color/spacing utilities. Rebranding later means editing
 // this file only.
@@ -18,8 +18,8 @@
 
 const themeConfig = {
   brand: {
-    name: 'Captee',
-    shortMark: 'CT',
+    name: 'Povolum',
+    shortMark: 'PV',
     tagline: 'Stop looking for ordinary jobs.',
     subTagline: 'Build real things instead.',
   },

@@ -1,6 +1,7 @@
 // src/views/MainFeedView.jsx
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
@@ -13,9 +14,10 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export default function MainFeedView({ onNavigate }) {
+export default function MainFeedView() {
   const { colors, radius, font, brand } = themeConfig;
   const [searchQuery, setSearchQuery] = useState('');
+  const navigate = useNavigate();
 
   const { data: events, status: eventsStatus } = useSupabaseTable('events', {
     orderBy: 'event_date',
@@ -81,7 +83,8 @@ export default function MainFeedView({ onNavigate }) {
             {events.map((event) => (
               <div
                 key={event.id}
-                className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 ${colors.borderHover} transition`}
+                onClick={() => navigate(`/events/${event.id}`)}
+                className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 ${colors.borderHover} transition cursor-pointer`}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -93,9 +96,7 @@ export default function MainFeedView({ onNavigate }) {
                     <h4 className={`text-lg font-bold ${colors.textWhite} mt-2`}>{event.title}</h4>
                     <p className={`text-xs ${colors.textMuted} mt-0.5`}>By {event.organizer}</p>
                   </div>
-                  <span className={`text-[10px] ${colors.textFaint}`}>
-                    {event.spots} spots left
-                  </span>
+                  <span className={`text-[10px] ${colors.textFaint}`}>{event.spots} spots left</span>
                 </div>
                 <div
                   className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} pt-3 border-t ${colors.border}`}
@@ -126,7 +127,8 @@ export default function MainFeedView({ onNavigate }) {
           {featuredGigs.map((gig) => (
             <div
               key={gig.id}
-              className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-3`}
+              onClick={() => navigate(`/gigs/${gig.id}`)}
+              className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-3 cursor-pointer ${colors.borderHover} transition`}
             >
               <div>
                 <span
@@ -140,15 +142,11 @@ export default function MainFeedView({ onNavigate }) {
               <p className={`text-xs ${colors.textMuted} line-clamp-2 leading-relaxed`}>
                 {gig.details}
               </p>
-              <button
-                onClick={() => {
-                  logUserAction('NAVIGATE_TAB', { from: 'main', to: 'recruit', via: gig.id });
-                  onNavigate?.('recruit');
-                }}
-                className={`w-full text-center text-[11px] font-bold ${colors.accent} ${colors.bgCard} ${colors.bgHoverInset} py-2 ${radius.full} transition border ${colors.borderStrong}`}
+              <span
+                className={`block w-full text-center text-[11px] font-bold ${colors.accent} ${colors.bgCard} py-2 ${radius.full} border ${colors.borderStrong}`}
               >
                 View Details
-              </button>
+              </span>
             </div>
           ))}
         </div>

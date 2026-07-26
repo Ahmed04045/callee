@@ -5,6 +5,7 @@
 // implementing useMapPins differently; this component's JSX stays as-is.
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useMapPins } from '../hooks/useMapPins';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
@@ -13,6 +14,7 @@ import Icon from '../components/Icon';
 
 export default function DiscoverView() {
   const { colors, radius } = themeConfig;
+  const navigate = useNavigate();
   const { data: events, status: eventsStatus } = useSupabaseTable('events', {
     orderBy: 'event_date',
   });
@@ -20,6 +22,7 @@ export default function DiscoverView() {
 
   const handlePinClick = (pin) => {
     logUserAction('MAP_PIN_CLICK', { eventId: pin.id, title: pin.label });
+    navigate(`/events/${pin.id}`);
   };
 
   return (
@@ -82,7 +85,8 @@ export default function DiscoverView() {
         {events.map((event) => (
           <div
             key={event.id}
-            className={`${colors.bgCardStrong} border ${colors.border} ${radius.md} p-4 flex gap-3 items-start`}
+            onClick={() => navigate(`/events/${event.id}`)}
+            className={`${colors.bgCardStrong} border ${colors.border} ${radius.md} p-4 flex gap-3 items-start cursor-pointer ${colors.borderHover} transition`}
           >
             <div
               className={`p-2 ${colors.accentSoftBg} border ${colors.accentBorder} ${radius.sm} ${colors.accent} shrink-0`}

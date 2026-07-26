@@ -1,6 +1,7 @@
 // src/views/RecruitView.jsx
 
 import React, { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
@@ -11,6 +12,7 @@ import Icon from '../components/Icon';
 export default function RecruitView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const { data: gigs, status: gigsStatus } = useSupabaseTable('gigs', {
     filters: { status: 'approved' },
@@ -32,7 +34,8 @@ export default function RecruitView({ onOpenAuthModal }) {
     [applications]
   );
 
-  const handleApply = async (gig) => {
+  const handleApply = async (e, gig) => {
+    e.stopPropagation(); // don't also trigger the card's click-through to the detail page
     if (!user) {
       logUserAction('APPLY_BLOCKED_UNAUTHENTICATED', { gigId: gig.id });
       onOpenAuthModal?.();
@@ -74,16 +77,13 @@ export default function RecruitView({ onOpenAuthModal }) {
         return (
           <div
             key={gig.id}
-            className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 ${colors.borderHover} transition`}
+            onClick={() => navigate(`/gigs/${gig.id}`)}
+            className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 ${colors.borderHover} transition cursor-pointer`}
           >
             <div className="flex justify-between items-start gap-4">
               <div>
                 <div className="flex items-center gap-2">
-                  <h3
-                    className={`text-lg font-bold ${colors.textWhite} ${colors.textHoverAccent} cursor-pointer transition`}
-                  >
-                    {gig.role}
-                  </h3>
+                  <h3 className={`text-lg font-bold ${colors.textWhite}`}>{gig.role}</h3>
                   {gig.verified && (
                     <span
                       title="Organizer identity verified"
@@ -121,7 +121,7 @@ export default function RecruitView({ onOpenAuthModal }) {
               )}
               <div className="ml-auto">
                 <button
-                  onClick={() => handleApply(gig)}
+                  onClick={(e) => handleApply(e, gig)}
                   disabled={isSubmitted || isCheckingApplied}
                   className={`flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider px-4 py-2 ${radius.full} transition
                     ${
