@@ -12,7 +12,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
-import { useProfile } from '../hooks/useProfile';
+import { useProfile } from '../context/ProfileContext';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from './TelemetryLog';
 import Icon from './Icon';
