@@ -13,12 +13,35 @@
 import React, { useEffect, useState } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
-import { useProfile } from '../hooks/useProfile';
+import { useProfile } from '../context/ProfileContext';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
 
 const BIO_MAX = 200;
 const todayISO = new Date().toISOString().split('T')[0];
+
+// Not exhaustive, but covers the accredited universities operating in
+// Qatar plus a High School option for younger users. "Other" reveals a
+// free-text field rather than just storing the literal word "Other" —
+// keeps the data actually useful if someone's school isn't listed.
+const EDUCATION_OPTIONS = [
+  'High School',
+  'Qatar University',
+  'Hamad Bin Khalifa University (HBKU)',
+  'University of Doha for Science and Technology (UDST)',
+  'Carnegie Mellon University in Qatar',
+  'Georgetown University in Qatar',
+  'Northwestern University in Qatar',
+  'Texas A&M University at Qatar',
+  'VCUarts Qatar',
+  'Weill Cornell Medicine - Qatar',
+  'HEC Paris in Qatar',
+  'Community College of Qatar',
+  'University of Calgary in Qatar',
+  'Al Rayyan International University',
+  'Lusail University',
+  'Doha Institute for Graduate Studies',
+];
 
 export default function ProfileView() {
   const { colors, radius, font } = themeConfig;
@@ -30,6 +53,8 @@ export default function ProfileView() {
   const [displayName, setDisplayName] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [bio, setBio] = useState('');
+  const [education, setEducation] = useState('');
+  const [educationOther, setEducationOther] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
 
@@ -38,6 +63,18 @@ export default function ProfileView() {
       setDisplayName(profile.display_name ?? '');
       setDateOfBirth(profile.date_of_birth ?? '');
       setBio(profile.bio ?? '');
+
+      const storedUniversity = profile.university ?? '';
+      if (storedUniversity && EDUCATION_OPTIONS.includes(storedUniversity)) {
+        setEducation(storedUniversity);
+        setEducationOther('');
+      } else if (storedUniversity) {
+        setEducation('Other');
+        setEducationOther(storedUniversity);
+      } else {
+        setEducation('');
+        setEducationOther('');
+      }
     }
   }, [profile]);
 
@@ -56,10 +93,14 @@ export default function ProfileView() {
     setNotice(null);
     logUserAction('PROFILE_SAVE_SUBMIT', {});
 
+    const universityToSave =
+      education === 'Other' ? educationOther.trim() || null : education || null;
+
     const { error: saveError } = await saveProfile({
       display_name: displayName.trim() || null,
       date_of_birth: dateOfBirth || null,
       bio: bio.trim() || null,
+      university: universityToSave,
     });
 
     setIsSaving(false);
@@ -132,6 +173,37 @@ export default function ProfileView() {
             className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
           />
         </label>
+
+        {profile?.account_type === 'personal' && (
+          <label className="block text-left">
+            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
+              School / University <span className={colors.textDim}>(optional)</span>
+            </span>
+            <select
+              value={education}
+              onChange={(e) => setEducation(e.target.value)}
+              className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+            >
+              <option value="">Select…</option>
+              {EDUCATION_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+              <option value="Other">Other</option>
+            </select>
+            {education === 'Other' && (
+              <input
+                type="text"
+                maxLength={100}
+                value={educationOther}
+                onChange={(e) => setEducationOther(e.target.value)}
+                placeholder="Enter your school or university"
+                className={`w-full mt-2 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+              />
+            )}
+          </label>
+        )}
 
         <label className="block text-left">
           <div className="flex items-baseline justify-between">

@@ -1,10 +1,12 @@
 // src/components/SidebarNav.jsx
 //
-// One config, two renders (desktop rail + mobile bottom bar, pure CSS
-// breakpoints, no resize listeners). Icons are Google Material Symbols
-// (fonts.google.com/icons) via the shared <Icon> component — iconType
-// 'material' takes a symbol name string; iconType 'image' still works for
-// a custom asset path if you ever want to drop one in for a specific item.
+// Base rail is just the primary content tabs now (Feed/Recruit/Discover) —
+// Updates, Profile, and Settings moved out to the header's top-right
+// cluster (desktop) / header + bottom bar split (mobile), and Admin was
+// removed from visible nav entirely (see App.jsx). `bottomItem` renders
+// pinned to the bottom of the desktop rail only — there's no equivalent
+// "bottom-left" concept on the mobile bottom bar, so mobile just gets
+// `items` with nothing pinned.
 
 import React from 'react';
 import themeConfig from '../theme/themeConfig';
@@ -14,7 +16,6 @@ export const NAV_ITEMS = [
   { id: 'main', label: 'Feed', path: '/', iconType: 'material', iconSource: 'home' },
   { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'material', iconSource: 'work' },
   { id: 'discover', label: 'Discover', path: '/discover', iconType: 'material', iconSource: 'explore' },
-  { id: 'announcements', label: 'Updates', path: '/updates', iconType: 'material', iconSource: 'campaign' },
 ];
 
 function NavGlyph({ item, active, size = 22 }) {
@@ -45,8 +46,6 @@ function NavButton({ item, isActive, onSelect, orientation }) {
         ${isVertical ? 'w-full flex-col gap-0.5 py-1.5' : 'flex-col gap-0.5 py-1 flex-1'}
         ${nav.itemHoverBg}`}
     >
-      {/* Google-style pill indicator directly behind the icon, filled only
-          when active */}
       <span
         className={`flex items-center justify-center rounded-full transition-colors duration-200 ${
           isVertical ? 'w-11 h-8' : 'w-12 h-7'
@@ -66,7 +65,7 @@ function NavButton({ item, isActive, onSelect, orientation }) {
   );
 }
 
-export default function SidebarNav({ activeTab, onNavigate, brandMark, items = NAV_ITEMS }) {
+export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, bottomItem }) {
   const { colors, layout } = themeConfig;
 
   return (
@@ -75,13 +74,7 @@ export default function SidebarNav({ activeTab, onNavigate, brandMark, items = N
       <aside
         className={`hidden md:flex flex-col fixed left-0 top-0 h-screen ${layout.sidebarWidth} ${layout.sidebarWidthLg} ${colors.bgPanel} border-r ${colors.border} z-40`}
       >
-        {brandMark && (
-          <div className={`flex items-center justify-center py-4 border-b ${colors.border}`}>
-            {brandMark}
-          </div>
-        )}
-
-        <nav className="flex-1 flex flex-col gap-0.5 px-1.5 py-3">
+        <nav className="flex-1 flex flex-col gap-0.5 px-1.5 py-4">
           {items.map((item) => (
             <NavButton
               key={item.id}
@@ -92,6 +85,17 @@ export default function SidebarNav({ activeTab, onNavigate, brandMark, items = N
             />
           ))}
         </nav>
+
+        {bottomItem && (
+          <div className="px-1.5 pb-4">
+            <NavButton
+              item={bottomItem}
+              isActive={activeTab === bottomItem.id}
+              onSelect={onNavigate}
+              orientation="vertical"
+            />
+          </div>
+        )}
       </aside>
 
       {/* MOBILE: fixed bottom bar */}

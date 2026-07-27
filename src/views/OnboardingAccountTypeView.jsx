@@ -1,14 +1,15 @@
 // src/views/OnboardingAccountTypeView.jsx
 //
-// Not a nav tab — a forced interstitial. App.jsx redirects here whenever a
-// signed-in user's profile has account_type === null, and redirects away
-// once it's set. Picking an option is a plain upsert via useProfile, same
-// mechanism the rest of the profile-editing flow already uses.
+// Fallback only — the primary path is choosing personal/business on the
+// signup form itself (AuthModal), which gets applied automatically via a
+// URL hint on first login (see App.jsx). This screen only shows up if that
+// hint is missing for some reason (e.g. a pre-existing account with no
+// account_type set at all).
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
-import { useProfile } from '../hooks/useProfile';
+import { useProfile } from '../context/ProfileContext';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
 
@@ -20,22 +21,10 @@ const ACCOUNT_TYPES = [
     icon: 'person',
   },
   {
-    id: 'brand',
-    label: 'Brand',
-    description: 'A company or product looking to recruit young creators.',
+    id: 'business',
+    label: 'Business',
+    description: 'A company, startup, or organization looking to recruit or post opportunities.',
     icon: 'storefront',
-  },
-  {
-    id: 'startup',
-    label: 'Startup',
-    description: 'An early-stage venture posting real roles.',
-    icon: 'rocket_launch',
-  },
-  {
-    id: 'other',
-    label: 'Other',
-    description: "Doesn't fit the above — organizations, collectives, etc.",
-    icon: 'more_horiz',
   },
 ];
 

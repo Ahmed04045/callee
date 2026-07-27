@@ -5,7 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { useProfile } from './hooks/useProfile';
+import { ProfileProvider, useProfile } from './context/ProfileContext';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
 import CreatePostModal from './components/CreatePostModal';
@@ -30,11 +30,33 @@ import EventDetailView from './views/EventDetailView';
 
 const ONBOARDING_PATH = '/onboarding/account-type';
 
-// Conditional nav items — only added to the visible tab list when the
-// condition holds (Profile: signed in. Admin: is an admin). Everything in
-// base NAV_ITEMS (Feed/Recruit/Discover/Updates) is unconditional; Settings
-// is unconditional too but lives here since, unlike the base four, it's
-// not something every part of the app needs to import.
+// Rail items (Feed/Recruit/Discover, from SidebarNav) plus Create make up
+// the primary nav — rendered as the desktop left rail / mobile bottom bar.
+// Everything else (Updates, Profile, Settings, Admin) lives in the header's
+// icon cluster or is unlisted entirely, and gets its own explicit <Route>
+// below instead of coming from this array. `path: null` on Create is
+// intentional — it opens a modal, not a page, so it's excluded from route
+// registration and intercepted specially in navigateToTab.
+const CREATE_NAV_ITEM = {
+  id: 'create',
+  label: 'Create',
+  path: null,
+  iconType: 'material',
+  iconSource: 'add_circle',
+};
+
+// Header cluster + settings-rail item + admin. Admin is deliberately absent
+// from every list that drives visible nav — reachable only by typing
+// /admin directly. The real gate is still is_admin() in Postgres either
+// way; not listing it anywhere is just so it isn't an obvious thing to
+// stumble onto, not a security boundary by itself.
+const ANNOUNCEMENTS_NAV_ITEM = {
+  id: 'announcements',
+  label: 'Updates',
+  path: '/updates',
+  iconType: 'material',
+  iconSource: 'campaign',
+};
 const PROFILE_NAV_ITEM = {
   id: 'profile',
   label: 'Profile',
@@ -49,27 +71,14 @@ const SETTINGS_NAV_ITEM = {
   iconType: 'material',
   iconSource: 'settings',
 };
-const ADMIN_NAV_ITEM = {
-  id: 'admin',
-  label: 'Admin',
-  path: '/admin',
-  iconType: 'material',
-  iconSource: 'fact_check',
-};
+const ADMIN_PATH = '/admin';
 
-// Full-screen "detail" pages, reached by drilling into a Settings row (or,
-// for About, a direct link) rather than being tabs themselves. The
-// persistent nav/topbar hide on these — SubPageHeader's own back button is
-// the only way to navigate while on one. Onboarding is included too for
-// the same visual effect (no nav chrome) even though it's a different kind
-// of full-screen page — a forced interstitial, not a drill-down detail.
+// Full-screen "detail" pages — persistent nav/topbar hide on these,
+// SubPageHeader's own back button is the only way to navigate. Onboarding
+// is included for the same visual effect even though it's a different
+// kind of full-screen page (a forced interstitial, not a drill-down).
 const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', ONBOARDING_PATH];
 
-// One switch, keyed by nav item id, mapping each tab to its view. Combined
-// with `path` on every nav item, this is the ONLY place that pairs a tab
-// with anything — routes, highlighting, and navigation all derive from
-// item.path, never a hardcoded string. Add a tab by adding one nav item
-// constant + one case here.
 function renderView(tabId, handlers) {
   switch (tabId) {
     case 'main':
@@ -91,20 +100,22 @@ function renderView(tabId, handlers) {
   }
 }
 
-function BrandMark({ size = 'sm' }) {
-  const { colors, font, brand } = themeConfig;
-  const boxSize = size === 'sm' ? 'w-9 h-9 text-xs' : 'w-10 h-10 text-sm';
+// Small header-cluster icon button (Updates/Profile/Settings-on-mobile) —
+// simpler than a full NavButton since it doesn't need the label/pill
+// treatment, just the icon + active state.
+function HeaderIconButton({ item, isActive, onClick, className = '' }) {
+  const { colors } = themeConfig;
   return (
-    <div className="flex items-center gap-2.5">
-      <div
-        className={`${boxSize} ${colors.gradientBrand} rounded-xl flex items-center justify-center ${colors.accentOn} ${font.heading} tracking-wider shrink-0`}
-      >
-        {brand.shortMark}
-      </div>
-      <span className={`${font.heading} text-base tracking-tight ${colors.textWhite} md:hidden`}>
-        {brand.name}
-      </span>
-    </div>
+    <button
+      onClick={onClick}
+      title={item.label}
+      aria-current={isActive ? 'page' : undefined}
+      className={`p-2 rounded-full transition-colors ${
+        isActive ? colors.accentSoftBg : colors.bgHoverInset
+      } ${className}`}
+    >
+      <Icon name={item.iconSource} size={20} active={isActive} />
+    </button>
   );
 }
 
@@ -114,7 +125,7 @@ function AppShell() {
   const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
   const { status, isAdmin, isAdminLoading } = useAuth();
-  const { profile, status: profileStatus } = useProfile();
+  const { profile, status: profileStatus, saveProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -127,62 +138,85 @@ function AppShell() {
   };
   const closeAuthModal = () => setAuthModalOpen(false);
 
-  const navItems = useMemo(() => {
+  // Rail items: what's actually rendered in SidebarNav (and what becomes
+  // routes via .map() below).
+  const railItems = useMemo(() => {
     const items = [...NAV_ITEMS];
-    if (isAuthenticated) items.push(PROFILE_NAV_ITEM);
-    items.push(SETTINGS_NAV_ITEM);
-    if (isAdmin) items.push(ADMIN_NAV_ITEM);
+    if (isAuthenticated) items.push(CREATE_NAV_ITEM);
     return items;
-  }, [isAuthenticated, isAdmin]);
+  }, [isAuthenticated]);
 
-  // Prefix match (not exact) so a detail page like /theme still
-  // highlights the Settings nav item — except the root path, which would
-  // otherwise "match" every route as a prefix.
-  const activeItem = navItems.find((item) =>
-    item.path === '/' ? location.pathname === '/' : location.pathname.startsWith(item.path)
+  // Superset used only for active-page lookup (page title, icon
+  // highlighting) — includes everything reachable, not just what's in the
+  // rail, so e.g. being on /profile still highlights the Profile icon.
+  const lookupItems = useMemo(
+    () => [
+      ...railItems,
+      ANNOUNCEMENTS_NAV_ITEM,
+      ...(isAuthenticated ? [PROFILE_NAV_ITEM] : []),
+      SETTINGS_NAV_ITEM,
+    ],
+    [railItems, isAuthenticated]
+  );
+
+  const activeItem = lookupItems.find((item) =>
+    item.path === '/' ? location.pathname === '/' : item.path && location.pathname.startsWith(item.path)
   );
   const activeTab = activeItem?.id ?? 'main';
   const activeLabel = activeItem?.label ?? '';
 
   const navigateToTab = (tabId) => {
-    const target = navItems.find((item) => item.id === tabId);
+    if (tabId === 'create') {
+      logUserAction('OPEN_CREATE_POST', {});
+      setCreatePostOpen(true);
+      return;
+    }
+    const target = lookupItems.find((item) => item.id === tabId);
     if (!target) return;
     logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
     navigate(target.path);
   };
 
-  // Bounce out of /admin if admin rights are lost mid-session, and out of
-  // /profile if signed out mid-session. Both wait for their respective
-  // check to actually finish first (isAdminLoading / status !== 'loading')
-  // — bouncing an admin out of /admin during the brief window before the
-  // is_admin() RPC resolves would be a false negative, not a real one.
   useEffect(() => {
-    if (location.pathname === ADMIN_NAV_ITEM.path && !isAdminLoading && !isAdmin) {
+    // Admin: no visible nav entry, but still a real, still-gated route —
+    // bounce non-admins away, waiting for the is_admin() check to actually
+    // resolve first so a real admin isn't bounced during that brief window.
+    if (location.pathname === ADMIN_PATH && !isAdminLoading && !isAdmin) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
     if (location.pathname === PROFILE_NAV_ITEM.path && status !== 'loading' && !isAuthenticated) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
-    // Onboarding: force it once account_type is confirmed null, and bounce
-    // away from it if account_type is already set (e.g. a direct revisit
-    // to the URL after already completing it). Waits for profileStatus to
-    // actually be 'ready' first — acting on a still-loading profile could
-    // misfire in either direction.
+
     if (isAuthenticated && profileStatus === 'ready' && profile) {
-      if (!profile.account_type && location.pathname !== ONBOARDING_PATH) {
-        navigate(ONBOARDING_PATH, { replace: true });
-      } else if (profile.account_type && location.pathname === ONBOARDING_PATH) {
+      if (!profile.account_type) {
+        // Signing up via "or sign up as a business" passes ?accountType=
+        // through the email-confirmation redirect (see AuthModal). If it's
+        // here, use it silently instead of showing the onboarding
+        // interstitial at all — that screen is a fallback for when this
+        // hint is missing, not the primary path anymore.
+        const hinted = new URLSearchParams(location.search).get('accountType');
+        if (hinted === 'personal' || hinted === 'business') {
+          saveProfile({ account_type: hinted }).then(({ error }) => {
+            if (!error) navigate(NAV_ITEMS[0].path, { replace: true });
+          });
+        } else if (location.pathname !== ONBOARDING_PATH) {
+          navigate(ONBOARDING_PATH, { replace: true });
+        }
+      } else if (location.pathname === ONBOARDING_PATH) {
         navigate(NAV_ITEMS[0].path, { replace: true });
       }
     }
   }, [
     location.pathname,
+    location.search,
     isAdmin,
     isAdminLoading,
     status,
     isAuthenticated,
     profileStatus,
     profile,
+    saveProfile,
     navigate,
   ]);
 
@@ -194,8 +228,8 @@ function AppShell() {
         <SidebarNav
           activeTab={activeTab}
           onNavigate={navigateToTab}
-          brandMark={<BrandMark />}
-          items={navItems}
+          items={railItems}
+          bottomItem={SETTINGS_NAV_ITEM}
         />
       )}
 
@@ -209,23 +243,48 @@ function AppShell() {
             className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
           >
             <div className="md:hidden">
-              <BrandMark />
+              <span className={`${font.heading} text-base tracking-tight ${colors.textWhite}`}>
+                {themeConfig.brand.name}
+              </span>
             </div>
             <h2 className={`hidden md:block text-sm font-semibold ${colors.textMuted} tracking-wide uppercase`}>
               {activeLabel}
             </h2>
 
-            {status === 'unauthenticated' && (
-              <button
-                onClick={() => {
-                  logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
-                  openAuthModal();
-                }}
-                className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition`}
-              >
-                <Icon name="login" size={14} className="text-inherit" /> Sign in
-              </button>
-            )}
+            <div className="flex items-center gap-1.5">
+              <HeaderIconButton
+                item={ANNOUNCEMENTS_NAV_ITEM}
+                isActive={activeTab === 'announcements'}
+                onClick={() => navigateToTab('announcements')}
+              />
+              {isAuthenticated && (
+                <HeaderIconButton
+                  item={PROFILE_NAV_ITEM}
+                  isActive={activeTab === 'profile'}
+                  onClick={() => navigateToTab('profile')}
+                />
+              )}
+              {/* Settings is pinned to the bottom of the desktop rail —
+                  only shown here on mobile, which has no rail to pin it to. */}
+              <HeaderIconButton
+                item={SETTINGS_NAV_ITEM}
+                isActive={activeTab === 'settings'}
+                onClick={() => navigateToTab('settings')}
+                className="md:hidden"
+              />
+
+              {status === 'unauthenticated' && (
+                <button
+                  onClick={() => {
+                    logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
+                    openAuthModal();
+                  }}
+                  className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition ml-1`}
+                >
+                  <Icon name="login" size={14} className="text-inherit" /> Sign in
+                </button>
+              )}
+            </div>
           </header>
         )}
 
@@ -233,9 +292,15 @@ function AppShell() {
           className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
         >
           <Routes>
-            {navItems.map((item) => (
-              <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
-            ))}
+            {railItems
+              .filter((item) => item.path)
+              .map((item) => (
+                <Route key={item.id} path={item.path} element={renderView(item.id, handlers)} />
+              ))}
+            <Route path={ANNOUNCEMENTS_NAV_ITEM.path} element={renderView('announcements', handlers)} />
+            <Route path={PROFILE_NAV_ITEM.path} element={renderView('profile', handlers)} />
+            <Route path={SETTINGS_NAV_ITEM.path} element={renderView('settings', handlers)} />
+            <Route path={ADMIN_PATH} element={renderView('admin', handlers)} />
             <Route path="/about" element={<AboutView />} />
             <Route path="/account" element={<AccountView />} />
             <Route path="/theme" element={<ThemeView />} />
@@ -249,19 +314,6 @@ function AppShell() {
         </main>
       </div>
 
-      {isAuthenticated && !isImmersive && (
-        <button
-          onClick={() => {
-            logUserAction('OPEN_CREATE_POST', {});
-            setCreatePostOpen(true);
-          }}
-          aria-label="Create a post"
-          className={`fixed bottom-20 md:bottom-6 right-6 z-30 w-14 h-14 flex items-center justify-center ${colors.accentBg} ${colors.accentOn} rounded-2xl shadow-lg ${colors.accentBgHover} transition`}
-        >
-          <Icon name="add" size={26} className="text-inherit" />
-        </button>
-      )}
-
       <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
       <CreatePostModal isOpen={isCreatePostOpen} onClose={() => setCreatePostOpen(false)} />
     </div>
@@ -272,7 +324,9 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppShell />
+        <ProfileProvider>
+          <AppShell />
+        </ProfileProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -14,6 +14,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
   const { signIn, signUp, error } = useAuth();
 
   const [mode, setMode] = useState(initialMode); // 'signIn' | 'signUp'
+  const [accountType, setAccountType] = useState('personal'); // 'personal' | 'business' — signUp only
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,6 +31,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
   const resetAndClose = () => {
     setEmail('');
     setPassword('');
+    setAccountType('personal');
     setNotice(null);
     onClose();
   };
@@ -38,10 +40,10 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
     e.preventDefault();
     setIsSubmitting(true);
     setNotice(null);
-    logUserAction('AUTH_SUBMIT', { mode });
+    logUserAction('AUTH_SUBMIT', { mode, accountType: mode === 'signUp' ? accountType : undefined });
 
-    const action = mode === 'signIn' ? signIn : signUp;
-    const { error: actionError } = await action(email, password);
+    const { error: actionError } =
+      mode === 'signIn' ? await signIn(email, password) : await signUp(email, password, accountType);
 
     setIsSubmitting(false);
 
@@ -56,6 +58,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
 
   const toggleMode = () => {
     setMode((prev) => (prev === 'signIn' ? 'signUp' : 'signIn'));
+    setAccountType('personal');
     setNotice(null);
   };
 
@@ -84,8 +87,19 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             {brand.shortMark}
           </div>
           <h2 id="auth-modal-title" className={`text-lg ${font.heading} ${colors.textWhite} mt-3`}>
-            {mode === 'signIn' ? 'Sign in to' : 'Create your'} {brand.name} account
+            {mode === 'signIn'
+              ? `Sign in to ${brand.name}`
+              : `Create your ${accountType === 'business' ? 'business ' : ''}${brand.name} account`}
           </h2>
+          {mode === 'signUp' && (
+            <button
+              type="button"
+              onClick={() => setAccountType((prev) => (prev === 'personal' ? 'business' : 'personal'))}
+              className={`text-[11px] font-semibold ${colors.accent}`}
+            >
+              {accountType === 'personal' ? 'or sign up as a business' : 'or sign up as an individual'}
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">

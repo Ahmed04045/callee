@@ -68,7 +68,7 @@ export function AuthProvider({ children }) {
     };
   }, [session?.user?.id]);
 
-  const signUp = useCallback(async (email, password) => {
+  const signUp = useCallback(async (email, password, accountType = 'personal') => {
     setError(null);
     // window.location.origin resolves to whatever the app is actually
     // running on right now — http://localhost:5173 in dev, your real
@@ -76,10 +76,15 @@ export function AuthProvider({ children }) {
     // still requires that URL to be allow-listed in the dashboard (see
     // Authentication -> URL Configuration -> Redirect URLs) or it silently
     // falls back to the Site URL default.
+    //
+    // accountType rides along as a query param on the redirect — there's
+    // no active session between signUp() and email confirmation, so it
+    // can't be written to the profiles table yet; App.jsx reads it back
+    // out of the URL on first authenticated load and applies it then.
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: `${window.location.origin}/?accountType=${accountType}` },
     });
     if (signUpError) setError(signUpError.message);
     return { error: signUpError };
