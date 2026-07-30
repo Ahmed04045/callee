@@ -10,11 +10,12 @@
 // under Profile to justify a separate menu (Account/Theme/Legal/About all
 // moved to the Settings tab).
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { logUserAction } from '../components/TelemetryLog';
+import { uploadImage, fileExtension } from '../lib/imageUpload';
 import Icon from '../components/Icon';
 
 const BIO_MAX = 200;
@@ -57,6 +58,9 @@ export default function ProfileView() {
   const [educationOther, setEducationOther] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState(null);
+  const avatarInputRef = useRef(null);
 
   useEffect(() => {
     if (profile) {
@@ -87,6 +91,29 @@ export default function ProfileView() {
   // broken form in the brief moment before that redirect happens.
   if (!isAuthenticated) return null;
 
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    setAvatarError(null);
+    logUserAction('AVATAR_UPLOAD_SUBMIT', {});
+
+    const path = `${user.id}/avatar.${fileExtension(file)}`;
+    const { url, error: uploadError } = await uploadImage('avatars', path, file);
+
+    if (uploadError) {
+      setAvatarError(uploadError);
+      setIsUploadingAvatar(false);
+      return;
+    }
+
+    const { error: saveError } = await saveProfile({ avatar_url: url });
+    setIsUploadingAvatar(false);
+    if (saveError) setAvatarError(saveError.message);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
@@ -113,11 +140,41 @@ export default function ProfileView() {
     <div className="w-full max-w-md mx-auto space-y-6">
       {/* Identity */}
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
-        <div
-          className={`w-20 h-20 ${colors.gradientBrand} ${radius.full} mx-auto flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
+        <button
+          type="button"
+          onClick={() => avatarInputRef.current?.click()}
+          disabled={isUploadingAvatar}
+          className={`relative w-20 h-20 mx-auto block ${radius.full} overflow-hidden group`}
+          title="Change photo"
         >
-          {heading?.[0]?.toUpperCase() ?? 'U'}
-        </div>
+          {profile?.avatar_url ? (
+            <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div
+              className={`w-full h-full ${colors.gradientBrand} flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
+            >
+              {heading?.[0]?.toUpperCase() ?? 'U'}
+            </div>
+          )}
+          <div
+            className={`absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center`}
+          >
+            {isUploadingAvatar ? (
+              <Icon name="progress_activity" size={20} className="text-white animate-spin" />
+            ) : (
+              <Icon name="photo_camera" size={20} className="text-white" />
+            )}
+          </div>
+        </button>
+        <input
+          ref={avatarInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleAvatarChange}
+          className="hidden"
+        />
+        {avatarError && <p className={`text-[11px] ${colors.error}`}>{avatarError}</p>}
+
         <div>
           <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{heading}</h3>
           <p className={`text-xs ${colors.textFaint}`}>

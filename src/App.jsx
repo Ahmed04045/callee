@@ -8,7 +8,6 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
-import CreatePostModal from './components/CreatePostModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
 import Icon from './components/Icon';
 
@@ -27,6 +26,7 @@ import PrivacyView from './views/PrivacyView';
 import OnboardingAccountTypeView from './views/OnboardingAccountTypeView';
 import GigDetailView from './views/GigDetailView';
 import EventDetailView from './views/EventDetailView';
+import CreateView from './views/CreateView';
 
 const ONBOARDING_PATH = '/onboarding/account-type';
 
@@ -34,13 +34,13 @@ const ONBOARDING_PATH = '/onboarding/account-type';
 // the primary nav — rendered as the desktop left rail / mobile bottom bar.
 // Everything else (Updates, Profile, Settings, Admin) lives in the header's
 // icon cluster or is unlisted entirely, and gets its own explicit <Route>
-// below instead of coming from this array. `path: null` on Create is
-// intentional — it opens a modal, not a page, so it's excluded from route
-// registration and intercepted specially in navigateToTab.
+// below instead of coming from this array. Create is a real page (was a
+// modal — that had real perf cost, see CreateView.jsx), so it needs a real
+// path like everything else in this array now.
 const CREATE_NAV_ITEM = {
   id: 'create',
   label: 'Create',
-  path: null,
+  path: '/create',
   iconType: 'material',
   iconSource: 'add_circle',
 };
@@ -93,6 +93,8 @@ function renderView(tabId, handlers) {
       return <ProfileView />;
     case 'settings':
       return <SettingsView />;
+    case 'create':
+      return <CreateView />;
     case 'admin':
       return <AdminView />;
     default:
@@ -122,7 +124,6 @@ function HeaderIconButton({ item, isActive, onClick, className = '' }) {
 function AppShell() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
-  const [isCreatePostOpen, setCreatePostOpen] = useState(false);
   const { colors, layout, font } = themeConfig;
   const { status, isAdmin, isAdminLoading } = useAuth();
   const { profile, status: profileStatus, saveProfile } = useProfile();
@@ -166,11 +167,6 @@ function AppShell() {
   const activeLabel = activeItem?.label ?? '';
 
   const navigateToTab = (tabId) => {
-    if (tabId === 'create') {
-      logUserAction('OPEN_CREATE_POST', {});
-      setCreatePostOpen(true);
-      return;
-    }
     const target = lookupItems.find((item) => item.id === tabId);
     if (!target) return;
     logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
@@ -315,7 +311,6 @@ function AppShell() {
       </div>
 
       <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
-      <CreatePostModal isOpen={isCreatePostOpen} onClose={() => setCreatePostOpen(false)} />
     </div>
   );
 }

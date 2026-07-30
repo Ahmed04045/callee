@@ -1,11 +1,12 @@
 // src/views/EventDetailView.jsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
+import { uploadImage, fileExtension } from '../lib/imageUpload';
 import Icon from '../components/Icon';
 
 const CONTACT_LABELS = {
@@ -15,6 +16,8 @@ const CONTACT_LABELS = {
   telegram: 'Telegram',
   discord: 'Discord',
 };
+
+const MAX_PHOTOS = 5;
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -34,6 +37,12 @@ export default function EventDetailView() {
   const [isRsvpLoading, setIsRsvpLoading] = useState(false);
   const [attendees, setAttendees] = useState([]);
   const [attendeesStatus, setAttendeesStatus] = useState('idle');
+
+  const [photos, setPhotos] = useState([]);
+  const [photosStatus, setPhotosStatus] = useState('idle');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+  const photoInputRef = useRef(null);
 
   const isOrganizer = Boolean(event && user && event.posted_by_user_id === user.id);
 
@@ -59,6 +68,32 @@ export default function EventDetailView() {
       isMounted = false;
     };
   }, [id]);
+
+  // Photos — public for approved events, organizer can see their own
+  // regardless of status (same RLS pattern as everything else here).
+  useEffect(() => {
+    if (!event) return;
+    let isMounted = true;
+    async function loadPhotos() {
+      setPhotosStatus('loading');
+      const { data, error } = await supabase
+        .from('event_photos')
+        .select('*')
+        .eq('event_id', event.id)
+        .order('position', { ascending: true });
+      if (!isMounted) return;
+      if (error) {
+        setPhotosStatus('error');
+        return;
+      }
+      setPhotos(data ?? []);
+      setPhotosStatus('ready');
+    }
+    loadPhotos();
+    return () => {
+      isMounted = false;
+    };
+  }, [event]);
 
   // Am I already RSVP'd?
   useEffect(() => {
@@ -148,6 +183,52 @@ export default function EventDetailView() {
     setIsRsvpLoading(false);
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !event) return;
+    if (photos.length >= MAX_PHOTOS) {
+      setPhotoError(`Maximum of ${MAX_PHOTOS} photos.`);
+      return;
+    }
+
+    setIsUploadingPhoto(true);
+    setPhotoError(null);
+    logUserAction('EVENT_PHOTO_UPLOAD', { eventId: event.id });
+
+    const path = `${event.id}/${Date.now()}.${fileExtension(file)}`;
+    const { url, error: uploadError } = await uploadImage('event-photos', path, file);
+
+    if (uploadError) {
+      setPhotoError(uploadError);
+      setIsUploadingPhoto(false);
+      return;
+    }
+
+    const { data, error: insertError } = await supabase
+      .from('event_photos')
+      .insert({ event_id: event.id, url, position: photos.length })
+      .select()
+      .single();
+
+    setIsUploadingPhoto(false);
+    if (insertError) {
+      setPhotoError(insertError.message);
+      return;
+    }
+    setPhotos((prev) => [...prev, data]);
+  };
+
+  const handlePhotoDelete = async (photo) => {
+    // Removes the DB row (and with it, public visibility) immediately.
+    // The underlying Storage file is left in place rather than also
+    // deleted here — an orphaned file costs a little storage space but
+    // keeping this action fast and simple was worth that tradeoff; worth
+    // revisiting if storage usage ever actually matters.
+    await supabase.from('event_photos').delete().eq('id', photo.id);
+    setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+  };
+
   if (status === 'loading') {
     return <p className={`text-sm ${colors.textFaint}`}>Loading…</p>;
   }
@@ -192,6 +273,19 @@ export default function EventDetailView() {
             </span>
           )}
         </div>
+
+        {photosStatus === 'ready' && photos.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-4">
+            {photos.map((photo) => (
+              <img
+                key={photo.id}
+                src={photo.url}
+                alt=""
+                className={`w-full aspect-square object-cover ${radius.md} border ${colors.border}`}
+              />
+            ))}
+          </div>
+        )}
 
         {event.description && (
           <p className={`text-sm ${colors.textMuted} mt-4 leading-relaxed`}>{event.description}</p>
@@ -255,6 +349,56 @@ export default function EventDetailView() {
       {isOrganizer && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
           <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
+            <Icon name="photo_library" size={16} /> Photos ({photos.length}/{MAX_PHOTOS})
+          </h2>
+
+          <div className="grid grid-cols-3 gap-2">
+            {photos.map((photo) => (
+              <div key={photo.id} className="relative group aspect-square">
+                <img
+                  src={photo.url}
+                  alt=""
+                  className={`w-full h-full object-cover ${radius.md} border ${colors.border}`}
+                />
+                <button
+                  onClick={() => handlePhotoDelete(photo)}
+                  aria-label="Remove photo"
+                  className={`absolute top-1 right-1 p-1 ${colors.scrim} ${radius.full} opacity-0 group-hover:opacity-100 transition`}
+                >
+                  <Icon name="close" size={14} className="text-white" />
+                </button>
+              </div>
+            ))}
+
+            {photos.length < MAX_PHOTOS && (
+              <button
+                type="button"
+                onClick={() => photoInputRef.current?.click()}
+                disabled={isUploadingPhoto}
+                className={`aspect-square flex items-center justify-center ${colors.bgInset} border ${colors.borderStrong} border-dashed ${radius.md} ${colors.textFaint} ${colors.textHoverStrong} transition`}
+              >
+                {isUploadingPhoto ? (
+                  <Icon name="progress_activity" size={20} className="animate-spin" />
+                ) : (
+                  <Icon name="add_photo_alternate" size={22} />
+                )}
+              </button>
+            )}
+          </div>
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handlePhotoUpload}
+            className="hidden"
+          />
+          {photoError && <p className={`text-xs ${colors.error}`}>{photoError}</p>}
+        </div>
+      )}
+
+      {isOrganizer && (
+        <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
+          <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
             <Icon name="groups" size={16} /> Attendees ({attendees.length})
           </h2>
 
@@ -271,11 +415,19 @@ export default function EventDetailView() {
                 key={a.user_id}
                 className={`${colors.bgCard} border ${colors.border} ${radius.md} p-3 flex items-center gap-3`}
               >
-                <div
-                  className={`w-9 h-9 ${colors.gradientBrand} ${radius.full} flex items-center justify-center text-xs font-bold ${colors.accentOn} shrink-0`}
-                >
-                  {(a.profile?.display_name || '?')[0]?.toUpperCase() ?? '?'}
-                </div>
+                {a.profile?.avatar_url ? (
+                  <img
+                    src={a.profile.avatar_url}
+                    alt=""
+                    className={`w-9 h-9 ${radius.full} object-cover shrink-0`}
+                  />
+                ) : (
+                  <div
+                    className={`w-9 h-9 ${colors.gradientBrand} ${radius.full} flex items-center justify-center text-xs font-bold ${colors.accentOn} shrink-0`}
+                  >
+                    {(a.profile?.display_name || '?')[0]?.toUpperCase() ?? '?'}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <p className={`text-xs font-bold ${colors.textWhite} truncate`}>
                     {a.profile?.display_name || 'Unnamed'}
