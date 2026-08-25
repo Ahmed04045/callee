@@ -1,6 +1,6 @@
 // src/views/MainFeedView.jsx
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
@@ -14,6 +14,10 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+function matches(query, ...fields) {
+  return fields.some((field) => field?.toLowerCase().includes(query));
+}
+
 export default function MainFeedView() {
   const { colors, radius, font, brand } = themeConfig;
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,11 +26,30 @@ export default function MainFeedView() {
   const { data: events, status: eventsStatus } = useSupabaseTable('events', {
     orderBy: 'event_date',
   });
-  const { data: featuredGigs, status: gigsStatus } = useSupabaseTable('gigs', {
-    filters: { featured: true, status: 'approved' },
+  // Fetches every approved gig, not just featured ones — search needs the
+  // full set to search against; the normal (non-searching) Feed view just
+  // filters this down to featured=true client-side, so it's one query
+  // covering both cases instead of two separate ones.
+  const { data: allGigs, status: gigsStatus } = useSupabaseTable('gigs', {
+    filters: { status: 'approved' },
     orderBy: 'created_at',
     ascending: false,
   });
+
+  const query = searchQuery.trim().toLowerCase();
+  const isSearching = query.length > 0;
+
+  const visibleEvents = useMemo(() => {
+    if (!isSearching) return events;
+    return events.filter((e) => matches(query, e.title, e.organizer, e.tag, e.location));
+  }, [events, isSearching, query]);
+
+  const visibleGigs = useMemo(() => {
+    if (!isSearching) return allGigs.filter((g) => g.featured);
+    return allGigs.filter(
+      (g) => matches(query, g.role, g.posted_by, g.details) || (g.tags ?? []).some((t) => t.toLowerCase().includes(query))
+    );
+  }, [allGigs, isSearching, query]);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -55,18 +78,33 @@ export default function MainFeedView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search coding gigs, video editing, local events..."
-            className={`w-full ${colors.bgCard} border ${colors.border} ${radius.full} pl-12 pr-4 py-3 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+            className={`w-full ${colors.bgCard} border ${colors.border} ${radius.full} pl-12 pr-10 py-3 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
           />
+          {isSearching && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
+              className={`absolute right-4 top-1/2 -translate-y-1/2 ${colors.textFaint} ${colors.textHoverStrong} transition`}
+            >
+              <Icon name="close" size={16} />
+            </button>
+          )}
         </form>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Trending events */}
+        {/* Events */}
         <div className="md:col-span-2 space-y-4">
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Icon name="local_fire_department" size={16} className={colors.warning} /> Trending Events
+            <Icon
+              name={isSearching ? 'search' : 'local_fire_department'}
+              size={16}
+              className={isSearching ? colors.textFaint : colors.warning}
+            />
+            {isSearching ? `Events matching "${searchQuery.trim()}"` : 'Trending Events'}
           </h3>
 
           {eventsStatus === 'loading' && (
@@ -75,12 +113,14 @@ export default function MainFeedView() {
           {eventsStatus === 'error' && (
             <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>
           )}
-          {eventsStatus === 'ready' && events.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No events posted yet — check back soon.</p>
+          {eventsStatus === 'ready' && visibleEvents.length === 0 && (
+            <p className={`text-xs ${colors.textFaint}`}>
+              {isSearching ? 'No matching events.' : 'No events posted yet — check back soon.'}
+            </p>
           )}
 
           <div className="grid grid-cols-1 gap-4">
-            {events.map((event) => (
+            {visibleEvents.map((event) => (
               <div
                 key={event.id}
                 onClick={() => navigate(`/events/${event.id}`)}
@@ -111,20 +151,23 @@ export default function MainFeedView() {
           </div>
         </div>
 
-        {/* Top recruitment */}
+        {/* Gigs & Opportunities */}
         <div className="space-y-4">
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Icon name="work" size={16} className={colors.secondary} /> Top Recruitment Calls
+            <Icon name="work" size={16} className={colors.secondary} />
+            {isSearching ? 'Matching Gigs' : 'Top Recruitment Calls'}
           </h3>
 
           {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
-          {gigsStatus === 'ready' && featuredGigs.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No featured roles right now.</p>
+          {gigsStatus === 'ready' && visibleGigs.length === 0 && (
+            <p className={`text-xs ${colors.textFaint}`}>
+              {isSearching ? 'No matching gigs.' : 'No featured roles right now.'}
+            </p>
           )}
 
-          {featuredGigs.map((gig) => (
+          {visibleGigs.map((gig) => (
             <div
               key={gig.id}
               onClick={() => navigate(`/gigs/${gig.id}`)}

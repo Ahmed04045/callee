@@ -19,6 +19,12 @@ const ALWAYS_VISIBLE_ITEMS = [
 ];
 
 const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/account', icon: 'manage_accounts' };
+const MY_SUBMISSIONS_ITEM = {
+  id: 'my-submissions',
+  label: 'My Submissions',
+  path: '/my-submissions',
+  icon: 'inbox',
+};
 
 export default function SettingsView() {
   const { colors, radius, font, brand } = themeConfig;
@@ -26,7 +32,7 @@ export default function SettingsView() {
   const aboutItem = { id: 'about', label: `About ${brand.name}`, path: '/about', icon: 'info' };
   const menuItems =
     status === 'authenticated'
-      ? [ACCOUNT_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
+      ? [ACCOUNT_ITEM, MY_SUBMISSIONS_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
       : [...ALWAYS_VISIBLE_ITEMS, aboutItem];
 
   return (

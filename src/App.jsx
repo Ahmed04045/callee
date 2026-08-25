@@ -27,6 +27,7 @@ import OnboardingAccountTypeView from './views/OnboardingAccountTypeView';
 import GigDetailView from './views/GigDetailView';
 import EventDetailView from './views/EventDetailView';
 import CreateView from './views/CreateView';
+import MySubmissionsView from './views/MySubmissionsView';
 
 const ONBOARDING_PATH = '/onboarding/account-type';
 
@@ -77,7 +78,7 @@ const ADMIN_PATH = '/admin';
 // SubPageHeader's own back button is the only way to navigate. Onboarding
 // is included for the same visual effect even though it's a different
 // kind of full-screen page (a forced interstitial, not a drill-down).
-const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', ONBOARDING_PATH];
+const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', '/my-submissions', ONBOARDING_PATH];
 
 function renderView(tabId, handlers) {
   switch (tabId) {
@@ -299,6 +300,7 @@ function AppShell() {
             <Route path={ADMIN_PATH} element={renderView('admin', handlers)} />
             <Route path="/about" element={<AboutView />} />
             <Route path="/account" element={<AccountView />} />
+            <Route path="/my-submissions" element={<MySubmissionsView />} />
             <Route path="/theme" element={<ThemeView />} />
             <Route path="/terms" element={<TermsView />} />
             <Route path="/privacy" element={<PrivacyView />} />
