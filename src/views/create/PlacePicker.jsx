@@ -13,23 +13,44 @@
 // value/onChange shape: { name, address, placeId, lat, lng } | null
 
 import React, { useEffect, useRef, useState } from 'react';
-import { APIProvider, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, APIProvider, Map, useMapsLibrary } from '@vis.gl/react-google-maps';
 import themeConfig from '../../theme/themeConfig';
 import Icon from '../../components/Icon';
 import { useFormStyles } from './formKit';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+// Advanced markers need a Map ID; DEMO_MAP_ID works until you create your own in Google Cloud.
+const MAP_ID = import.meta.env.VITE_GOOGLE_MAP_ID || 'DEMO_MAP_ID';
+const DOHA = { lat: 25.2854, lng: 51.531 };
 
 function PickerInner({ value, onChange, allowManual }) {
   const { colors, radius } = themeConfig;
   const { input } = useFormStyles();
   const places = useMapsLibrary('places');
+  const geocoding = useMapsLibrary('geocoding');
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapAuthFailed, setMapAuthFailed] = useState(false);
+  const [mapKey, setMapKey] = useState(0); // bumped when a search result should recenter the map
   const [text, setText] = useState(value?.name ?? '');
   const [suggestions, setSuggestions] = useState([]);
   const [searchError, setSearchError] = useState(false);
   const [manual, setManual] = useState(false);
   const sessionToken = useRef(null);
   const requestId = useRef(0);
+
+  // Google calls this global when it rejects the key for the map (referrer not
+  // allowed, Maps JavaScript API not enabled, ...). Without it the map just
+  // renders as an unexplained gray box.
+  useEffect(() => {
+    const previous = window.gm_authFailure;
+    window.gm_authFailure = () => {
+      setMapAuthFailed(true);
+      previous?.();
+    };
+    return () => {
+      window.gm_authFailure = previous;
+    };
+  }, []);
 
   // Debounced autocomplete. A session token groups keystrokes + the final
   // place fetch into one billing session.
@@ -75,10 +96,29 @@ function PickerInner({ value, onChange, allowManual }) {
       };
       setText(picked.name);
       setSuggestions([]);
+      setMapKey((k) => k + 1);
+      setMapOpen(true); // show the pin right away so it can be adjusted
       onChange(picked);
     } catch {
       setSearchError(true);
     }
+  };
+
+  // Move/click the pin: keep the searched name, refresh the address by reverse
+  // geocoding (best effort — needs Geocoding API), and drop the place id since
+  // the point no longer matches that exact place.
+  const setPin = async (lat, lng) => {
+    let address = '';
+    try {
+      const { results } = await new geocoding.Geocoder().geocode({ location: { lat, lng } });
+      address = results?.[0]?.formatted_address ?? '';
+    } catch {
+      /* no Geocoding API — keep coordinates only */
+    }
+    const name = value?.name || address.split(',')[0] || 'Pinned location';
+    setText(name);
+    // If reverse geocoding isn't available, do NOT keep the old address: it no longer matches the pin.
+    onChange({ name, address, placeId: null, lat, lng });
   };
 
   const clear = () => {
@@ -140,9 +180,41 @@ function PickerInner({ value, onChange, allowManual }) {
 
       {value && (
         <p className={`text-[11px] ${colors.success} mt-1 flex items-center gap-1`}>
-          <Icon name="check_circle" size={13} className="text-inherit" /> {value.address || value.name}
+          <Icon name="check_circle" size={13} className="text-inherit" /> {value.address || `${value.name} (pin at ${value.lat?.toFixed(4)}, ${value.lng?.toFixed(4)})`}
         </p>
       )}
+
+      <button type="button" onClick={() => setMapOpen((o) => !o)} className={`mt-2 text-[11px] font-semibold ${colors.accent} flex items-center gap-1`}>
+        <Icon name="pin_drop" size={14} className="text-inherit" />
+        {mapOpen ? 'Hide map' : value ? 'Adjust pin on map' : 'Pick on map'}
+      </button>
+      {mapOpen && (
+        <div className={`mt-2 h-56 ${radius.md} overflow-hidden border ${colors.borderStrong}`}>
+          <Map
+            key={mapKey}
+            mapId={MAP_ID}
+            defaultCenter={value?.lat != null ? { lat: value.lat, lng: value.lng } : DOHA}
+            defaultZoom={value?.lat != null ? 15 : 11}
+            gestureHandling="greedy"
+            disableDefaultUI
+            onClick={(e) => e.detail.latLng && setPin(e.detail.latLng.lat, e.detail.latLng.lng)}
+          >
+            {value?.lat != null && (
+              <AdvancedMarker
+                position={{ lat: value.lat, lng: value.lng }}
+                draggable
+                onDragEnd={(e) => e.latLng && setPin(e.latLng.lat(), e.latLng.lng())}
+              />
+            )}
+          </Map>
+        </div>
+      )}
+      {mapOpen && mapAuthFailed && (
+        <p className={`text-[11px] ${colors.error} mt-1`}>
+          Google rejected the key for the map. Check that this site's address (including the port) is in the key's website restrictions and that Maps JavaScript API is enabled.
+        </p>
+      )}
+      {mapOpen && <p className={`text-[10px] ${colors.textDim} mt-1`}>Tap the map or drag the pin to set the exact spot.</p>}
       {!value && text.trim().length >= 3 && suggestions.length === 0 && !searchError && places && (
         <p className={`text-[11px] ${colors.textFaint} mt-1`}>Pick one of the suggestions to set the location.</p>
       )}
