@@ -17,13 +17,21 @@ import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
 import SettingsView from './views/SettingsView';
-import AdminView from './views/AdminView';
+import AdminLayout from './components/AdminLayout';
+import AdminOverview from './views/admin/AdminOverview';
+import AdminGigs from './views/admin/AdminGigs';
+import AdminEvents from './views/admin/AdminEvents';
+import AdminGroups from './views/admin/AdminGroups';
+import AdminModerators from './views/admin/AdminModerators';
+import AdminPeople from './views/admin/AdminPeople';
+import AdminActivity from './views/admin/AdminActivity';
 import AboutView from './views/AboutView';
 import AccountView from './views/AccountView';
 import ThemeView from './views/ThemeView';
 import TermsView from './views/TermsView';
 import PrivacyView from './views/PrivacyView';
-import OnboardingAccountTypeView from './views/OnboardingAccountTypeView';
+import OnboardingView from './views/OnboardingView';
+import PublicProfileView from './views/PublicProfileView';
 import GigDetailView from './views/GigDetailView';
 import EventDetailView from './views/EventDetailView';
 import CreateView from './views/CreateView';
@@ -31,10 +39,9 @@ import MySubmissionsView from './views/MySubmissionsView';
 import ClubsView from './views/ClubsView';
 import ClubDetailView from './views/ClubDetailView';
 import ClubModeratorView from './views/ClubModeratorView';
-import AdminClubsView from './views/AdminClubsView';
 import ConnectDiscordView from './views/ConnectDiscordView';
 
-const ONBOARDING_PATH = '/onboarding/account-type';
+const ONBOARDING_PATH = '/onboarding';
 
 // Rail items (Feed/Recruit/Discover, from SidebarNav) plus Create make up
 // the primary nav — rendered as the desktop left rail / mobile bottom bar.
@@ -77,13 +84,17 @@ const SETTINGS_NAV_ITEM = {
   iconType: 'material',
   iconSource: 'settings',
 };
-const ADMIN_PATH = '/admin';
 
 // Full-screen "detail" pages — persistent nav/topbar hide on these,
 // SubPageHeader's own back button is the only way to navigate. Onboarding
 // is included for the same visual effect even though it's a different
 // kind of full-screen page (a forced interstitial, not a drill-down).
 const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', '/my-submissions', '/connect-discord', ONBOARDING_PATH];
+const isImmersivePath = (pathname) =>
+  IMMERSIVE_PATHS.includes(pathname) ||
+  pathname.startsWith('/clubs/') ||
+  pathname.startsWith('/u/') ||
+  pathname.startsWith('/admin');
 
 function renderView(tabId, handlers) {
   switch (tabId) {
@@ -103,8 +114,6 @@ function renderView(tabId, handlers) {
       return <SettingsView />;
     case 'create':
       return <CreateView />;
-    case 'admin':
-      return <AdminView />;
     default:
       return null;
   }
@@ -133,17 +142,14 @@ function AppShell() {
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
   const { colors, layout, font } = themeConfig;
-  const { status, isAdmin, isAdminLoading } = useAuth();
+  const { status } = useAuth();
   const { profile, status: profileStatus, saveProfile } = useProfile();
   const navigate = useNavigate();
   const location = useLocation();
 
   const isAuthenticated = status === 'authenticated';
-  // Club detail / moderator / club-admin pages bring their own SubPageHeader.
-  const isImmersive =
-    IMMERSIVE_PATHS.includes(location.pathname) ||
-    location.pathname.startsWith('/clubs/') ||
-    location.pathname === '/admin/clubs';
+  // Detail pages, profiles and the admin area bring their own header/nav.
+  const isImmersive = isImmersivePath(location.pathname);
 
   const openAuthModal = (mode = 'signIn') => {
     setAuthModalMode(mode);
@@ -166,10 +172,10 @@ function AppShell() {
     () => [
       ...railItems,
       ANNOUNCEMENTS_NAV_ITEM,
-      ...(isAuthenticated ? [PROFILE_NAV_ITEM] : []),
+      ...(isAuthenticated ? [{ ...PROFILE_NAV_ITEM, label: profile?.username ? `@${profile.username}` : PROFILE_NAV_ITEM.label }] : []),
       SETTINGS_NAV_ITEM,
     ],
-    [railItems, isAuthenticated]
+    [railItems, isAuthenticated, profile?.username]
   );
 
   const activeItem = lookupItems.find((item) =>
@@ -186,40 +192,33 @@ function AppShell() {
   };
 
   useEffect(() => {
-    // Admin: no visible nav entry, but still a real, still-gated route —
-    // bounce non-admins away, waiting for the is_admin() check to actually
-    // resolve first so a real admin isn't bounced during that brief window.
-    if (location.pathname === ADMIN_PATH && !isAdminLoading && !isAdmin) {
-      navigate(NAV_ITEMS[0].path, { replace: true });
-    }
+    // Admin area: no visible nav entry, and no redirect either — AdminLayout shows
+    // an "access required" screen (with a diagnostic) for non-admins. The real
+    // gate is is_admin() in Postgres either way.
     if (location.pathname === PROFILE_NAV_ITEM.path && status !== 'loading' && !isAuthenticated) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
 
     if (isAuthenticated && profileStatus === 'ready' && profile) {
-      if (!profile.account_type) {
-        // Signing up via "or sign up as a business" passes ?accountType=
-        // through the email-confirmation redirect (see AuthModal). If it's
-        // here, use it silently instead of showing the onboarding
-        // interstitial at all — that screen is a fallback for when this
-        // hint is missing, not the primary path anymore.
-        const hinted = new URLSearchParams(location.search).get('accountType');
-        if (hinted === 'personal' || hinted === 'business') {
-          saveProfile({ account_type: hinted }).then(({ error }) => {
-            if (!error) navigate(NAV_ITEMS[0].path, { replace: true });
-          });
-        } else if (location.pathname !== ONBOARDING_PATH) {
-          navigate(ONBOARDING_PATH, { replace: true });
-        }
-      } else if (location.pathname === ONBOARDING_PATH) {
+      // Signing up via "or sign up as a business" passes ?accountType=
+      // through the email-confirmation redirect (see AuthModal); apply it
+      // silently so the onboarding step for account type is pre-answered.
+      const hinted = new URLSearchParams(location.search).get('accountType');
+      if (!profile.account_type && (hinted === 'personal' || hinted === 'business')) {
+        saveProfile({ account_type: hinted });
+        return;
+      }
+      // Account setup (type, name, username, university) is required once.
+      const needsSetup = !profile.account_type || !profile.username;
+      if (needsSetup && location.pathname !== ONBOARDING_PATH && !location.pathname.startsWith('/u/')) {
+        navigate(ONBOARDING_PATH, { replace: true });
+      } else if (!needsSetup && location.pathname === ONBOARDING_PATH) {
         navigate(NAV_ITEMS[0].path, { replace: true });
       }
     }
   }, [
     location.pathname,
     location.search,
-    isAdmin,
-    isAdminLoading,
     status,
     isAuthenticated,
     profileStatus,
@@ -266,11 +265,25 @@ function AppShell() {
                 onClick={() => navigateToTab('announcements')}
               />
               {isAuthenticated && (
-                <HeaderIconButton
-                  item={PROFILE_NAV_ITEM}
-                  isActive={activeTab === 'profile'}
+                <button
                   onClick={() => navigateToTab('profile')}
-                />
+                  title="Your profile"
+                  aria-current={activeTab === 'profile' ? 'page' : undefined}
+                  className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-colors ${
+                    activeTab === 'profile' ? colors.accentSoftBg : colors.bgHoverInset
+                  }`}
+                >
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <span className={`w-7 h-7 rounded-full ${colors.gradientBrand} flex items-center justify-center text-xs font-black ${colors.accentOn}`}>
+                      {(profile?.username || profile?.display_name || '?')[0].toUpperCase()}
+                    </span>
+                  )}
+                  <span className={`text-xs font-semibold ${colors.textWhite} max-w-[110px] truncate`}>
+                    {profile?.username ? `@${profile.username}` : 'Profile'}
+                  </span>
+                </button>
               )}
               {/* Settings is pinned to the bottom of the desktop rail —
                   only shown here on mobile, which has no rail to pin it to. */}
@@ -308,10 +321,18 @@ function AppShell() {
             <Route path={ANNOUNCEMENTS_NAV_ITEM.path} element={renderView('announcements', handlers)} />
             <Route path={PROFILE_NAV_ITEM.path} element={renderView('profile', handlers)} />
             <Route path={SETTINGS_NAV_ITEM.path} element={renderView('settings', handlers)} />
-            <Route path={ADMIN_PATH} element={renderView('admin', handlers)} />
+            <Route path="/u/:username" element={<PublicProfileView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<AdminOverview />} />
+              <Route path="gigs" element={<AdminGigs />} />
+              <Route path="events" element={<AdminEvents />} />
+              <Route path="groups" element={<AdminGroups />} />
+              <Route path="moderators" element={<AdminModerators />} />
+              <Route path="people" element={<AdminPeople />} />
+              <Route path="activity" element={<AdminActivity />} />
+            </Route>
             <Route path="/clubs/moderator" element={<ClubModeratorView />} />
             <Route path="/clubs/:clubId" element={<ClubDetailView onOpenAuthModal={openAuthModal} />} />
-            <Route path="/admin/clubs" element={<AdminClubsView />} />
             <Route path="/connect-discord" element={<ConnectDiscordView />} />
             <Route path="/about" element={<AboutView />} />
             <Route path="/account" element={<AccountView />} />
@@ -319,7 +340,8 @@ function AppShell() {
             <Route path="/theme" element={<ThemeView />} />
             <Route path="/terms" element={<TermsView />} />
             <Route path="/privacy" element={<PrivacyView />} />
-            <Route path={ONBOARDING_PATH} element={<OnboardingAccountTypeView />} />
+            <Route path={ONBOARDING_PATH} element={<OnboardingView />} />
+            <Route path="/onboarding/account-type" element={<Navigate to={ONBOARDING_PATH} replace />} />
             <Route path="/gigs/:id" element={<GigDetailView />} />
             <Route path="/events/:id" element={<EventDetailView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />

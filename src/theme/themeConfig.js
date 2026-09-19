@@ -22,6 +22,8 @@ const themeConfig = {
     shortMark: 'PV',
     tagline: 'Stop looking for ordinary jobs.',
     subTagline: 'Build real things instead.',
+    // Shown on the About page when set; leave empty until you have a real address.
+    contactEmail: '',
   },
 
   colors: {

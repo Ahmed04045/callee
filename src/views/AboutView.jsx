@@ -31,13 +31,15 @@ export default function AboutView() {
         </p>
       </div>
 
+      {brand.contactEmail && (
       <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-2`}>
         <h2 className={`text-sm font-bold ${colors.textWhite}`}>Contact</h2>
         <p className={`text-xs ${colors.textFaint} leading-relaxed`}>
           Questions, feedback, or a listing you'd like reviewed? Reach out at{' '}
-          <span className={colors.accent}>[add your contact email here]</span>.
+          <a href={`mailto:${brand.contactEmail}`} className={colors.accent}>{brand.contactEmail}</a>.
         </p>
       </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 // src/views/ClubDetailView.jsx
 //
-// One shareable page per club (/clubs/:clubId). Joining/leaving goes through
-// the join_club()/leave_club() database functions; the WhatsApp/Discord links
+// One shareable page per club (/clubs/:clubId). Clubs are private: you send a
+// join request (request_join_club()) and a moderator approves it; leaving goes
+// through leave_club(). The WhatsApp/Discord links
 // come from get_club_links(), which only returns them to members, this
 // club's moderators and admins — so hiding them here is UX, the database is
 // the real gate.
@@ -23,6 +24,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
   const { user, isAdmin } = useAuth();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [note, setNote] = useState('');
   const [links, setLinks] = useState(null);
 
   const { data: clubRows, status, refetch: refetchClub } = useSupabaseTable('clubs', {
@@ -33,6 +35,11 @@ export default function ClubDetailView({ onOpenAuthModal }) {
 
   const { data: memberships, refetch: refetchMemberships } = useSupabaseTable('club_memberships', {
     select: 'club_id',
+    filters: user ? { user_id: user.id } : undefined,
+    enabled: Boolean(user),
+  });
+  const { data: requests, refetch: refetchRequests } = useSupabaseTable('club_join_requests', {
+    select: 'id,club_id,status',
     filters: user ? { user_id: user.id } : undefined,
     enabled: Boolean(user),
   });
@@ -49,6 +56,8 @@ export default function ClubDetailView({ onOpenAuthModal }) {
 
   const isMember = useMemo(() => memberships.some((m) => m.club_id === clubId), [memberships, clubId]);
   const isMod = useMemo(() => moderated.some((m) => m.club_id === clubId), [moderated, clubId]);
+  const myRequest = useMemo(() => requests.find((r) => r.club_id === clubId), [requests, clubId]);
+  const isPending = myRequest?.status === 'pending';
   const canSeeLinks = Boolean(user) && (isMember || isMod || isAdmin);
   const atLimit = memberships.length >= MAX_CLUBS && !isMember;
 
@@ -58,15 +67,23 @@ export default function ClubDetailView({ onOpenAuthModal }) {
     supabase.rpc('get_club_links', { p_club_id: clubId }).then(({ data }) => setLinks(data?.[0] ?? null));
   }, [canSeeLinks, clubId]);
 
-  const refresh = () => Promise.all([refetchClub(), refetchMemberships()]);
+  const refresh = () => Promise.all([refetchClub(), refetchMemberships(), refetchRequests()]);
 
-  const handleJoin = async () => {
+  const handleRequest = async () => {
     setBusy(true);
     setMessage('');
-    logUserAction('CLUB_JOIN', { clubId });
-    const { data, error } = await supabase.rpc('join_club', { p_club_id: clubId });
-    if (error) setMessage(error.message.includes('LIMIT_REACHED') ? JOIN_MESSAGES.LIMIT_REACHED : error.message);
+    logUserAction('CLUB_JOIN_REQUEST', { clubId });
+    const { data, error } = await supabase.rpc('request_join_club', { p_club_id: clubId, p_message: note });
+    if (error) setMessage(error.message);
     else if (data !== 'OK') setMessage(JOIN_MESSAGES[data] ?? String(data));
+    else setNote('');
+    await refresh();
+    setBusy(false);
+  };
+
+  const handleCancelRequest = async () => {
+    setBusy(true);
+    await supabase.rpc('cancel_join_request', { p_club_id: clubId });
     await refresh();
     setBusy(false);
   };
@@ -97,8 +114,11 @@ export default function ClubDetailView({ onOpenAuthModal }) {
       <SubPageHeader title={club.name} fallbackTo="/clubs" />
 
       <div className={`overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg}`}>
-        <div style={bannerStyle(club)} className="h-32 p-4 flex items-end">
+        <div style={bannerStyle(club)} className="h-32 p-4 flex items-end gap-2">
           <span className={`text-xs font-semibold bg-black/40 text-white ${radius.full} px-3 py-1`}>{club.category}</span>
+          {club.status === 'pending' && (
+            <span className={`text-xs font-bold bg-white text-black ${radius.full} px-3 py-1`}>Pending approval</span>
+          )}
         </div>
         <div className="p-6 space-y-5">
           <p className={`text-sm leading-relaxed ${colors.textMuted}`}>{club.description}</p>
@@ -118,12 +138,14 @@ export default function ClubDetailView({ onOpenAuthModal }) {
             ))}
           </div>
 
-          {!user ? (
+          {club.status !== 'approved' ? (
+            <p className={`text-xs ${colors.textMuted} text-center`}>This group is waiting for admin approval before it goes public.</p>
+          ) : !user ? (
             <button
               onClick={() => onOpenAuthModal?.()}
               className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full}`}
             >
-              Sign in to join
+              Sign in to request to join
             </button>
           ) : isMember ? (
             <button
@@ -133,14 +155,38 @@ export default function ClubDetailView({ onOpenAuthModal }) {
             >
               Leave club
             </button>
+          ) : isPending ? (
+            <div className="space-y-2">
+              <p className={`text-xs ${colors.textMuted} text-center`}>Request sent — a moderator will review it.</p>
+              <button
+                onClick={handleCancelRequest}
+                disabled={busy}
+                className={`w-full border ${colors.borderStrong} ${colors.textWhite} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
+              >
+                Cancel request
+              </button>
+            </div>
           ) : (
-            <button
-              onClick={handleJoin}
-              disabled={busy || atLimit}
-              className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
-            >
-              {atLimit ? `Maximum ${MAX_CLUBS} clubs reached` : `Join ${club.name}`}
-            </button>
+            <div className="space-y-2">
+              {myRequest?.status === 'declined' && (
+                <p className={`text-xs ${colors.textFaint}`}>Your last request was declined. You can send a new one.</p>
+              )}
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={300}
+                rows={2}
+                placeholder="Optional: tell the moderators why you'd like to join"
+                className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textPrimary} outline-none focus:border-md3-primary resize-none`}
+              />
+              <button
+                onClick={handleRequest}
+                disabled={busy || atLimit}
+                className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
+              >
+                {atLimit ? `Maximum ${MAX_CLUBS} clubs reached` : 'Request to join'}
+              </button>
+            </div>
           )}
           {message && <p className={`text-xs ${colors.error}`}>{message}</p>}
         </div>
@@ -166,7 +212,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
             <p className={`text-xs ${colors.textFaint}`}>Loading links…</p>
           )
         ) : (
-          <p className={`text-xs ${colors.textFaint}`}>Join this club to unlock its private WhatsApp group and Discord server.</p>
+          <p className={`text-xs ${colors.textFaint}`}>This club is private. Once a moderator approves your request, its WhatsApp group and Discord server unlock here.</p>
         )}
       </div>
 

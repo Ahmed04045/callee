@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
-import { ACTION_LABEL, CLUB_COLUMNS, fmtDateTime } from '../lib/clubUtil';
+import { ACTION_LABEL, CLUB_COLUMNS, JOIN_MESSAGES, fmtDateTime } from '../lib/clubUtil';
 
 export function LogList({ logs, showClub }) {
   const { colors, radius } = themeConfig;
@@ -37,12 +37,14 @@ export default function ClubModeratorView() {
   const { colors, radius } = themeConfig;
   const { user, isAdmin, status: authStatus } = useAuth();
   const [clubId, setClubId] = useState(null);
-  const [tab, setTab] = useState('members');
+  const [tab, setTab] = useState('requests');
+  const [requests, setRequests] = useState([]);
+  const [actionError, setActionError] = useState('');
   const [members, setMembers] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const { data: clubs } = useSupabaseTable('clubs', { select: CLUB_COLUMNS, orderBy: 'name' });
+  const { data: clubs } = useSupabaseTable('clubs', { select: CLUB_COLUMNS, filters: { status: 'approved' }, orderBy: 'name' });
   const { data: moderated, status: modStatus } = useSupabaseTable('club_moderators', {
     select: 'club_id',
     filters: user ? { user_id: user.id } : undefined,
@@ -55,10 +57,16 @@ export default function ClubModeratorView() {
   const load = useCallback(async () => {
     if (!active) return;
     setLoading(true);
-    const [m, l] = await Promise.all([
+    const [m, l, r] = await Promise.all([
       supabase.from('club_memberships').select('user_id, joined_at').eq('club_id', active),
       supabase.from('club_audit_logs').select('*').eq('club_id', active).order('created_at', { ascending: false }).limit(200),
+      supabase.from('club_join_requests').select('id, user_id, message, created_at').eq('club_id', active).eq('status', 'pending').order('created_at'),
     ]);
+    const reqRows = r.data ?? [];
+    const reqProfiles = reqRows.length
+      ? (await supabase.from('profiles').select('user_id, display_name, username, email').in('user_id', reqRows.map((x) => x.user_id))).data ?? []
+      : [];
+    setRequests(reqRows.map((x) => ({ ...x, profile: reqProfiles.find((p) => p.user_id === x.user_id) })));
     const ids = (m.data ?? []).map((r) => r.user_id);
     const profiles = ids.length
       ? (await supabase.from('profiles').select('user_id, display_name, avatar_url, email').in('user_id', ids)).data ?? []
@@ -71,6 +79,14 @@ export default function ClubModeratorView() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const review = async (request, approve) => {
+    setActionError('');
+    const { data, error } = await supabase.rpc('review_join_request', { p_request_id: request.id, p_approve: approve });
+    if (error) setActionError(error.message);
+    else if (data !== 'OK') setActionError(JOIN_MESSAGES[data] ?? String(data));
+    load();
+  };
 
   const removeMember = async (p) => {
     const name = p.display_name || p.email || 'this member';
@@ -107,7 +123,7 @@ export default function ClubModeratorView() {
         ))}
       </div>
       <div className="flex gap-2">
-        {[['members', `Members (${members.length})`], ['logs', `Activity (${logs.length})`]].map(([id, label]) => (
+        {[['requests', `Requests (${requests.length})`], ['members', `Members (${members.length})`], ['logs', `Activity (${logs.length})`]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={`text-xs font-semibold px-3 py-1.5 ${radius.full} ${tab === id ? colors.accentSoftBg : ''} ${colors.textWhite}`}>
             {label}
@@ -117,6 +133,26 @@ export default function ClubModeratorView() {
 
       {loading ? (
         <p className={`text-xs ${colors.textFaint}`}>Loading…</p>
+      ) : tab === 'requests' ? (
+        <div className="space-y-3">
+          {actionError && <p className={`text-xs ${colors.error}`}>{actionError}</p>}
+          {requests.length === 0 && <p className={`text-xs ${colors.textFaint}`}>No pending requests.</p>}
+          {requests.map((r) => (
+            <div key={r.id} className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-4 space-y-2`}>
+              <div>
+                <p className={`text-sm font-semibold ${colors.textWhite}`}>
+                  {r.profile?.display_name || 'Unnamed'} {r.profile?.username && <span className={`font-normal ${colors.accent}`}>@{r.profile.username}</span>}
+                </p>
+                <p className={`text-xs ${colors.textFaint}`}>{r.profile?.email} · {fmtDateTime(r.created_at)}</p>
+              </div>
+              {r.message && <p className={`text-xs ${colors.textMuted}`}>"{r.message}"</p>}
+              <div className="flex gap-2">
+                <button onClick={() => review(r, true)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.accentBg} ${colors.accentOn}`}>Approve</button>
+                <button onClick={() => review(r, false)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${colors.borderStrong} ${colors.error}`}>Decline</button>
+              </div>
+            </div>
+          ))}
+        </div>
       ) : tab === 'members' ? (
         members.length ? (
           <ul className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} divide-y divide-md3-outlineVariant`}>

@@ -14,6 +14,13 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
+// Local calendar date (YYYY-MM-DD) — events dated today still count as upcoming.
+function todayLocalISO() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 function matches(query, ...fields) {
   return fields.some((field) => field?.toLowerCase().includes(query));
 }
@@ -23,9 +30,14 @@ export default function MainFeedView() {
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
-  const { data: events, status: eventsStatus } = useSupabaseTable('events', {
+  // Only approved events (admins and organizers can also *read* their pending
+  // ones under RLS, which must not leak into the public feed) and only ones
+  // that haven't happened yet.
+  const { data: allEvents, status: eventsStatus } = useSupabaseTable('events', {
+    filters: { status: 'approved' },
     orderBy: 'event_date',
   });
+  const events = useMemo(() => allEvents.filter((e) => e.event_date >= todayLocalISO()), [allEvents]);
   // Fetches every approved gig, not just featured ones — search needs the
   // full set to search against; the normal (non-searching) Feed view just
   // filters this down to featured=true client-side, so it's one query
@@ -54,7 +66,8 @@ export default function MainFeedView() {
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    logUserAction('SEARCH_SUBMIT', { query: searchQuery.trim() });
+    // Length only — never log what teens type into search (see TelemetryLog note).
+    logUserAction('SEARCH_SUBMIT', { queryLength: searchQuery.trim().length });
   };
 
   return (
@@ -104,7 +117,7 @@ export default function MainFeedView() {
               size={16}
               className={isSearching ? colors.textFaint : colors.warning}
             />
-            {isSearching ? `Events matching "${searchQuery.trim()}"` : 'Trending Events'}
+            {isSearching ? `Events matching "${searchQuery.trim()}"` : 'Upcoming Events'}
           </h3>
 
           {eventsStatus === 'loading' && (
@@ -115,7 +128,7 @@ export default function MainFeedView() {
           )}
           {eventsStatus === 'ready' && visibleEvents.length === 0 && (
             <p className={`text-xs ${colors.textFaint}`}>
-              {isSearching ? 'No matching events.' : 'No events posted yet — check back soon.'}
+              {isSearching ? 'No matching events.' : 'No upcoming events yet — be the first to create one.'}
             </p>
           )}
 
@@ -136,7 +149,9 @@ export default function MainFeedView() {
                     <h4 className={`text-lg font-bold ${colors.textWhite} mt-2`}>{event.title}</h4>
                     <p className={`text-xs ${colors.textMuted} mt-0.5`}>By {event.organizer}</p>
                   </div>
-                  <span className={`text-[10px] ${colors.textFaint}`}>{event.spots} spots left</span>
+                  {!event.capacity_hidden && (
+                    <span className={`text-[10px] ${colors.textFaint}`}>{event.spots} spots left</span>
+                  )}
                 </div>
                 <div
                   className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} pt-3 border-t ${colors.border}`}
@@ -157,7 +172,7 @@ export default function MainFeedView() {
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
             <Icon name="work" size={16} className={colors.secondary} />
-            {isSearching ? 'Matching Gigs' : 'Top Recruitment Calls'}
+            {isSearching ? 'Matching Gigs' : 'Featured Recruitment Calls'}
           </h3>
 
           {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}

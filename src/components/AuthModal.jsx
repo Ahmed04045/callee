@@ -11,9 +11,9 @@ import Icon from './Icon';
 
 export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
   const { colors, radius, spacing, font, brand } = themeConfig;
-  const { signIn, signUp, error } = useAuth();
+  const { signIn, signUp, signInWithGoogle, resetPassword, error } = useAuth();
 
-  const [mode, setMode] = useState(initialMode); // 'signIn' | 'signUp'
+  const [mode, setMode] = useState(initialMode); // 'signIn' | 'signUp' | 'reset'
   const [accountType, setAccountType] = useState('personal'); // 'personal' | 'business' — signUp only
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -41,6 +41,13 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
     setIsSubmitting(true);
     setNotice(null);
     logUserAction('AUTH_SUBMIT', { mode, accountType: mode === 'signUp' ? accountType : undefined });
+
+    if (mode === 'reset') {
+      const { error: resetError } = await resetPassword(email);
+      setIsSubmitting(false);
+      if (!resetError) setNotice('If that email has an account, a reset link is on its way.');
+      return;
+    }
 
     const { error: actionError } =
       mode === 'signIn' ? await signIn(email, password) : await signUp(email, password, accountType);
@@ -89,7 +96,9 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
           <h2 id="auth-modal-title" className={`text-lg ${font.heading} ${colors.textWhite} mt-3`}>
             {mode === 'signIn'
               ? `Sign in to ${brand.name}`
-              : `Create your ${accountType === 'business' ? 'business ' : ''}${brand.name} account`}
+              : mode === 'reset'
+                ? 'Reset your password'
+                : `Create your ${accountType === 'business' ? 'business ' : ''}${brand.name} account`}
           </h2>
           {mode === 'signUp' && (
             <button
@@ -123,6 +132,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             </div>
           </label>
 
+          {mode !== 'reset' && (
           <label className="block text-left">
             <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Password</span>
             <div className="relative mt-1">
@@ -143,6 +153,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
               />
             </div>
           </label>
+          )}
 
           <button
             type="submit"
@@ -152,18 +163,54 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             {isSubmitting && (
               <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
             )}
-            {mode === 'signIn' ? 'Sign in' : 'Create account'}
+            {mode === 'signIn' ? 'Sign in' : mode === 'reset' ? 'Send reset link' : 'Create account'}
           </button>
         </form>
+
+        {mode !== 'reset' && (
+          <>
+            <div className={`flex items-center gap-3 my-4 text-[11px] ${colors.textFaint}`}>
+              <span className={`h-px flex-1 ${colors.bgPill}`} /> or <span className={`h-px flex-1 ${colors.bgPill}`} />
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                logUserAction('AUTH_GOOGLE', { mode });
+                signInWithGoogle(mode === 'signUp' ? accountType : undefined);
+              }}
+              className={`w-full flex items-center justify-center gap-2 ${radius.md} py-2.5 text-sm font-bold ${colors.textWhite} border ${colors.borderStrong} ${colors.bgHoverInset} transition`}
+            >
+              <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.4-.4-3.5z"/>
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
+                <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
+              </svg>
+              Continue with Google
+            </button>
+          </>
+        )}
 
         {error && <p className={`mt-3 text-xs ${colors.error} text-center`}>{error}</p>}
         {notice && <p className={`mt-3 text-xs ${colors.success} text-center`}>{notice}</p>}
 
+        {mode === 'signIn' && (
+          <button
+            onClick={() => { setMode('reset'); setNotice(null); }}
+            className={`mt-4 w-full text-center text-[11px] ${colors.textFaint} ${colors.textHoverStrong} transition`}
+          >
+            Forgot your password?
+          </button>
+        )}
         <button
-          onClick={toggleMode}
-          className={`mt-5 w-full text-center text-xs ${colors.textFaint} ${colors.textHoverStrong} transition`}
+          onClick={() => (mode === 'reset' ? setMode('signIn') : toggleMode())}
+          className={`mt-3 w-full text-center text-xs ${colors.textFaint} ${colors.textHoverStrong} transition`}
         >
-          {mode === 'signIn' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+          {mode === 'signIn'
+            ? "Don't have an account? Sign up"
+            : mode === 'reset'
+              ? 'Back to sign in'
+              : 'Already have an account? Sign in'}
         </button>
       </div>
     </div>

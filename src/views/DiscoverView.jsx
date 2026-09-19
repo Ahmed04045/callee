@@ -14,9 +14,13 @@ export default function DiscoverView() {
   const { colors, radius } = themeConfig;
   const navigate = useNavigate();
 
-  const { data: events, status: eventsStatus } = useSupabaseTable('events', {
+  // Approved + upcoming only (pending events are readable by admins/organizers under RLS).
+  const { data: allEvents, status: eventsStatus } = useSupabaseTable('events', {
+    filters: { status: 'approved' },
     orderBy: 'event_date',
   });
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
+  const events = allEvents.filter((e) => e.event_date >= today);
 
   const handlePinClick = (event) => {
     logUserAction('MAP_PIN_CLICK', { eventId: event.id, title: event.title });
@@ -51,7 +55,7 @@ export default function DiscoverView() {
                 disableDefaultUI={true}
               >
                 {events.map((event) => {
-                  if (!event.lat || !event.lng) return null;
+                  if (event.lat == null || event.lng == null) return null;
                   return (
                     <AdvancedMarker
                       key={event.id}
@@ -81,7 +85,7 @@ export default function DiscoverView() {
         <div className="space-y-4">
           <div className={`border-b ${colors.border} pb-3`}>
             <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>
-              Nearby You
+              Upcoming Events
             </h3>
           </div>
 
@@ -92,7 +96,7 @@ export default function DiscoverView() {
             <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>
           )}
           {eventsStatus === 'ready' && events.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No nearby events posted yet.</p>
+            <p className={`text-xs ${colors.textFaint}`}>No upcoming events yet.</p>
           )}
 
           {events.map((event) => (

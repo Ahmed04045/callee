@@ -1,23 +1,62 @@
 // src/views/ClubsView.jsx
 //
-// Circosodal: browse university clubs. Public read; joining needs an account.
+// Circosodal: browse university clubs. All clubs are private — you request
+// to join and a moderator approves. The page is scoped to one university:
+// your profile's university if you've set one, otherwise you're asked which
+// university you attend (remembered on this device, and offered to save to
+// your profile).
 
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
+import { useProfile } from '../context/ProfileContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { CLUB_COLUMNS, MAX_CLUBS } from '../lib/clubUtil';
+import { CLUB_UNIVERSITIES } from '../lib/education';
 import ClubCard from '../components/ClubCard';
 import Icon from '../components/Icon';
+
+const STORAGE_KEY = 'clubs.university';
+
+function readStoredUniversity() {
+  try {
+    const value = localStorage.getItem(STORAGE_KEY);
+    return CLUB_UNIVERSITIES.includes(value) ? value : '';
+  } catch {
+    return '';
+  }
+}
 
 export default function ClubsView() {
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
+  const { profile, saveProfile } = useProfile();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
+  const [picked, setPicked] = useState(readStoredUniversity);
+  const [saved, setSaved] = useState(false);
 
-  const { data: clubs, status } = useSupabaseTable('clubs', { select: CLUB_COLUMNS, orderBy: 'name' });
+  const profileUniversity = CLUB_UNIVERSITIES.includes(profile?.university) ? profile.university : '';
+  const university = profileUniversity || picked;
+
+  const chooseUniversity = (value) => {
+    setPicked(value);
+    setSaved(false);
+    setCategory('All');
+    try {
+      localStorage.setItem(STORAGE_KEY, value);
+    } catch {
+      /* private mode — just don't remember it */
+    }
+  };
+
+  const { data: clubs, status } = useSupabaseTable('clubs', {
+    select: CLUB_COLUMNS,
+    filters: { status: 'approved', university },
+    orderBy: 'name',
+    enabled: Boolean(university),
+  });
   const { data: memberships } = useSupabaseTable('club_memberships', {
     select: 'club_id',
     filters: user ? { user_id: user.id } : undefined,
@@ -34,13 +73,20 @@ export default function ClubsView() {
     );
   });
 
+  const saveToProfile = async () => {
+    const { error } = await saveProfile({ university: picked });
+    if (!error) setSaved(true);
+  };
+
+  const selectClass = `w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary`;
+
   return (
     <div className="space-y-6 w-full">
       <div className={`border-b ${colors.border} pb-3 flex items-end justify-between gap-4`}>
         <div>
-          <h2 className={`text-xl font-bold ${colors.textWhite}`}>University Clubs</h2>
+          <h2 className={`text-xl font-bold ${colors.textWhite}`}>Clubs</h2>
           <p className={`text-xs ${colors.textFaint} mt-1`}>
-            {clubs.length} clubs at UDST. Join up to {MAX_CLUBS} to unlock their WhatsApp and Discord communities.
+            Clubs are private: request to join and a moderator approves you. Up to {MAX_CLUBS} clubs.
           </p>
         </div>
         {user && (
@@ -50,43 +96,78 @@ export default function ClubsView() {
         )}
       </div>
 
-      <div className="relative">
-        <Icon name="search" size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by club name or interests..."
-          className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} pl-10 pr-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
-        />
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {categories.map((c) => (
-          <button
-            key={c}
-            onClick={() => setCategory(c)}
-            className={`text-xs font-medium whitespace-nowrap px-3.5 py-1.5 ${radius.full} border transition ${
-              category === c ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.border} ${colors.textMuted}`
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
-      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading clubs…</p>}
-      {status === 'error' && (
-        <p className={`text-xs ${colors.error}`}>Couldn't load clubs. Has 009_clubs.sql been run?</p>
-      )}
-      {status === 'ready' && shown.length === 0 && (
-        <p className={`text-xs ${colors.textFaint}`}>No clubs match that search.</p>
+      {profileUniversity ? (
+        <div className={`flex items-center gap-2 text-xs ${colors.textMuted}`}>
+          <Icon name="school" size={15} /> Showing clubs at <b className={colors.textWhite}>{profileUniversity}</b>
+          <Link to="/profile" className={colors.accent}>Change</Link>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <label className={`block text-xs font-semibold ${colors.textFaint}`}>Which university do you attend?</label>
+          <select className={selectClass} value={picked} onChange={(e) => chooseUniversity(e.target.value)}>
+            <option value="">Select your university…</option>
+            {CLUB_UNIVERSITIES.map((u) => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
+          {user && picked && !saved && (
+            <button onClick={saveToProfile} className={`text-xs font-semibold ${colors.accent}`}>Save as my university</button>
+          )}
+          {saved && <p className={`text-xs ${colors.success}`}>Saved to your profile.</p>}
+        </div>
       )}
 
-      <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        {shown.map((c) => (
-          <ClubCard key={c.id} club={c} joined={joinedIds.has(c.id)} />
-        ))}
-      </div>
+      {!university && <p className={`text-sm ${colors.textFaint}`}>Pick your university to see its clubs.</p>}
+
+      {university && (
+        <>
+          <div className="relative">
+            <Icon name="search" size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by club name or interests..."
+              className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} pl-10 pr-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
+            />
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {categories.map((c) => (
+              <button
+                key={c}
+                onClick={() => setCategory(c)}
+                className={`text-xs font-medium whitespace-nowrap px-3.5 py-1.5 ${radius.full} border transition ${
+                  category === c ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.border} ${colors.textMuted}`
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading clubs…</p>}
+          {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load clubs. Has 010_private_clubs_usernames.sql been run?</p>}
+          {status === 'ready' && clubs.length === 0 && (
+            <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 text-center space-y-2`}>
+              <p className={`text-sm font-semibold ${colors.textWhite}`}>No clubs at this university yet</p>
+              {user ? (
+                <Link to="/create?type=group" className={`text-xs font-semibold ${colors.accent}`}>Create the first group</Link>
+              ) : (
+                <p className={`text-xs ${colors.textFaint}`}>Sign in to create the first group.</p>
+              )}
+            </div>
+          )}
+          {status === 'ready' && clubs.length > 0 && shown.length === 0 && (
+            <p className={`text-xs ${colors.textFaint}`}>No clubs match that search.</p>
+          )}
+
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {shown.map((c) => (
+              <ClubCard key={c.id} club={c} joined={joinedIds.has(c.id)} />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -21,7 +21,7 @@ const STATUS_META = {
 
 function SubmissionRow({ item, kind, colors, radius, onClick }) {
   const meta = STATUS_META[item.status] ?? STATUS_META.pending;
-  const title = kind === 'gig' ? item.role : item.title;
+  const title = kind === 'gig' ? item.role : kind === 'group' ? item.name : item.title;
 
   return (
     <button
@@ -30,11 +30,11 @@ function SubmissionRow({ item, kind, colors, radius, onClick }) {
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <Icon name={kind === 'gig' ? 'work' : 'event'} size={14} className={colors.textFaint} />
+          <Icon name={kind === 'gig' ? 'work' : kind === 'group' ? 'groups' : 'event'} size={14} className={colors.textFaint} />
           <p className={`text-sm font-bold ${colors.textWhite} truncate`}>{title}</p>
         </div>
         <p className={`text-[11px] ${colors.textFaint} mt-0.5`}>
-          {kind === 'gig' ? 'Gig / Opportunity' : 'Event'}
+          {kind === 'gig' ? 'Gig / Opportunity' : kind === 'group' ? 'Group' : 'Event'}
         </p>
       </div>
       <span
@@ -64,9 +64,18 @@ export default function MySubmissionsView() {
     enabled: Boolean(user),
   });
 
-  const isLoading = gigsStatus === 'loading' || eventsStatus === 'loading';
+  const { data: myGroups, status: groupsStatus } = useSupabaseTable('clubs', {
+    select: 'id,name,status',
+    filters: user ? { owner_user_id: user.id } : undefined,
+    orderBy: 'created_at',
+    ascending: false,
+    enabled: Boolean(user),
+  });
+
+  const isLoading = gigsStatus === 'loading' || eventsStatus === 'loading' || groupsStatus === 'loading';
   const isEmpty =
-    gigsStatus === 'ready' && eventsStatus === 'ready' && myGigs.length === 0 && myEvents.length === 0;
+    gigsStatus === 'ready' && eventsStatus === 'ready' && groupsStatus !== 'loading' &&
+    myGigs.length === 0 && myEvents.length === 0 && myGroups.length === 0;
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -83,7 +92,7 @@ export default function MySubmissionsView() {
         </div>
       )}
 
-      {!isLoading && (myGigs.length > 0 || myEvents.length > 0) && (
+      {!isLoading && (myGigs.length > 0 || myEvents.length > 0 || myGroups.length > 0) && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} overflow-hidden divide-y ${colors.border}`}>
           {myGigs.map((gig) => (
             <SubmissionRow
@@ -93,6 +102,16 @@ export default function MySubmissionsView() {
               colors={colors}
               radius={radius}
               onClick={() => navigate(`/gigs/${gig.id}`)}
+            />
+          ))}
+          {myGroups.map((group) => (
+            <SubmissionRow
+              key={`group-${group.id}`}
+              item={group}
+              kind="group"
+              colors={colors}
+              radius={radius}
+              onClick={() => navigate(`/clubs/${group.id}`)}
             />
           ))}
           {myEvents.map((event) => (

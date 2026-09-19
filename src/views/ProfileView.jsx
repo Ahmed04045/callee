@@ -17,32 +17,12 @@ import { useProfile } from '../context/ProfileContext';
 import { logUserAction } from '../components/TelemetryLog';
 import { uploadImage, fileExtension } from '../lib/imageUpload';
 import Icon from '../components/Icon';
+import { EDUCATION_OPTIONS } from '../lib/education';
+import { USERNAME_PATTERN, isUsernameAvailable, normalizeUsername } from '../lib/username';
 
 const BIO_MAX = 200;
 const todayISO = new Date().toISOString().split('T')[0];
 
-// Not exhaustive, but covers the accredited universities operating in
-// Qatar plus a High School option for younger users. "Other" reveals a
-// free-text field rather than just storing the literal word "Other" —
-// keeps the data actually useful if someone's school isn't listed.
-const EDUCATION_OPTIONS = [
-  'High School',
-  'Qatar University',
-  'Hamad Bin Khalifa University (HBKU)',
-  'University of Doha for Science and Technology (UDST)',
-  'Carnegie Mellon University in Qatar',
-  'Georgetown University in Qatar',
-  'Northwestern University in Qatar',
-  'Texas A&M University at Qatar',
-  'VCUarts Qatar',
-  'Weill Cornell Medicine - Qatar',
-  'HEC Paris in Qatar',
-  'Community College of Qatar',
-  'University of Calgary in Qatar',
-  'Al Rayyan International University',
-  'Lusail University',
-  'Doha Institute for Graduate Studies',
-];
 
 export default function ProfileView() {
   const { colors, radius, font } = themeConfig;
@@ -57,6 +37,10 @@ export default function ProfileView() {
   const [education, setEducation] = useState('');
   const [educationOther, setEducationOther] = useState('');
   const [discoverable, setDiscoverable] = useState(false);
+  const [username, setUsername] = useState('');
+  const [usernameState, setUsernameState] = useState('idle'); // idle | checking | ok | taken | invalid
+  const [isPublic, setIsPublic] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -69,6 +53,8 @@ export default function ProfileView() {
       setDateOfBirth(profile.date_of_birth ?? '');
       setBio(profile.bio ?? '');
       setDiscoverable(Boolean(profile.discoverable));
+      setUsername(profile.username ?? '');
+      setIsPublic(profile.is_public !== false);
 
       const storedUniversity = profile.university ?? '';
       if (storedUniversity && EDUCATION_OPTIONS.includes(storedUniversity)) {
@@ -83,6 +69,28 @@ export default function ProfileView() {
       }
     }
   }, [profile]);
+
+  // Live availability check when the username is edited (skipped for the current one).
+  useEffect(() => {
+    if (!profile || username === (profile.username ?? '')) {
+      setUsernameState('idle');
+      return undefined;
+    }
+    if (!USERNAME_PATTERN.test(username)) {
+      setUsernameState('invalid');
+      return undefined;
+    }
+    setUsernameState('checking');
+    let active = true;
+    const timer = setTimeout(async () => {
+      const ok = await isUsernameAvailable(username);
+      if (active) setUsernameState(ok ? 'ok' : 'taken');
+    }, 350);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [username, profile]);
 
   if (isLoadingSession) {
     return <p className={`text-sm ${colors.textFaint}`}>Checking your session…</p>;
@@ -122,6 +130,12 @@ export default function ProfileView() {
     setNotice(null);
     logUserAction('PROFILE_SAVE_SUBMIT', {});
 
+    if (usernameState === 'taken' || usernameState === 'invalid') {
+      setNotice(null);
+      setIsSaving(false);
+      return;
+    }
+
     const universityToSave =
       education === 'Other' ? educationOther.trim() || null : education || null;
 
@@ -131,6 +145,8 @@ export default function ProfileView() {
       bio: bio.trim() || null,
       university: universityToSave,
       discoverable,
+      username: username || null,
+      is_public: isPublic,
     });
 
     setIsSaving(false);
@@ -138,6 +154,27 @@ export default function ProfileView() {
   };
 
   const heading = displayName.trim() || user.email;
+  const profileUrl = profile?.username ? `${window.location.origin}/u/${profile.username}` : null;
+  const shareProfile = async () => {
+    if (!profileUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `@${profile.username}`, url: profileUrl });
+        return;
+      } catch {
+        /* cancelled — fall back to copy */
+      }
+    }
+    await navigator.clipboard?.writeText(profileUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  const usernameHint = {
+    checking: ['Checking…', colors.textFaint],
+    ok: ['Available', colors.success],
+    taken: ['That username is taken', colors.error],
+    invalid: ['3–20 characters: letters, numbers, underscore', colors.error],
+  }[usernameState];
 
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
@@ -180,9 +217,19 @@ export default function ProfileView() {
 
         <div>
           <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{heading}</h3>
+          {profile?.username && <p className={`text-sm ${colors.accent}`}>@{profile.username}</p>}
           <p className={`text-xs ${colors.textFaint}`}>
             {displayName.trim() ? user.email : 'Signed in'}
           </p>
+          {profileUrl && (
+            <button
+              type="button"
+              onClick={shareProfile}
+              className={`mt-2 inline-flex items-center gap-1.5 text-xs font-semibold ${colors.accent}`}
+            >
+              <Icon name={copied ? 'check' : 'share'} size={14} /> {copied ? 'Link copied' : 'Share my profile'}
+            </button>
+          )}
         </div>
 
         <button
@@ -208,6 +255,22 @@ export default function ProfileView() {
         <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
           <Icon name="edit" size={16} /> Edit Profile
         </h2>
+
+        <label className="block text-left">
+          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Username</span>
+          <div className="relative mt-1">
+            <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${colors.textFaint}`}>@</span>
+            <input
+              type="text"
+              maxLength={20}
+              value={username}
+              onChange={(e) => setUsername(normalizeUsername(e.target.value))}
+              placeholder="username"
+              className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-7 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+            />
+          </div>
+          {usernameHint && <span className={`block mt-1 text-[11px] ${usernameHint[1]}`}>{usernameHint[0]}</span>}
+        </label>
 
         <label className="block text-left">
           <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Name</span>
@@ -279,6 +342,18 @@ export default function ProfileView() {
             onChange={(e) => setBio(e.target.value)}
             placeholder="A little about you…"
             className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition} resize-none`}
+          />
+        </label>
+
+        <label
+          className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
+        >
+          <span className={`text-xs ${colors.textMuted}`}>Anyone with my profile link can view it</span>
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
+            className="accent-md3-primary"
           />
         </label>
 

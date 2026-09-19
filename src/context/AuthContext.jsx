@@ -19,7 +19,10 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(false);
+  // adminChecked flips true once is_admin() has answered for the CURRENT user.
+  // "Not checked yet" must never be treated as "not an admin" — that race is
+  // what used to bounce real admins off /admin on a direct page load.
+  const [adminChecked, setAdminChecked] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,15 +55,15 @@ export function AuthProvider({ children }) {
 
     if (!userId) {
       setIsAdmin(false);
-      setIsAdminLoading(false);
+      setAdminChecked(true);
       return;
     }
 
-    setIsAdminLoading(true);
+    setAdminChecked(false);
     supabase.rpc('is_admin').then(({ data, error: rpcError }) => {
       if (!isMounted) return;
       setIsAdmin(!rpcError && data === true);
-      setIsAdminLoading(false);
+      setAdminChecked(true);
     });
 
     return () => {
@@ -97,6 +100,31 @@ export function AuthProvider({ children }) {
     return { error: signInError };
   }, []);
 
+  const signInWithGoogle = useCallback(async (accountType) => {
+    setError(null);
+    // accountType (only set for "sign up as a business") rides along on the
+    // redirect, same trick as email sign-up; App.jsx applies it on return.
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: accountType
+          ? `${window.location.origin}/?accountType=${accountType}`
+          : window.location.origin,
+      },
+    });
+    if (oauthError) setError(oauthError.message);
+    return { error: oauthError };
+  }, []);
+
+  const resetPassword = useCallback(async (email) => {
+    setError(null);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin,
+    });
+    if (resetError) setError(resetError.message);
+    return { error: resetError };
+  }, []);
+
   const signOut = useCallback(async () => {
     await supabase.auth.signOut();
   }, []);
@@ -112,6 +140,9 @@ export function AuthProvider({ children }) {
     return { error: updateError };
   }, []);
 
+  // True from app start until we know for sure whether this user is an admin.
+  const isAdminLoading = status === 'loading' || (Boolean(session) && !adminChecked);
+
   const value = useMemo(
     () => ({
       status,
@@ -122,10 +153,12 @@ export function AuthProvider({ children }) {
       isAdminLoading,
       signIn,
       signUp,
+      signInWithGoogle,
+      resetPassword,
       signOut,
       updatePassword,
     }),
-    [status, session, error, isAdmin, isAdminLoading, signIn, signUp, signOut, updatePassword]
+    [status, session, error, isAdmin, isAdminLoading, signIn, signUp, signInWithGoogle, resetPassword, signOut, updatePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
