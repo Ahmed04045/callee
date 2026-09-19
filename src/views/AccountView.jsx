@@ -5,9 +5,11 @@
 // is just account credentials (email + password). Reached via the Account
 // row in the Settings menu, only shown there when signed in.
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
@@ -15,6 +17,34 @@ import Icon from '../components/Icon';
 export default function AccountView() {
   const { colors, radius } = themeConfig;
   const { user, updatePassword, error } = useAuth();
+
+  const [discordLink, setDiscordLink] = useState(null);
+  const [discordStatus, setDiscordStatus] = useState('loading');
+
+  useEffect(() => {
+    if (!user) return;
+    let isMounted = true;
+    supabase
+      .from('discord_links')
+      .select('discord_username, linked_at')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (isMounted) {
+          setDiscordLink(data);
+          setDiscordStatus('ready');
+        }
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
+
+  const handleUnlinkDiscord = async () => {
+    logUserAction('DISCORD_UNLINK', {});
+    await supabase.from('discord_links').delete().eq('user_id', user.id);
+    setDiscordLink(null);
+  };
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -52,6 +82,36 @@ export default function AccountView() {
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-1`}>
           <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Email</span>
           <p className={`text-sm ${colors.textWhite} break-all`}>{user?.email}</p>
+        </div>
+
+        <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-3`}>
+          <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
+            <Icon name="forum" size={16} /> Discord
+          </h2>
+          {discordStatus === 'loading' && (
+            <p className={`text-xs ${colors.textFaint}`}>Checking…</p>
+          )}
+          {discordStatus === 'ready' && discordLink && (
+            <div className="flex items-center justify-between">
+              <p className={`text-xs ${colors.textMuted}`}>
+                Connected as <span className={colors.textWhite}>{discordLink.discord_username}</span>
+              </p>
+              <button
+                onClick={handleUnlinkDiscord}
+                className={`text-[11px] font-semibold ${colors.error}`}
+              >
+                Unlink
+              </button>
+            </div>
+          )}
+          {discordStatus === 'ready' && !discordLink && (
+            <Link
+              to="/connect-discord"
+              className={`inline-flex items-center gap-1.5 text-xs font-bold ${colors.accent}`}
+            >
+              Connect your Discord account <Icon name="arrow_forward" size={13} />
+            </Link>
+          )}
         </div>
 
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-4`}>

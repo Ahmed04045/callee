@@ -56,6 +56,7 @@ export default function ProfileView() {
   const [bio, setBio] = useState('');
   const [education, setEducation] = useState('');
   const [educationOther, setEducationOther] = useState('');
+  const [discoverable, setDiscoverable] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -67,6 +68,7 @@ export default function ProfileView() {
       setDisplayName(profile.display_name ?? '');
       setDateOfBirth(profile.date_of_birth ?? '');
       setBio(profile.bio ?? '');
+      setDiscoverable(Boolean(profile.discoverable));
 
       const storedUniversity = profile.university ?? '';
       if (storedUniversity && EDUCATION_OPTIONS.includes(storedUniversity)) {
@@ -128,6 +130,7 @@ export default function ProfileView() {
       date_of_birth: dateOfBirth || null,
       bio: bio.trim() || null,
       university: universityToSave,
+      discoverable,
     });
 
     setIsSaving(false);
@@ -278,6 +281,24 @@ export default function ProfileView() {
             className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition} resize-none`}
           />
         </label>
+
+        <label
+          className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
+        >
+          <span className={`text-xs ${colors.textMuted}`}>
+            Discoverable via <span className={colors.accent}>/search</span> on Discord
+          </span>
+          <input
+            type="checkbox"
+            checked={discoverable}
+            onChange={(e) => setDiscoverable(e.target.checked)}
+            className="accent-md3-primary"
+          />
+        </label>
+        <p className={`text-[10px] ${colors.textDim} -mt-2`}>
+          Off by default. When on, your name, school, and bio are findable by anyone using the
+          Discord bot.
+        </p>
 
         {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
         {notice && <p className={`text-xs ${colors.success}`}>{notice}</p>}

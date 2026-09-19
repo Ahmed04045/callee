@@ -16,6 +16,7 @@ export const NAV_ITEMS = [
   { id: 'main', label: 'Feed', path: '/', iconType: 'material', iconSource: 'home' },
   { id: 'recruit', label: 'Recruit', path: '/recruit', iconType: 'material', iconSource: 'work' },
   { id: 'discover', label: 'Discover', path: '/discover', iconType: 'material', iconSource: 'explore' },
+  { id: 'clubs', label: 'Clubs', path: '/clubs', iconType: 'material', iconSource: 'groups' },
 ];
 
 function NavGlyph({ item, active, size = 22 }) {

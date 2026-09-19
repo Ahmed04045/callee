@@ -28,6 +28,11 @@ import GigDetailView from './views/GigDetailView';
 import EventDetailView from './views/EventDetailView';
 import CreateView from './views/CreateView';
 import MySubmissionsView from './views/MySubmissionsView';
+import ClubsView from './views/ClubsView';
+import ClubDetailView from './views/ClubDetailView';
+import ClubModeratorView from './views/ClubModeratorView';
+import AdminClubsView from './views/AdminClubsView';
+import ConnectDiscordView from './views/ConnectDiscordView';
 
 const ONBOARDING_PATH = '/onboarding/account-type';
 
@@ -78,7 +83,7 @@ const ADMIN_PATH = '/admin';
 // SubPageHeader's own back button is the only way to navigate. Onboarding
 // is included for the same visual effect even though it's a different
 // kind of full-screen page (a forced interstitial, not a drill-down).
-const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', '/my-submissions', ONBOARDING_PATH];
+const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', '/my-submissions', '/connect-discord', ONBOARDING_PATH];
 
 function renderView(tabId, handlers) {
   switch (tabId) {
@@ -88,6 +93,8 @@ function renderView(tabId, handlers) {
       return <RecruitView onOpenAuthModal={handlers.openAuthModal} />;
     case 'discover':
       return <DiscoverView />;
+    case 'clubs':
+      return <ClubsView />;
     case 'announcements':
       return <AnnouncementsView />;
     case 'profile':
@@ -132,7 +139,11 @@ function AppShell() {
   const location = useLocation();
 
   const isAuthenticated = status === 'authenticated';
-  const isImmersive = IMMERSIVE_PATHS.includes(location.pathname);
+  // Club detail / moderator / club-admin pages bring their own SubPageHeader.
+  const isImmersive =
+    IMMERSIVE_PATHS.includes(location.pathname) ||
+    location.pathname.startsWith('/clubs/') ||
+    location.pathname === '/admin/clubs';
 
   const openAuthModal = (mode = 'signIn') => {
     setAuthModalMode(mode);
@@ -298,6 +309,10 @@ function AppShell() {
             <Route path={PROFILE_NAV_ITEM.path} element={renderView('profile', handlers)} />
             <Route path={SETTINGS_NAV_ITEM.path} element={renderView('settings', handlers)} />
             <Route path={ADMIN_PATH} element={renderView('admin', handlers)} />
+            <Route path="/clubs/moderator" element={<ClubModeratorView />} />
+            <Route path="/clubs/:clubId" element={<ClubDetailView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/admin/clubs" element={<AdminClubsView />} />
+            <Route path="/connect-discord" element={<ConnectDiscordView />} />
             <Route path="/about" element={<AboutView />} />
             <Route path="/account" element={<AccountView />} />
             <Route path="/my-submissions" element={<MySubmissionsView />} />
