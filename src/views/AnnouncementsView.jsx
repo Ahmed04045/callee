@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 function formatDate(dateString) {
   if (!dateString) return '';
@@ -27,6 +28,7 @@ function AnnouncementCard({ item }) {
 }
 
 export default function AnnouncementsView() {
+  const { t } = useT();
   const { colors } = themeConfig;
   const { data: announcements, status } = useSupabaseTable('announcements', {
     orderBy: 'published_at',
@@ -45,15 +47,15 @@ export default function AnnouncementsView() {
   return (
     <div className="w-full space-y-8">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>Broadcast Announcements</h2>
+        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Broadcast Announcements')}</h2>
         <p className={`text-xs ${colors.textFaint} mt-1`}>
-          Official platform updates and what's happening in the local youth ecosystem.
+          {t('Official platform updates and what\'s happening in the local youth ecosystem.')}
         </p>
       </div>
 
-      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
+      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>}
       {status === 'error' && (
-        <p className={`text-xs ${colors.error}`}>Couldn't load announcements. Try refreshing.</p>
+        <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load announcements. Try refreshing.')}</p>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -61,10 +63,10 @@ export default function AnnouncementsView() {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Icon name="campaign" size={16} className={colors.accent} /> App System Updates
+            <Icon name="campaign" size={16} className={colors.accent} /> {t('App System Updates')}
           </h3>
           {status === 'ready' && systemUpdates.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No updates yet.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('No updates yet.')}</p>
           )}
           <div className="space-y-4">
             {systemUpdates.map((item) => (
@@ -77,10 +79,10 @@ export default function AnnouncementsView() {
           <h3
             className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
           >
-            <Icon name="newspaper" size={16} className={colors.secondary} /> Local Ecosystem News
+            <Icon name="newspaper" size={16} className={colors.secondary} /> {t('Local Ecosystem News')}
           </h3>
           {status === 'ready' && localNews.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No local news yet.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('No local news yet.')}</p>
           )}
           <div className="space-y-4">
             {localNews.map((item) => (

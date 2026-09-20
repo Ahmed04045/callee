@@ -5,12 +5,14 @@ import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 // Default center set to Doha, Qatar
 const DEFAULT_CENTER = { lat: 25.2854, lng: 51.5310 };
 
 export default function DiscoverView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const navigate = useNavigate();
 
@@ -34,7 +36,7 @@ export default function DiscoverView() {
         <div className="md:col-span-2 space-y-6">
           <div className={`border-b ${colors.border} pb-3 flex items-center gap-2`}>
             <Icon name="map" size={18} className={colors.accent} />
-            <h2 className={`text-lg font-bold ${colors.textWhite}`}>Interactive Discovery</h2>
+            <h2 className={`text-lg font-bold ${colors.textWhite}`}>{t('Interactive Discovery')}</h2>
           </div>
 
           <div
@@ -43,7 +45,7 @@ export default function DiscoverView() {
             {eventsStatus === 'loading' ? (
               <div className="absolute inset-0 flex items-center justify-center">
                 <p className={`text-xs ${colors.textFaint} z-10 uppercase ${colors.bgPill} px-3 py-1.5 ${radius.md} border ${colors.borderStrong}`}>
-                  Loading map & events…
+                  {t('Loading map & events…')}
                 </p>
               </div>
             ) : (
@@ -76,8 +78,7 @@ export default function DiscoverView() {
           </div>
 
           <p className={`text-[11px] ${colors.textDim} leading-relaxed`}>
-            Locations shown are approximate until an event listing is confirmed. Meet at public,
-            organizer-verified venues and let a parent or guardian know your plans.
+            {t('Locations shown are approximate until an event listing is confirmed. Meet at public, organizer-verified venues and let a parent or guardian know your plans.')}
           </p>
         </div>
 
@@ -85,18 +86,18 @@ export default function DiscoverView() {
         <div className="space-y-4">
           <div className={`border-b ${colors.border} pb-3`}>
             <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>
-              Upcoming Events
+              {t('Upcoming Events')}
             </h3>
           </div>
 
           {eventsStatus === 'loading' && (
-            <p className={`text-xs ${colors.textFaint}`}>Loading events…</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Loading events…')}</p>
           )}
           {eventsStatus === 'error' && (
-            <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>
+            <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load events. Try refreshing.')}</p>
           )}
           {eventsStatus === 'ready' && events.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No upcoming events yet.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('No upcoming events yet.')}</p>
           )}
 
           {events.map((event) => (

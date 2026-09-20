@@ -14,10 +14,12 @@ import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
 import { cleanForSave } from '../../lib/questions';
+import { useT } from '../../i18n';
 
 const DETAILS_MIN = 30;
 
 export default function GigForm({ user, postedBy, kind }) {
+  const { t } = useT();
   const { colors } = themeConfig;
   const { input } = useFormStyles();
   const navigate = useNavigate();
@@ -38,9 +40,9 @@ export default function GigForm({ user, postedBy, kind }) {
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!compensation) return setError('Choose the compensation type.');
-    if (tags.length === 0) return setError('Pick at least one tag.');
-    if (!remote && !place) return setError('Choose a location, or mark this as remote.');
+    if (!compensation) return setError(t('Choose the compensation type.'));
+    if (tags.length === 0) return setError(t('Pick at least one tag.'));
+    if (!remote && !place) return setError(t('Choose a location, or mark this as remote.'));
     if (details.trim().length < DETAILS_MIN) return setError(`Details need at least ${DETAILS_MIN} characters.`);
 
     setBusy(true);
@@ -74,42 +76,42 @@ export default function GigForm({ user, postedBy, kind }) {
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Field label={isOpportunity ? 'What are you offering?' : 'Role / title'}>
+      <Field label={isOpportunity ? t('What are you offering?') : t('Role / title')}>
         <input className={input} required maxLength={100} value={role} onChange={(e) => setRole(e.target.value)} />
       </Field>
 
-      <Field label="Compensation">
+      <Field label={t('Compensation')}>
         <ChipPicker options={COMPENSATION_OPTIONS} value={compensation} onChange={setCompensation} />
         {PAID_COMPENSATIONS.includes(compensation) && (
-          <input className={input} maxLength={40} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Amount, e.g. 500 QAR / project (optional)" />
+          <input className={input} maxLength={40} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={t('Amount, e.g. 500 QAR / project (optional)')} />
         )}
       </Field>
 
-      <Field label="Tags" hint={`(up to ${MAX_TAGS})`}>
+      <Field label={t('Tags')} hint={t('(up to {n})', { n: MAX_TAGS })}>
         <ChipPicker multiple max={MAX_TAGS} options={GIG_TAGS} value={tags} onChange={setTags} />
       </Field>
 
-      <Field label="Location">
+      <Field label={t('Location')}>
         <label className={`flex items-center justify-between mt-1 mb-2 text-xs ${colors.textMuted}`}>
-          Remote — no fixed location
+          {t('Remote — no fixed location')}
           <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} className="accent-md3-primary" />
         </label>
         {!remote && <PlacePicker value={place} onChange={setPlace} />}
       </Field>
 
-      <Field label="Application deadline" hint="(optional)">
+      <Field label={t('Application deadline')} hint={t('(optional)')}>
         <input type="date" className={input} min={new Date().toLocaleDateString('en-CA')} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
       </Field>
 
       <Field
-        label="Details"
+        label={t('Details')}
         right={<span className={`text-[10px] ${details.trim().length < DETAILS_MIN ? colors.error : colors.success}`}>{details.trim().length}/{DETAILS_MIN}+</span>}
       >
         <textarea className={`${input} resize-none`} required rows={4} maxLength={500} value={details} onChange={(e) => setDetails(e.target.value)} />
       </Field>
 
-      <Field label="Questions for applicants" hint="(optional)">
-        <QuestionBuilder value={questions} onChange={setQuestions} hint="Ask applicants anything you need to know. You'll see their answers next to each application." />
+      <Field label={t('Questions for applicants')} hint={t('(optional)')}>
+        <QuestionBuilder value={questions} onChange={setQuestions} hint={t('Ask applicants anything you need to know. You\'ll see their answers next to each application.')} />
       </Field>
 
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}

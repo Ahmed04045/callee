@@ -8,8 +8,10 @@ import themeConfig from '../../theme/themeConfig';
 import { useSupabaseTable } from '../../hooks/useSupabaseTable';
 import { supabase } from '../../lib/supabaseClient';
 import { CLUB_COLUMNS } from '../../lib/clubUtil';
+import { useT } from '../../i18n';
 
 export default function AdminModerators() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const [mods, setMods] = useState([]);
   const [invites, setInvites] = useState([]);
@@ -61,8 +63,8 @@ export default function AdminModerators() {
   return (
     <div className="max-w-3xl space-y-5">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>Moderators</h2>
-        <p className={`text-xs ${colors.textFaint} mt-1`}>Moderators approve join requests and manage members for their own clubs.</p>
+        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Moderators')}</h2>
+        <p className={`text-xs ${colors.textFaint} mt-1`}>{t('Moderators approve join requests and manage members for their own clubs.')}</p>
       </div>
       <div className="space-y-3">
         {clubs.map((c) => (
@@ -72,12 +74,12 @@ export default function AdminModerators() {
                 {c.name} <span className={`text-xs font-normal ${colors.textFaint}`}>· {c.member_count} members</span>
               </p>
               <button onClick={() => { setAssignFor(c); setMsg(''); }} className={`text-xs font-semibold ${colors.accent}`}>
-                + Assign moderator
+                {t('+ Assign moderator')}
               </button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {mods.filter((m) => m.club_id === c.id).map((m) => (
-                <button key={m.user_id} onClick={() => remove(c.id, m.user_id)} title="Remove moderator"
+                <button key={m.user_id} onClick={() => remove(c.id, m.user_id)} title={t('Remove moderator')}
                   className={`text-xs ${colors.textMuted} border ${colors.border} ${radius.full} px-3 py-1`}>
                   {nameOf(m.user_id)} ✕
                 </button>
@@ -90,15 +92,15 @@ export default function AdminModerators() {
             </div>
             {assignFor?.id === c.id && (
               <div className="mt-3 space-y-2">
-                <input value={ident} onChange={(e) => setIdent(e.target.value)} placeholder="Student email or user id"
+                <input value={ident} onChange={(e) => setIdent(e.target.value)} placeholder={t('Student email or user id')}
                   className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textWhite} outline-none`} />
                 <div className="flex gap-2 items-center">
-                  <button onClick={assign} className={`${colors.accentBg} ${colors.accentOn} text-xs font-bold px-4 py-2 ${radius.full}`}>Assign</button>
-                  <button onClick={() => setAssignFor(null)} className={`text-xs ${colors.textFaint}`}>Cancel</button>
+                  <button onClick={assign} className={`${colors.accentBg} ${colors.accentOn} text-xs font-bold px-4 py-2 ${radius.full}`}>{t('Assign')}</button>
+                  <button onClick={() => setAssignFor(null)} className={`text-xs ${colors.textFaint}`}>{t('Cancel')}</button>
                   {msg && <span className={`text-xs ${colors.error}`}>{msg}</span>}
                 </div>
                 <p className={`text-[11px] ${colors.textFaint}`}>
-                  If nobody has registered with that email yet, they become a moderator automatically when they sign up.
+                  {t('If nobody has registered with that email yet, they become a moderator automatically when they sign up.')}
                 </p>
               </div>
             )}

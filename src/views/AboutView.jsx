@@ -12,6 +12,7 @@ import themeConfig from '../theme/themeConfig';
 import usePageMeta from '../lib/usePageMeta';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 const PILLARS = [
   { icon: 'event_available', title: 'Events', text: 'Hackathons, workshops, meetups and socials. RSVP, see who is going and find them on the map.' },
@@ -28,22 +29,21 @@ const SAFETY = [
 ];
 
 export default function AboutView() {
+  const { t } = useT();
   usePageMeta('About', 'Circosodal connects students in Qatar with events, private university clubs and gigs. Learn what we do and how we keep it safe.');
   const { colors, radius, brand } = themeConfig;
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-8 px-4 py-6">
-      <SubPageHeader title="About Circosodal" fallbackTo="/" backLabel={`Back to ${brand.name}`} />
+      <SubPageHeader title={t('About Circosodal')} fallbackTo="/" backLabel={t('Back to {name}', { name: brand.name })} />
 
       <section className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
-        <h2 className={`text-lg ${colors.textWhite}`}>Find your people.</h2>
+        <h2 className={`text-lg ${colors.textWhite}`}>{t('Find your people.')}</h2>
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
-          {brand.name} is a community platform for students and young creators in Qatar. It puts what is happening around you in one place: events to go to,
-          clubs to join and opportunities to work on together. Instead of hunting through group chats and posters, you sign in once and see what is on at your
-          university and across the city.
+          {t('{name} is a community platform for students and young creators in Qatar. It puts what is happening around you in one place: events to go to, clubs to join and opportunities to work on together. Instead of hunting through group chats and posters, you sign in once and see what is on at your university and across the city.', { name: brand.name })}
         </p>
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
-          Anyone can start something. Post an event, open a club or put out a call for collaborators, and it goes live once it has been reviewed.
+          {t('Anyone can start something. Post an event, open a club or put out a call for collaborators, and it goes live once it has been reviewed.')}
         </p>
       </section>
 
@@ -51,21 +51,21 @@ export default function AboutView() {
         {PILLARS.map((p) => (
           <div key={p.title} className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-2`}>
             <Icon name={p.icon} size={24} className={colors.accent} />
-            <h3 className={`text-sm font-bold ${colors.textWhite}`}>{p.title}</h3>
-            <p className={`text-xs ${colors.textMuted} leading-relaxed`}>{p.text}</p>
+            <h3 className={`text-sm font-bold ${colors.textWhite}`}>{t(p.title)}</h3>
+            <p className={`text-xs ${colors.textMuted} leading-relaxed`}>{t(p.text)}</p>
           </div>
         ))}
       </section>
 
       <section className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-3`}>
         <h2 className={`text-lg ${colors.textWhite} flex items-center gap-2`}>
-          <Icon name="shield" size={20} className={colors.success} /> How we keep it safe
+          <Icon name="shield" size={20} className={colors.success} /> {t('How we keep it safe')}
         </h2>
         <ul className="space-y-2">
           {SAFETY.map((line) => (
             <li key={line} className={`flex gap-2 text-sm ${colors.textMuted} leading-relaxed`}>
               <Icon name="check" size={16} className={`mt-0.5 shrink-0 ${colors.success}`} />
-              {line}
+              {t(line)}
             </li>
           ))}
         </ul>
@@ -73,18 +73,18 @@ export default function AboutView() {
 
       {(brand.builtBy || brand.contactEmail) && (
         <section className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-2`}>
-          <h2 className={`text-sm font-bold ${colors.textWhite}`}>Who is behind it</h2>
-          {brand.builtBy && <p className={`text-xs ${colors.textMuted}`}>{brand.name} is built by {brand.builtBy}.</p>}
+          <h2 className={`text-sm font-bold ${colors.textWhite}`}>{t('Who is behind it')}</h2>
+          {brand.builtBy && <p className={`text-xs ${colors.textMuted}`}>{t('{name} is built by {builder}.', { name: brand.name, builder: brand.builtBy })}</p>}
           {brand.contactEmail && (
             <p className={`text-xs ${colors.textFaint}`}>
-              Questions or feedback? <a href={`mailto:${brand.contactEmail}`} className={colors.accent}>{brand.contactEmail}</a>
+              {t('Questions or feedback?')} <a href={`mailto:${brand.contactEmail}`} className={colors.accent}>{brand.contactEmail}</a>
             </p>
           )}
         </section>
       )}
 
       <p className={`text-xs ${colors.textFaint} text-center`}>
-        <Link to="/terms" className={colors.accent}>Terms</Link> · <Link to="/privacy" className={colors.accent}>Privacy</Link>
+        <Link to="/terms" className={colors.accent}>{t('Terms')}</Link> · <Link to="/privacy" className={colors.accent}>{t('Privacy')}</Link>
       </p>
     </div>
   );

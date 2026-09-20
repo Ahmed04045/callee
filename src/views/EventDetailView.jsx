@@ -17,6 +17,7 @@ import AnswerModal from '../components/AnswerModal';
 import { hasQuestions } from '../lib/questions';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { DateBadge } from '../components/FeedCards';
+import { useT, formatDate as formatLocalDate } from '../i18n';
 
 const CONTACT_LABELS = {
   phone: 'Phone',
@@ -32,10 +33,11 @@ function formatDate(dateString) {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (Number.isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  return formatLocalDate(date, { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
 export default function EventDetailView({ onOpenAuthModal }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user } = useAuth();
@@ -263,7 +265,7 @@ export default function EventDetailView({ onOpenAuthModal }) {
   };
 
   if (status === 'loading') {
-    return <p className={`text-sm ${colors.textFaint}`}>Loading…</p>;
+    return <p className={`text-sm ${colors.textFaint}`}>{t('Loading…')}</p>;
   }
 
   if (status === 'notFound' || status === 'error') {
@@ -271,10 +273,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
       <div className="max-w-md mx-auto text-center py-16 space-y-3">
         <Icon name="search_off" size={28} className={colors.textFaint} />
         <p className={`text-sm ${colors.textFaint}`}>
-          {status === 'notFound' ? "This event doesn't exist." : "Couldn't load this event."}
+          {status === 'notFound' ? t('This event doesn\'t exist.') : t('Couldn\'t load this event.')}
         </p>
         <Link to="/" className={`text-xs font-semibold ${colors.accent}`}>
-          Back to Home
+          {t('Back to Home')}
         </Link>
       </div>
     );
@@ -288,7 +290,7 @@ export default function EventDetailView({ onOpenAuthModal }) {
         to="/"
         className={`inline-flex items-center gap-1 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition`}
       >
-        <Icon name="arrow_back" size={14} /> Back to Home
+        <Icon name="arrow_back" size={14} /> {t('Back to Home')}
       </Link>
 
       <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} overflow-hidden`}>
@@ -298,11 +300,11 @@ export default function EventDetailView({ onOpenAuthModal }) {
         ) : (
           <PixelCover seed={event.id} cols={72} rows={14} />
         )}
-        <div className="absolute left-5 bottom-[-22px]">
+        <div className="absolute start-5 bottom-[-22px]">
           <DateBadge date={event.event_date} />
         </div>
         {event.tag && (
-          <span className={`absolute right-4 top-4 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 bg-md3-surface/85 ${colors.accent} border ${colors.accentBorder}`}>
+          <span className={`absolute end-4 top-4 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 bg-md3-surface/85 ${colors.accent} border ${colors.accentBorder}`}>
             {event.tag}
           </span>
         )}
@@ -310,10 +312,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
       <div className="p-6 pt-9">
         <h1 className={`text-2xl font-bold ${colors.textWhite}`}>{event.title}</h1>
         <div className="flex items-center gap-1.5 mt-1">
-          <p className={`text-xs ${colors.textMuted}`}>By {event.organizer}</p>
+          <p className={`text-xs ${colors.textMuted}`}>{t('By {name}', { name: event.organizer })}</p>
           {event.organizer_verified && (
             <span className={`flex items-center gap-1 text-[10px] ${colors.success}`}>
-              <Icon name="verified" size={12} /> Verified
+              <Icon name="verified" size={12} /> {t('Verified')}
             </span>
           )}
         </div>
@@ -348,10 +350,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
           {showSpots && (
             <div className="flex items-center gap-2">
               <Icon name="group" size={16} className={colors.textFaint} />
-              {event.capacity != null && event.capacity - event.spots > 0 ? `${event.capacity - event.spots} going · ` : ''}
-              {event.spots} spots left
+              {event.capacity != null && event.capacity - event.spots > 0 ? `${t('{n} going', { n: event.capacity - event.spots })} · ` : ''}
+              {t('{n} spots left', { n: event.spots })}
               {isOrganizer && event.capacity_hidden && (
-                <span className={`text-[10px] ${colors.textDim}`}>(hidden from public)</span>
+                <span className={`text-[10px] ${colors.textDim}`}>{t('(hidden from public)')}</span>
               )}
             </div>
           )}
@@ -372,10 +374,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
         {isOrganizer && (
           <>
             <Link to={`/events/${event.id}/manage`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
-              <Icon name="dashboard" size={14} className="text-inherit" /> Manage &amp; stats
+              <Icon name="dashboard" size={14} className="text-inherit" /> {t('Manage & stats')}
             </Link>
             <Link to={`/events/${event.id}/scan`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full}`}>
-              <Icon name="search" size={14} className="text-inherit" /> Scan tickets
+              <Icon name="search" size={14} className="text-inherit" /> {t('Scan tickets')}
             </Link>
           </>
         )}
@@ -384,8 +386,8 @@ export default function EventDetailView({ onOpenAuthModal }) {
       {myTicket && !isOrganizer && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>Your ticket</h2>
-            <button onClick={() => window.print()} className={`text-xs font-semibold ${colors.accent}`}>Print</button>
+            <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>{t('Your ticket')}</h2>
+            <button onClick={() => window.print()} className={`text-xs font-semibold ${colors.accent}`}>{t('Print')}</button>
           </div>
           <TicketCard event={event} ticket={myTicket} holderName={profile?.display_name || (profile?.username ? `@${profile.username}` : user.email)} />
         </section>
@@ -393,9 +395,9 @@ export default function EventDetailView({ onOpenAuthModal }) {
 
       <StickyAction summary={event.title} sub={`${formatDate(event.event_date)} · ${event.location}`}>
           {!user ? (
-            <p className={`text-xs ${colors.textFaint}`}>Sign in to RSVP.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Sign in to RSVP.')}</p>
           ) : isOrganizer ? (
-            <p className={`text-xs ${colors.textFaint}`}>This is your event.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('This is your event.')}</p>
           ) : (
             <button
               onClick={handleToggleRsvp}
@@ -408,11 +410,11 @@ export default function EventDetailView({ onOpenAuthModal }) {
             >
               {isAttending ? (
                 <>
-                  You're Attending <Icon name="check_circle" size={13} className="text-inherit" />
+                  {t('You\'re Attending')} <Icon name="check_circle" size={13} className="text-inherit" />
                 </>
               ) : (
                 <>
-                  I'm Attending <Icon name="event_available" size={13} className="text-inherit" />
+                  {t('I\'m Attending')} <Icon name="event_available" size={13} className="text-inherit" />
                 </>
               )}
             </button>
@@ -421,11 +423,11 @@ export default function EventDetailView({ onOpenAuthModal }) {
 
       {askOpen && (
         <AnswerModal
-          title={`RSVP: ${event.title}`}
-          intro="The organizer has a few questions."
+          title={t('RSVP: {title}', { title: event.title })}
+          intro={t('The organizer has a few questions.')}
           questions={event.questions}
-          submitLabel="Get my ticket"
-          shares="Your answers will be shared with the event organizer."
+          submitLabel={t('Get my ticket')}
+          shares={t('Your answers will be shared with the event organizer.')}
           onSubmit={(payload) => saveRsvp(payload.answers)}
           onClose={() => setAskOpen(false)}
         />
@@ -434,7 +436,7 @@ export default function EventDetailView({ onOpenAuthModal }) {
       {isOrganizer && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
           <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-            <Icon name="photo_library" size={16} /> Photos ({photos.length}/{MAX_PHOTOS})
+            <Icon name="photo_library" size={16} /> {t('Photos')} ({photos.length}/{MAX_PHOTOS})
           </h2>
 
           <div className="grid grid-cols-3 gap-2">
@@ -447,8 +449,8 @@ export default function EventDetailView({ onOpenAuthModal }) {
                 />
                 <button
                   onClick={() => handlePhotoDelete(photo)}
-                  aria-label="Remove photo"
-                  className={`absolute top-1 right-1 p-1 ${colors.scrim} ${radius.full} opacity-0 group-hover:opacity-100 transition`}
+                  aria-label={t('Remove photo')}
+                  className={`absolute top-1 end-1 p-1 ${colors.scrim} ${radius.full} opacity-0 group-hover:opacity-100 transition`}
                 >
                   <Icon name="close" size={14} className="text-white" />
                 </button>
@@ -484,14 +486,14 @@ export default function EventDetailView({ onOpenAuthModal }) {
       {isOrganizer && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
           <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-            <Icon name="groups" size={16} /> Attendees ({attendees.length})
+            <Icon name="groups" size={16} /> {t('Attendees')} ({attendees.length})
           </h2>
 
           {attendeesStatus === 'loading' && (
-            <p className={`text-xs ${colors.textFaint}`}>Loading…</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>
           )}
           {attendeesStatus === 'ready' && attendees.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>Nobody's RSVP'd yet.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Nobody\'s RSVP\'d yet.')}</p>
           )}
 
           <div className="space-y-2">
@@ -511,10 +513,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
                 )}
                 <div className="min-w-0">
                   <p className={`text-xs font-bold ${colors.textWhite} truncate`}>
-                    {a.profile?.display_name || 'Unnamed'}
+                    {a.profile?.display_name || t('Unnamed')}
                   </p>
                   <p className={`text-[11px] ${colors.textFaint} truncate`}>
-                    {a.profile?.university || 'No school listed'}
+                    {a.profile?.university || t('No school listed')}
                   </p>
                 </div>
               </div>

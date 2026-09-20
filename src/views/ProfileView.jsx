@@ -20,12 +20,14 @@ import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { EDUCATION_OPTIONS } from '../lib/education';
 import { USERNAME_PATTERN, isUsernameAvailable, normalizeUsername } from '../lib/username';
+import { useT } from '../i18n';
 
 const BIO_MAX = 200;
 const todayISO = new Date().toISOString().split('T')[0];
 
 
 export default function ProfileView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { status, user, signOut } = useAuth();
   const { profile, status: profileStatus, error, saveProfile } = useProfile();
@@ -94,7 +96,7 @@ export default function ProfileView() {
   }, [username, profile]);
 
   if (isLoadingSession) {
-    return <p className={`text-sm ${colors.textFaint}`}>Checking your session…</p>;
+    return <p className={`text-sm ${colors.textFaint}`}>{t('Checking your session…')}</p>;
   }
 
   // Shouldn't normally be reachable while signed out — the nav item is
@@ -151,7 +153,7 @@ export default function ProfileView() {
     });
 
     setIsSaving(false);
-    if (!saveError) setNotice('Profile saved.');
+    if (!saveError) setNotice(t('Profile saved.'));
   };
 
   const heading = displayName.trim() || user.email;
@@ -189,7 +191,7 @@ export default function ProfileView() {
           onClick={() => avatarInputRef.current?.click()}
           disabled={isUploadingAvatar}
           className={`relative -mt-14 w-20 h-20 mx-auto block rounded-[var(--r-md)] overflow-hidden group border-4 border-md3-surfaceContainer bg-md3-surfaceContainer`}
-          title="Change photo"
+          title={t('Change photo')}
         >
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
@@ -219,7 +221,7 @@ export default function ProfileView() {
           <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{heading}</h3>
           {profile?.username && <p className={`text-sm ${colors.accent}`}>@{profile.username}</p>}
           <p className={`text-xs ${colors.textFaint}`}>
-            {displayName.trim() ? user.email : 'Signed in'}
+            {displayName.trim() ? user.email : t('Signed in')}
           </p>
           {profileUrl && (
             <button
@@ -227,7 +229,7 @@ export default function ProfileView() {
               onClick={shareProfile}
               className={`mt-2 inline-flex items-center gap-1.5 text-xs font-semibold ${colors.accent}`}
             >
-              <Icon name={copied ? 'check' : 'share'} size={14} /> {copied ? 'Link copied' : 'Share my profile'}
+              <Icon name={copied ? 'check' : 'share'} size={14} /> {copied ? t('Link copied') : t('Share my profile')}
             </button>
           )}
         </div>
@@ -239,13 +241,13 @@ export default function ProfileView() {
           }}
           className={`w-full flex items-center justify-center gap-2 text-xs font-bold ${colors.textMuted} border ${colors.borderStrong} ${radius.full} py-2 ${colors.textHoverStrong} transition`}
         >
-          <Icon name="logout" size={14} /> Sign out
+          <Icon name="logout" size={14} /> {t('Sign out')}
         </button>
       </div>
 
       {/* Editable profile */}
       {profileStatus === 'loading' && !profile && (
-        <p className={`text-xs ${colors.textFaint}`}>Loading your profile…</p>
+        <p className={`text-xs ${colors.textFaint}`}>{t('Loading your profile…')}</p>
       )}
 
       <form
@@ -253,40 +255,40 @@ export default function ProfileView() {
         className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-5 space-y-4`}
       >
         <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-          <Icon name="edit" size={16} /> Edit Profile
+          <Icon name="edit" size={16} /> {t('Edit Profile')}
         </h2>
 
-        <label className="block text-left">
-          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Username</span>
+        <label className="block text-start">
+          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Username')}</span>
           <div className="relative mt-1">
-            <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${colors.textFaint}`}>@</span>
+            <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm ${colors.textFaint}`}>@</span>
             <input
               type="text"
               maxLength={20}
               value={username}
               onChange={(e) => setUsername(normalizeUsername(e.target.value))}
-              placeholder="username"
-              className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-7 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+              placeholder={t('username')}
+              className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} ps-7 pe-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
             />
           </div>
-          {usernameHint && <span className={`block mt-1 text-[11px] ${usernameHint[1]}`}>{usernameHint[0]}</span>}
+          {usernameHint && <span className={`block mt-1 text-[11px] ${usernameHint[1]}`}>{t(usernameHint[0])}</span>}
         </label>
 
-        <label className="block text-left">
-          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Name</span>
+        <label className="block text-start">
+          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Name')}</span>
           <input
             type="text"
             maxLength={60}
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
-            placeholder="Your name"
+            placeholder={t('Your name')}
             className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
           />
         </label>
 
-        <label className="block text-left">
+        <label className="block text-start">
           <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
-            Date of birth <span className={colors.textDim}>(optional)</span>
+            {t('Date of birth')} <span className={colors.textDim}>{t('(optional)')}</span>
           </span>
           <input
             type="date"
@@ -298,22 +300,22 @@ export default function ProfileView() {
         </label>
 
         {profile?.account_type === 'personal' && (
-          <label className="block text-left">
+          <label className="block text-start">
             <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
-              School / University <span className={colors.textDim}>(optional)</span>
+              {t('School / University')} <span className={colors.textDim}>{t('(optional)')}</span>
             </span>
             <select
               value={education}
               onChange={(e) => setEducation(e.target.value)}
               className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
             >
-              <option value="">Select…</option>
+              <option value="">{t('Select…')}</option>
               {EDUCATION_OPTIONS.map((option) => (
                 <option key={option} value={option}>
                   {option}
                 </option>
               ))}
-              <option value="Other">Other</option>
+              <option value="Other">{t('Other')}</option>
             </select>
             {education === 'Other' && (
               <input
@@ -321,16 +323,16 @@ export default function ProfileView() {
                 maxLength={100}
                 value={educationOther}
                 onChange={(e) => setEducationOther(e.target.value)}
-                placeholder="Enter your school or university"
+                placeholder={t('Enter your school or university')}
                 className={`w-full mt-2 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             )}
           </label>
         )}
 
-        <label className="block text-left">
+        <label className="block text-start">
           <div className="flex items-baseline justify-between">
-            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Description</span>
+            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Description')}</span>
             <span className={`text-[10px] ${bio.length >= BIO_MAX ? colors.error : colors.textDim}`}>
               {bio.length}/{BIO_MAX}
             </span>
@@ -340,7 +342,7 @@ export default function ProfileView() {
             maxLength={BIO_MAX}
             value={bio}
             onChange={(e) => setBio(e.target.value)}
-            placeholder="A little about you…"
+            placeholder={t('A little about you…')}
             className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition} resize-none`}
           />
         </label>
@@ -348,7 +350,7 @@ export default function ProfileView() {
         <label
           className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
         >
-          <span className={`text-xs ${colors.textMuted}`}>Anyone with my profile link can view it</span>
+          <span className={`text-xs ${colors.textMuted}`}>{t('Anyone with my profile link can view it')}</span>
           <input
             type="checkbox"
             checked={isPublic}
@@ -361,7 +363,7 @@ export default function ProfileView() {
           className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
         >
           <span className={`text-xs ${colors.textMuted}`}>
-            Discoverable via <span className={colors.accent}>/search</span> on Discord
+            {t('Discoverable via')} <span className={colors.accent}>{t('/search')}</span> {t('on Discord')}
           </span>
           <input
             type="checkbox"
@@ -371,8 +373,7 @@ export default function ProfileView() {
           />
         </label>
         <p className={`text-[10px] ${colors.textDim} -mt-2`}>
-          Off by default. When on, your name, school, and bio are findable by anyone using the
-          Discord bot.
+          {t('Off by default. When on, your name, school, and bio are findable by anyone using the Discord bot.')}
         </p>
 
         {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
@@ -386,7 +387,7 @@ export default function ProfileView() {
           {isSaving && (
             <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
           )}
-          Save profile
+          {t('Save profile')}
         </button>
       </form>
     </div>

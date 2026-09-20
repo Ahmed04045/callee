@@ -6,25 +6,27 @@ import themeConfig from '../theme/themeConfig';
 import Icon from './Icon';
 import { argbToHex } from '../lib/clubUtil';
 import { PixelCover } from './Pixel';
+import { useT } from '../i18n';
 
 export default function ClubCard({ club, joined = false }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const navigate = useNavigate();
 
   return (
     <button
       onClick={() => navigate(`/clubs/${club.id}`)}
-      className={`text-left overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg} ${colors.borderHover} transition w-full`}
+      className={`text-start overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg} ${colors.borderHover} transition w-full`}
     >
       <div className="relative h-20 p-3 flex items-end justify-between">
         <div className="absolute inset-0">
           <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} />
         </div>
         <span className={`relative text-[10px] font-semibold bg-black/60 text-white ${radius.full} px-2.5 py-1`}>
-          {club.category}
+          {t(club.category)}
         </span>
         {joined && (
-          <span className={`relative text-[10px] font-bold bg-white text-black ${radius.full} px-2.5 py-1`}>Joined</span>
+          <span className={`relative text-[10px] font-bold bg-white text-black ${radius.full} px-2.5 py-1`}>{t('Joined')}</span>
         )}
       </div>
       <div className="p-4">

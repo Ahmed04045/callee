@@ -8,8 +8,10 @@ import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import ModerationQueue from '../../components/ModerationQueue';
 import { CLUB_COLUMNS } from '../../lib/clubUtil';
+import { useT } from '../../i18n';
 
 function LinksPeek({ clubId }) {
+  const { t } = useT();
   const { colors } = themeConfig;
   const [links, setLinks] = useState(null);
   const load = async () => {
@@ -17,7 +19,7 @@ function LinksPeek({ clubId }) {
     setLinks(data?.[0] ?? { whatsapp_link: '', discord_link: '' });
   };
   if (!links) {
-    return <button onClick={load} className={`text-[11px] font-semibold ${colors.accent} mt-2`}>Show private links</button>;
+    return <button onClick={load} className={`text-[11px] font-semibold ${colors.accent} mt-2`}>{t('Show private links')}</button>;
   }
   return (
     <div className={`text-[11px] ${colors.textMuted} mt-2 break-all space-y-0.5`}>
@@ -28,6 +30,7 @@ function LinksPeek({ clubId }) {
 }
 
 export default function AdminGroups() {
+  const { t } = useT();
   const { colors } = themeConfig;
 
   const setStatus = async (club, next) => {
@@ -38,8 +41,8 @@ export default function AdminGroups() {
 
   return (
     <ModerationQueue
-      title="Group approvals"
-      subtitle="Groups created from the Create tab. Approving makes the group public and its creator the moderator."
+      title={t('Group approvals')}
+      subtitle={t('Groups created from the Create tab. Approving makes the group public and its creator the moderator.')}
       table="clubs"
       select={CLUB_COLUMNS}
       orderBy="created_at"

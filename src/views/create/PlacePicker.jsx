@@ -18,8 +18,10 @@ import themeConfig from '../../theme/themeConfig';
 import Icon from '../../components/Icon';
 import { useFormStyles } from './formKit';
 import { DOHA, MAPS_API_KEY as API_KEY, MAP_ID } from '../../lib/maps';
+import { useT } from '../../i18n';
 
 function PickerInner({ value, onChange, allowManual }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { input } = useFormStyles();
   const places = useMapsLibrary('places');
@@ -121,13 +123,13 @@ function PickerInner({ value, onChange, allowManual }) {
           className={input}
           value={text}
           maxLength={150}
-          placeholder="Type the venue or address"
+          placeholder={t('Type the venue or address')}
           onChange={(e) => {
             setText(e.target.value);
             onChange(e.target.value.trim() ? { name: e.target.value.trim(), address: '', placeId: null, lat: null, lng: null } : null);
           }}
         />
-        <p className={`text-[10px] ${colors.textDim} mt-1`}>Typed locations won't appear as a pin on the Discover map.</p>
+        <p className={`text-[10px] ${colors.textDim} mt-1`}>{t('Typed locations won\'t appear as a pin on the Discover map.')}</p>
       </div>
     );
   }
@@ -135,29 +137,29 @@ function PickerInner({ value, onChange, allowManual }) {
   return (
     <div className="relative">
       <div className="relative">
-        <Icon name="location_on" size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 mt-0.5 ${colors.textFaint}`} />
+        <Icon name="location_on" size={16} className={`absolute start-3 top-1/2 -translate-y-1/2 mt-0.5 ${colors.textFaint}`} />
         <input
-          className={`${input} pl-9 pr-9`}
+          className={`${input} ps-9 pe-9`}
           value={text}
           maxLength={150}
-          placeholder="Search for a place in Qatar"
+          placeholder={t('Search for a place in Qatar')}
           onChange={(e) => {
             setText(e.target.value);
             if (value) onChange(null); // editing after picking invalidates the pick
           }}
         />
         {(value || text) && (
-          <button type="button" onClick={clear} aria-label="Clear location" className={`absolute right-3 top-1/2 -translate-y-1/2 mt-0.5 ${colors.textFaint}`}>
+          <button type="button" onClick={clear} aria-label={t('Clear location')} className={`absolute end-3 top-1/2 -translate-y-1/2 mt-0.5 ${colors.textFaint}`}>
             <Icon name="close" size={16} />
           </button>
         )}
       </div>
 
       {suggestions.length > 0 && (
-        <ul className={`absolute z-20 left-0 right-0 mt-1 ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.md} overflow-hidden shadow-xl`}>
+        <ul className={`absolute z-20 start-0 end-0 mt-1 ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.md} overflow-hidden shadow-xl`}>
           {suggestions.map((s) => (
             <li key={s.placePrediction.placeId}>
-              <button type="button" onClick={() => choose(s)} className={`w-full text-left px-3 py-2 text-sm ${colors.textPrimary} ${colors.bgHoverInset}`}>
+              <button type="button" onClick={() => choose(s)} className={`w-full text-start px-3 py-2 text-sm ${colors.textPrimary} ${colors.bgHoverInset}`}>
                 {s.placePrediction.text.text}
               </button>
             </li>
@@ -173,7 +175,7 @@ function PickerInner({ value, onChange, allowManual }) {
 
       <button type="button" onClick={() => setMapOpen((o) => !o)} className={`mt-2 text-[11px] font-semibold ${colors.accent} flex items-center gap-1`}>
         <Icon name="pin_drop" size={14} className="text-inherit" />
-        {mapOpen ? 'Hide map' : value ? 'Adjust pin on map' : 'Pick on map'}
+        {mapOpen ? t('Hide map') : value ? t('Adjust pin on map') : t('Pick on map')}
       </button>
       {mapOpen && (
         <div className={`mt-2 h-56 ${radius.md} overflow-hidden border ${colors.borderStrong} px-box`}>
@@ -198,18 +200,18 @@ function PickerInner({ value, onChange, allowManual }) {
       )}
       {mapOpen && mapAuthFailed && (
         <p className={`text-[11px] ${colors.error} mt-1`}>
-          Google rejected the key for the map. Check that this site's address (including the port) is in the key's website restrictions and that Maps JavaScript API is enabled.
+          {t('Google rejected the key for the map. Check that this site\'s address (including the port) is in the key\'s website restrictions and that Maps JavaScript API is enabled.')}
         </p>
       )}
-      {mapOpen && <p className={`text-[10px] ${colors.textDim} mt-1`}>Tap the map or drag the pin to set the exact spot.</p>}
+      {mapOpen && <p className={`text-[10px] ${colors.textDim} mt-1`}>{t('Tap the map or drag the pin to set the exact spot.')}</p>}
       {!value && text.trim().length >= 3 && suggestions.length === 0 && !searchError && places && (
-        <p className={`text-[11px] ${colors.textFaint} mt-1`}>Pick one of the suggestions to set the location.</p>
+        <p className={`text-[11px] ${colors.textFaint} mt-1`}>{t('Pick one of the suggestions to set the location.')}</p>
       )}
       {searchError && (
         <p className={`text-[11px] ${colors.warning} mt-1`}>
-          Place search isn't available right now (is Places API enabled for the key?).
+          {t('Place search isn\'t available right now (is Places API enabled for the key?).')}
           {allowManual && (
-            <button type="button" onClick={() => setManual(true)} className={`ml-1 underline ${colors.accent}`}>Type it instead</button>
+            <button type="button" onClick={() => setManual(true)} className={`ms-1 underline ${colors.accent}`}>{t('Type it instead')}</button>
           )}
         </p>
       )}
@@ -218,9 +220,10 @@ function PickerInner({ value, onChange, allowManual }) {
 }
 
 export default function PlacePicker({ value, onChange, allowManual = true }) {
+  const { t } = useT();
   const { colors } = themeConfig;
   if (!API_KEY) {
-    return <p className={`text-xs ${colors.warning} mt-1`}>Add VITE_GOOGLE_MAPS_API_KEY to enable location search.</p>;
+    return <p className={`text-xs ${colors.warning} mt-1`}>{t('Add VITE_GOOGLE_MAPS_API_KEY to enable location search.')}</p>;
   }
   return (
     <APIProvider apiKey={API_KEY}>

@@ -22,8 +22,10 @@ import { PixelCover } from '../components/Pixel';
 import { ReportButton, SaveButton } from '../components/SaveReportButtons';
 import AnswerModal from '../components/AnswerModal';
 import { hasQuestions } from '../lib/questions';
+import { useT } from '../i18n';
 
 export default function ClubDetailView({ onOpenAuthModal }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { clubId } = useParams();
   const { user, isAdmin } = useAuth();
@@ -94,9 +96,9 @@ export default function ClubDetailView({ onOpenAuthModal }) {
     let problem = null;
     if (error) {
       const key = Object.keys(ANSWER_ERRORS).find((k) => error.message.includes(k));
-      problem = key ? ANSWER_ERRORS[key] : error.message;
+      problem = key ? t(ANSWER_ERRORS[key]) : error.message;
     } else if (data !== 'OK') {
-      problem = JOIN_MESSAGES[data] ?? String(data);
+      problem = JOIN_MESSAGES[data] ? t(JOIN_MESSAGES[data]) : String(data);
     } else {
       setNote('');
     }
@@ -124,12 +126,12 @@ export default function ClubDetailView({ onOpenAuthModal }) {
     setBusy(false);
   };
 
-  if (status === 'loading' && !club) return <p className={`text-xs ${colors.textFaint}`}>Loading club…</p>;
+  if (status === 'loading' && !club) return <p className={`text-xs ${colors.textFaint}`}>{t('Loading club…')}</p>;
   if (!club) {
     return (
       <div>
-        <SubPageHeader title="Club not found" fallbackTo="/clubs" />
-        <p className={`text-sm ${colors.textMuted}`}>This club doesn't exist.</p>
+        <SubPageHeader title={t('Club not found')} fallbackTo="/clubs" />
+        <p className={`text-sm ${colors.textMuted}`}>{t('This club doesn\'t exist.')}</p>
       </div>
     );
   }
@@ -143,9 +145,9 @@ export default function ClubDetailView({ onOpenAuthModal }) {
           <div className="absolute inset-0">
             <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} cols={64} rows={16} />
           </div>
-          <span className={`relative text-xs font-semibold bg-black/60 text-white ${radius.full} px-3 py-1`}>{club.category}</span>
+          <span className={`relative text-xs font-semibold bg-black/60 text-white ${radius.full} px-3 py-1`}>{t(club.category)}</span>
           {club.status === 'pending' && (
-            <span className={`relative text-xs font-bold bg-white text-black ${radius.full} px-3 py-1`}>Pending approval</span>
+            <span className={`relative text-xs font-bold bg-white text-black ${radius.full} px-3 py-1`}>{t('Pending approval')}</span>
           )}
         </div>
         <div className="p-6 space-y-5">
@@ -159,7 +161,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
             ].map(([icon, label, value]) => (
               <div key={label} className={`${colors.bgInset} ${radius.md} p-3`}>
                 <p className={`text-[11px] ${colors.textFaint} flex items-center gap-1`}>
-                  <Icon name={icon} size={13} /> {label}
+                  <Icon name={icon} size={13} /> {t(label)}
                 </p>
                 <p className={`text-sm font-semibold ${colors.textWhite} mt-0.5`}>{value}</p>
               </div>
@@ -176,13 +178,13 @@ export default function ClubDetailView({ onOpenAuthModal }) {
           )}
 
           {club.status !== 'approved' ? (
-            <p className={`text-xs ${colors.textMuted} text-center`}>This group is waiting for admin approval before it goes public.</p>
+            <p className={`text-xs ${colors.textMuted} text-center`}>{t('This group is waiting for admin approval before it goes public.')}</p>
           ) : !user ? (
             <button
               onClick={() => onOpenAuthModal?.()}
               className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full}`}
             >
-              Sign in to request to join
+              {t('Sign in to request to join')}
             </button>
           ) : isMember ? (
             <button
@@ -190,30 +192,30 @@ export default function ClubDetailView({ onOpenAuthModal }) {
               disabled={busy}
               className={`w-full border ${colors.borderStrong} ${colors.textWhite} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
             >
-              Leave club
+              {t('Leave club')}
             </button>
           ) : isPending ? (
             <div className="space-y-2">
-              <p className={`text-xs ${colors.textMuted} text-center`}>Request sent — a moderator will review it.</p>
+              <p className={`text-xs ${colors.textMuted} text-center`}>{t('Request sent — a moderator will review it.')}</p>
               <button
                 onClick={handleCancelRequest}
                 disabled={busy}
                 className={`w-full border ${colors.borderStrong} ${colors.textWhite} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
               >
-                Cancel request
+                {t('Cancel request')}
               </button>
             </div>
           ) : (
             <div className="space-y-2">
               {myRequest?.status === 'declined' && (
-                <p className={`text-xs ${colors.textFaint}`}>Your last request was declined. You can send a new one.</p>
+                <p className={`text-xs ${colors.textFaint}`}>{t('Your last request was declined. You can send a new one.')}</p>
               )}
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={300}
                 rows={2}
-                placeholder="Optional: tell the moderators why you'd like to join"
+                placeholder={t('Optional: tell the moderators why you\'d like to join')}
                 className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textPrimary} outline-none focus:border-md3-primary resize-none`}
               />
               <button
@@ -221,7 +223,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
                 disabled={busy || atLimit}
                 className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
               >
-                {atLimit ? `Maximum ${MAX_CLUBS} clubs reached` : 'Request to join'}
+                {atLimit ? `Maximum ${MAX_CLUBS} clubs reached` : t('Request to join')}
               </button>
             </div>
           )}
@@ -231,37 +233,37 @@ export default function ClubDetailView({ onOpenAuthModal }) {
 
       <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6`}>
         <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2 mb-3`}>
-          <Icon name={canSeeLinks ? 'forum' : 'lock'} size={16} /> Member communities
+          <Icon name={canSeeLinks ? 'forum' : 'lock'} size={16} /> {t('Member communities')}
         </h2>
         {canSeeLinks ? (
           links ? (
             <div className="grid sm:grid-cols-2 gap-3">
               <a href={links.whatsapp_link} target="_blank" rel="noreferrer"
                 className={`text-center text-sm font-bold text-white py-2.5 ${radius.full} bg-[#25D366] hover:brightness-90 transition`}>
-                WhatsApp group
+                {t('WhatsApp group')}
               </a>
               <a href={links.discord_link} target="_blank" rel="noreferrer"
                 className={`text-center text-sm font-bold text-white py-2.5 ${radius.full} bg-[#5865F2] hover:brightness-90 transition`}>
-                Discord server
+                {t('Discord server')}
               </a>
             </div>
           ) : (
-            <p className={`text-xs ${colors.textFaint}`}>Loading links…</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Loading links…')}</p>
           )
         ) : (
-          <p className={`text-xs ${colors.textFaint}`}>This club is private. Once a moderator approves your request, its WhatsApp group and Discord server unlock here.</p>
+          <p className={`text-xs ${colors.textFaint}`}>{t('This club is private. Once a moderator approves your request, its WhatsApp group and Discord server unlock here.')}</p>
         )}
       </div>
 
       {askOpen && (
         <AnswerModal
-          title={`Join ${club.name}`}
-          intro="The moderators would like to know a little about you."
+          title={t('Join {name}', { name: club.name })}
+          intro={t('The moderators would like to know a little about you.')}
           questions={club.join_questions}
           withMessage
-          messageLabel="Message (optional)"
-          submitLabel="Send request"
-          shares="Your name, username, school, bio and answers will be shared with this group's moderators."
+          messageLabel={t('Message (optional)')}
+          submitLabel={t('Send request')}
+          shares={t('Your name, username, school, bio and answers will be shared with this group\'s moderators.')}
           onSubmit={handleRequest}
           onClose={() => setAskOpen(false)}
         />
@@ -269,7 +271,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
 
       {news.length > 0 && (
         <div className="space-y-3">
-          <h2 className={`text-sm font-bold ${colors.textWhite}`}>Club updates</h2>
+          <h2 className={`text-sm font-bold ${colors.textWhite}`}>{t('Club updates')}</h2>
           {news.map((n) => (
             <div key={n.id} className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-4`}>
               <h3 className={`font-bold ${colors.textWhite}`}>{n.title}</h3>

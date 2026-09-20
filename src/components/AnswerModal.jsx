@@ -12,8 +12,10 @@ import Icon from './Icon';
 import { AnswerForm } from './Questions';
 import { firstMissingRequired } from '../lib/questions';
 import { APPLICATION_CONTACT_METHODS, validateContact } from '../lib/options';
+import { useT } from '../i18n';
 
 export default function AnswerModal({ title, intro, shares, questions = [], withMessage = false, messageLabel, withContact = false, submitLabel = 'Submit', onSubmit, onClose }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const [answers, setAnswers] = useState({});
   const [message, setMessage] = useState('');
@@ -55,29 +57,29 @@ export default function AnswerModal({ title, intro, shares, questions = [], with
             <h2 className={`text-lg font-bold ${colors.textWhite}`}>{title}</h2>
             {intro && <p className={`text-xs ${colors.textMuted} mt-1`}>{intro}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className={colors.textFaint}><Icon name="close" size={20} /></button>
+          <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}><Icon name="close" size={20} /></button>
         </div>
 
         {questions.length > 0 && <AnswerForm questions={questions} answers={answers} onChange={setAnswers} />}
 
         {withMessage && (
           <label className="block">
-            <span className={`text-xs font-semibold ${colors.textWhite}`}>{messageLabel ?? 'Message (optional)'}</span>
+            <span className={`text-xs font-semibold ${colors.textWhite}`}>{messageLabel ?? t('Message (optional)')}</span>
             <textarea className={`${input} resize-none mt-1.5`} rows={3} maxLength={withContact ? 1000 : 300} value={message} onChange={(e) => setMessage(e.target.value)} />
           </label>
         )}
 
         {withContact && (
           <fieldset className="space-y-1.5">
-            <legend className={`text-xs font-semibold ${colors.textWhite}`}>How can they reach you?</legend>
+            <legend className={`text-xs font-semibold ${colors.textWhite}`}>{t('How can they reach you?')}</legend>
             <div className="grid grid-cols-2 gap-2">
-              <select className={input} value={contactMethod} aria-label="Contact method" onChange={(e) => { setContactMethod(e.target.value); setContactValue(''); }}>
-                <option value="" disabled>Select…</option>
+              <select className={input} value={contactMethod} aria-label={t('Contact method')} onChange={(e) => { setContactMethod(e.target.value); setContactValue(''); }}>
+                <option value="" disabled>{t('Select…')}</option>
                 {APPLICATION_CONTACT_METHODS.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label}</option>
+                  <option key={m.id} value={m.id}>{t(m.label)}</option>
                 ))}
               </select>
-              <input className={input} maxLength={80} disabled={!method} aria-label="Contact details" value={contactValue} onChange={(e) => setContactValue(e.target.value)} placeholder={method?.placeholder ?? ''} inputMode={method?.kind === 'phone' ? 'tel' : 'text'} />
+              <input className={input} maxLength={80} disabled={!method} aria-label={t('Contact details')} value={contactValue} onChange={(e) => setContactValue(e.target.value)} placeholder={method?.placeholder ?? ''} inputMode={method?.kind === 'phone' ? 'tel' : 'text'} />
             </div>
           </fieldset>
         )}
@@ -86,8 +88,8 @@ export default function AnswerModal({ title, intro, shares, questions = [], with
         {error && <p className={`text-xs ${colors.error}`} role="alert">{error}</p>}
 
         <div className="flex gap-3">
-          <button type="button" onClick={onClose} className={`flex-1 border ${colors.borderStrong} ${colors.textWhite} font-bold text-sm py-2.5 ${radius.full}`}>Cancel</button>
-          <button disabled={busy} className={`flex-1 ${colors.accentBg} ${colors.accentOn} font-bold text-sm py-2.5 ${radius.full} disabled:opacity-60`}>{busy ? 'Sending…' : submitLabel}</button>
+          <button type="button" onClick={onClose} className={`flex-1 border ${colors.borderStrong} ${colors.textWhite} font-bold text-sm py-2.5 ${radius.full}`}>{t('Cancel')}</button>
+          <button disabled={busy} className={`flex-1 ${colors.accentBg} ${colors.accentOn} font-bold text-sm py-2.5 ${radius.full} disabled:opacity-60`}>{busy ? t('Sending…') : submitLabel}</button>
         </div>
       </form>
     </div>

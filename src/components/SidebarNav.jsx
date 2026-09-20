@@ -12,6 +12,7 @@ import React from 'react';
 import themeConfig from '../theme/themeConfig';
 import Icon from './Icon';
 import { LogoMark } from './Logo';
+import { useT } from '../i18n';
 
 export const NAV_ITEMS = [
   { id: 'main', label: 'Home', path: '/', iconType: 'material', iconSource: 'home' },
@@ -36,6 +37,7 @@ function NavGlyph({ item, active, size = 22 }) {
 }
 
 function NavButton({ item, isActive, onSelect, orientation }) {
+  const { t } = useT();
   const { nav, colors } = themeConfig;
   const isVertical = orientation === 'vertical';
 
@@ -45,13 +47,13 @@ function NavButton({ item, isActive, onSelect, orientation }) {
       <button
         onClick={() => onSelect(item.id)}
         aria-current={isActive ? 'page' : undefined}
-        title={item.label}
+        title={t(item.label)}
         className="flex-1 flex flex-col items-center justify-start"
       >
         <span className={`-mt-5 w-12 h-12 flex items-center justify-center ${colors.accentBg} ${colors.accentOn} rounded-[var(--r-md)] border-2 border-md3-surface`}>
           <Icon name={item.iconSource} size={26} className="text-inherit" />
         </span>
-        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider mt-0.5 ${isActive ? colors.accent : nav.itemText}`}>{item.label}</span>
+        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider mt-0.5 ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
       </button>
     );
   }
@@ -60,37 +62,38 @@ function NavButton({ item, isActive, onSelect, orientation }) {
     <button
       onClick={() => onSelect(item.id)}
       aria-current={isActive ? 'page' : undefined}
-      title={item.label}
+      title={t(item.label)}
       className={`relative flex flex-col items-center gap-1 ${nav.itemRadius} ${nav.itemHoverBg} ${
         isVertical ? 'w-full py-2.5' : 'flex-1 py-1.5'
       } ${isActive ? 'bg-md3-primary/10' : ''}`}
     >
       {isActive && (
         <span
-          className={`absolute bg-md3-primary ${isVertical ? 'left-0 top-2 bottom-2 w-[3px]' : 'top-0 left-3 right-3 h-[3px]'}`}
+          className={`absolute bg-md3-primary ${isVertical ? 'start-0 top-2 bottom-2 w-[3px]' : 'top-0 start-3 end-3 h-[3px]'}`}
           aria-hidden="true"
         />
       )}
       <span className={isActive ? colors.accent : nav.itemText}>
         <NavGlyph item={item} active={isActive} size={22} />
       </span>
-      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${isActive ? colors.accent : nav.itemText}`}>{item.label}</span>
+      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
     </button>
   );
 }
 
 export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, bottomItem }) {
+  const { t } = useT();
   const { colors, layout } = themeConfig;
 
   return (
     <>
       {/* DESKTOP: fixed left icon rail */}
       <aside
-        className={`hidden md:flex flex-col fixed left-0 top-0 h-screen ${layout.sidebarWidth} ${colors.bgPanel} border-r ${colors.border} z-40`}
+        className={`hidden md:flex flex-col fixed start-0 top-0 h-screen ${layout.sidebarWidth} ${colors.bgPanel} border-e ${colors.border} z-40`}
       >
         <button
           onClick={() => onNavigate(items[0]?.id ?? 'main')}
-          aria-label="Circosodal home"
+          aria-label={t('Circosodal home')}
           className="h-16 flex items-center justify-center border-b border-md3-outlineVariant"
         >
           <LogoMark size={30} />
@@ -111,7 +114,7 @@ export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, b
 
       {/* MOBILE: fixed bottom bar */}
       <nav
-        className={`flex md:hidden fixed bottom-0 left-0 right-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
+        className={`flex md:hidden fixed bottom-0 start-0 end-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
       >
         {items.map((item) => (
           <NavButton key={item.id} item={item} isActive={activeTab === item.id} onSelect={onNavigate} orientation="horizontal" />

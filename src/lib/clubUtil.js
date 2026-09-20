@@ -2,6 +2,8 @@
 //
 // Small helpers shared by the Clubs (Circosodal) views.
 
+import { formatDateTime } from '../i18n';
+
 export const MAX_CLUBS = 5;
 
 // The clubs table stores banner colours as 0xAARRGGBB numbers (same values
@@ -17,8 +19,7 @@ export const bannerStyle = (club) => ({
 export const CLUB_COLUMNS =
   'id,name,university_id,university_name,university,description,member_count,category,banner_gradient_start,banner_gradient_end,meeting_schedule,room_or_location,status,owner_user_id,place_id,lat,lng,join_questions';
 
-export const fmtDateTime = (iso) =>
-  new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+export const fmtDateTime = (iso) => formatDateTime(iso);
 
 export const ACTION_LABEL = {
   JOINED: 'Joined',

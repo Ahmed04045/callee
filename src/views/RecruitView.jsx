@@ -10,8 +10,10 @@ import Icon from '../components/Icon';
 import { PixelEmpty } from '../components/Pixel';
 import { GIG_TAGS } from '../lib/options';
 import usePageMeta from '../lib/usePageMeta';
+import { useT } from '../i18n';
 
 export default function RecruitView({ onOpenAuthModal }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -85,47 +87,47 @@ export default function RecruitView({ onOpenAuthModal }) {
   return (
     <div className="space-y-6 w-full">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>Active Recruitment Pipeline</h2>
+        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Active Recruitment Pipeline')}</h2>
         <p className={`text-xs ${colors.textFaint} mt-1`}>
-          Direct development, media production, and project design roles for young creators.
+          {t('Direct development, media production, and project design roles for young creators.')}
         </p>
       </div>
 
       <div className="space-y-3">
         <div className="relative">
-          <Icon name="search" size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+          <Icon name="search" size={18} className={`absolute start-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search roles, teams, skills…"
-            className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} pl-10 pr-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
+            placeholder={t('Search roles, teams, skills…')}
+            className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} ps-10 pe-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
           />
         </div>
         <div className="flex flex-wrap gap-2">
           {[['all', 'All'], ['gig', 'Gigs'], ['opportunity', 'Opportunities']].map(([k, label]) => (
-            <button key={k} onClick={() => setKind(k)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${kind === k ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{label}</button>
+            <button key={k} onClick={() => setKind(k)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${kind === k ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{t(label)}</button>
           ))}
           <span className="w-px bg-md3-outlineVariant mx-1" aria-hidden="true" />
           {[['Paid only', paidOnly, setPaidOnly], ['Closing soon', closingSoon, setClosingSoon], ['Remote', remoteOnly, setRemoteOnly]].map(([label, on, set]) => (
-            <button key={label} onClick={() => set(!on)} aria-pressed={on} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${on ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{label}</button>
+            <button key={label} onClick={() => set(!on)} aria-pressed={on} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${on ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{t(label)}</button>
           ))}
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {GIG_TAGS.map((t) => (
-            <button key={t} onClick={() => setTag(tag === t ? '' : t)} aria-pressed={tag === t} className={`text-[11px] font-semibold whitespace-nowrap px-3 py-1 ${radius.full} border ${tag === t ? `${colors.accentSoftBg} ${colors.accent} border-md3-primary` : `${colors.textFaint} ${colors.border}`}`}>#{t}</button>
+          {GIG_TAGS.map((name) => (
+            <button key={name} onClick={() => setTag(tag === name ? '' : name)} aria-pressed={tag === name} className={`text-[11px] font-semibold whitespace-nowrap px-3 py-1 ${radius.full} border ${tag === name ? `${colors.accentSoftBg} ${colors.accent} border-md3-primary` : `${colors.textFaint} ${colors.border}`}`}><bdi>#{t(name)}</bdi></button>
           ))}
         </div>
         {hasFilters && (
-          <button onClick={clearFilters} className={`text-xs font-semibold ${colors.accent}`}>Clear filters ({gigs.length} shown)</button>
+          <button onClick={clearFilters} className={`text-xs font-semibold ${colors.accent}`}>{t('Clear filters ({n} shown)', { n: gigs.length })}</button>
         )}
       </div>
 
-      {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading roles…</p>}
+      {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>{t('Loading roles…')}</p>}
       {gigsStatus === 'error' && (
-        <p className={`text-xs ${colors.error}`}>Couldn't load roles. Try refreshing.</p>
+        <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load roles. Try refreshing.')}</p>
       )}
       {gigsStatus === 'ready' && gigs.length === 0 && (
-        <PixelEmpty sprite="search" title="No active roles right now">Check back soon, or post one from the Create tab.</PixelEmpty>
+        <PixelEmpty sprite="search" title={t('No active roles right now')}>{t('Check back soon, or post one from the Create tab.')}</PixelEmpty>
       )}
 
       {gigs.map((gig) => {
@@ -144,19 +146,19 @@ export default function RecruitView({ onOpenAuthModal }) {
                   <h3 className={`text-lg font-bold ${colors.textWhite}`}>{gig.role}</h3>
                   {gig.verified && (
                     <span
-                      title="Organizer identity verified"
+                      title={t('Organizer identity verified')}
                       className={`flex items-center gap-1 text-[10px] ${colors.success}`}
                     >
-                      <Icon name="verified" size={13} /> Verified
+                      <Icon name="verified" size={13} /> {t('Verified')}
                     </span>
                   )}
                 </div>
-                <p className={`text-xs ${colors.textMuted}`}>Posted by: {gig.posted_by}</p>
+                <p className={`text-xs ${colors.textMuted}`}>{t('Posted by: {name}', { name: gig.posted_by })}</p>
               </div>
               <span
                 className={`text-xs ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full}`}
               >
-                {gig.compensation}
+                {t(gig.compensation)}
               </span>
             </div>
 
@@ -168,16 +170,16 @@ export default function RecruitView({ onOpenAuthModal }) {
                   key={tag}
                   className={`text-[10px] ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
                 >
-                  #{tag}
+                  <bdi>#{t(tag)}</bdi>
                 </span>
               ))}
             </div>
 
             <div className={`mt-5 pt-4 border-t ${colors.border} flex justify-between items-center`}>
               {!user && (
-                <span className={`text-[11px] ${colors.textFaint}`}>Sign in to apply</span>
+                <span className={`text-[11px] ${colors.textFaint}`}>{t('Sign in to apply')}</span>
               )}
-              <div className="ml-auto">
+              <div className="ms-auto">
                 <button
                   onClick={(e) => handleApply(e, gig)}
                   disabled={isSubmitted || isCheckingApplied}
@@ -190,15 +192,15 @@ export default function RecruitView({ onOpenAuthModal }) {
                 >
                   {isSubmitted ? (
                     <>
-                      Submitted <Icon name="check_circle" size={13} className="text-inherit" />
+                      {t('Submitted')} <Icon name="check_circle" size={13} className="text-inherit" />
                     </>
                   ) : user ? (
                     <>
-                      Submit Project Request <Icon name="arrow_forward" size={13} className="text-inherit" />
+                      {t('Submit Project Request')} <Icon name="arrow_forward" size={13} className="text-inherit" />
                     </>
                   ) : (
                     <>
-                      Sign In to Apply <Icon name="login" size={13} className="text-inherit" />
+                      {t('Sign In to Apply')} <Icon name="login" size={13} className="text-inherit" />
                     </>
                   )}
                 </button>

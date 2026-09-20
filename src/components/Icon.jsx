@@ -13,8 +13,12 @@ import React from 'react';
 import { FALLBACK_ICON, ICON_MAP } from '../theme/iconMap';
 import { useTheme } from '../theme/theme';
 
+// Icons that point somewhere mirror in right-to-left languages.
+const DIRECTIONAL = new Set(['arrow_back', 'arrow_forward', 'chevron_right', 'chevron_left', 'navigate_next', 'navigate_before', 'arrow_right_alt', 'undo', 'redo', 'logout', 'login', 'send']);
+
 export default function Icon({ name, size = 20, active = false, className = '', style = {} }) {
   const { style: look } = useTheme();
+  const flip = DIRECTIONAL.has(name) ? ' rtl:-scale-x-100' : '';
 
   if (look === 'pixel') {
     const mapped = ICON_MAP[name];
@@ -22,7 +26,7 @@ export default function Icon({ name, size = 20, active = false, className = '', 
     return (
       <i
         aria-hidden="true"
-        className={`pixelart-icons-font-${mapped ?? FALLBACK_ICON} select-none inline-block leading-none not-italic ${className}`}
+        className={`pixelart-icons-font-${mapped ?? FALLBACK_ICON} select-none inline-block leading-none not-italic ${className}${flip}`}
         style={{ fontSize: size, width: size, height: size, lineHeight: 1, ...style }}
       />
     );
@@ -31,7 +35,7 @@ export default function Icon({ name, size = 20, active = false, className = '', 
   return (
     <span
       aria-hidden="true"
-      className={`material-symbols-outlined select-none inline-block leading-none ${className}`}
+      className={`material-symbols-outlined select-none inline-block leading-none ${className}${flip}`}
       style={{
         fontSize: size,
         width: size,

@@ -13,8 +13,10 @@ import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
+import { useT } from '../i18n';
 
 export default function PublicProfileView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { username } = useParams();
   const { profile: myProfile } = useProfile();
@@ -58,10 +60,10 @@ export default function PublicProfileView() {
     <div className="w-full max-w-md mx-auto space-y-6 px-4 py-6">
       <SubPageHeader title={`@${username}`} fallbackTo="/" />
 
-      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading profile…</p>}
-      {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load this profile. Try again.</p>}
+      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>{t('Loading profile…')}</p>}
+      {status === 'error' && <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load this profile. Try again.')}</p>}
       {status === 'missing' && (
-        <p className={`text-sm ${colors.textMuted}`}>This profile doesn't exist or is private.</p>
+        <p className={`text-sm ${colors.textMuted}`}>{t('This profile doesn\'t exist or is private.')}</p>
       )}
 
       {status === 'ready' && (
@@ -82,7 +84,7 @@ export default function PublicProfileView() {
           </div>
           <div className="flex flex-wrap justify-center gap-2">
             {person.account_type === 'business' && (
-              <span className={`text-[11px] px-2.5 py-1 ${radius.full} ${colors.secondarySoftBg} ${colors.secondary}`}>Business</span>
+              <span className={`text-[11px] px-2.5 py-1 ${radius.full} ${colors.secondarySoftBg} ${colors.secondary}`}>{t('Business')}</span>
             )}
             {person.university && (
               <span className={`text-[11px] px-2.5 py-1 ${radius.full} border ${colors.border} ${colors.textMuted} flex items-center gap-1`}>
@@ -94,10 +96,10 @@ export default function PublicProfileView() {
 
           <div className="flex gap-2 justify-center pt-2">
             <button onClick={share} className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} px-4 py-2 ${radius.full}`}>
-              <Icon name={copied ? 'check' : 'share'} size={14} className="text-inherit" /> {copied ? 'Link copied' : 'Share profile'}
+              <Icon name={copied ? 'check' : 'share'} size={14} className="text-inherit" /> {copied ? t('Link copied') : t('Share profile')}
             </button>
             {isMe && (
-              <Link to="/profile" className={`text-xs font-bold ${colors.textWhite} border ${colors.borderStrong} px-4 py-2 ${radius.full}`}>Edit</Link>
+              <Link to="/profile" className={`text-xs font-bold ${colors.textWhite} border ${colors.borderStrong} px-4 py-2 ${radius.full}`}>{t('Edit')}</Link>
             )}
           </div>
         </div>

@@ -9,8 +9,10 @@ import { useAuth } from '../context/AuthContext';
 import { logUserAction } from './TelemetryLog';
 import Icon from './Icon';
 import { LogoMark } from './Logo';
+import { useT } from '../i18n';
 
 export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
+  const { t } = useT();
   const { colors, radius, spacing, font, brand } = themeConfig;
   const { signIn, signUp, signInWithGoogle, resetPassword, error } = useAuth();
 
@@ -46,7 +48,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
     if (mode === 'reset') {
       const { error: resetError } = await resetPassword(email);
       setIsSubmitting(false);
-      if (!resetError) setNotice('If that email has an account, a reset link is on its way.');
+      if (!resetError) setNotice(t('If that email has an account, a reset link is on its way.'));
       return;
     }
 
@@ -58,7 +60,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
     if (actionError) return;
 
     if (mode === 'signUp') {
-      setNotice('Account created — check your inbox to confirm your email before signing in.');
+      setNotice(t('Account created — check your inbox to confirm your email before signing in.'));
     } else {
       resetAndClose();
     }
@@ -82,8 +84,8 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
       >
         <button
           onClick={resetAndClose}
-          aria-label="Close sign-in dialog"
-          className={`absolute top-4 right-4 ${colors.textFaint} ${colors.textHoverStrong} transition`}
+          aria-label={t('Close sign-in dialog')}
+          className={`absolute top-4 end-4 ${colors.textFaint} ${colors.textHoverStrong} transition`}
         >
           <Icon name="close" size={18} />
         </button>
@@ -94,7 +96,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             {mode === 'signIn'
               ? `Sign in to ${brand.name}`
               : mode === 'reset'
-                ? 'Reset your password'
+                ? t('Reset your password')
                 : `Create your ${accountType === 'business' ? 'business ' : ''}${brand.name} account`}
           </h2>
           {mode === 'signUp' && (
@@ -103,19 +105,19 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
               onClick={() => setAccountType((prev) => (prev === 'personal' ? 'business' : 'personal'))}
               className={`text-[11px] font-semibold ${colors.accent}`}
             >
-              {accountType === 'personal' ? 'or sign up as a business' : 'or sign up as an individual'}
+              {accountType === 'personal' ? t('or sign up as a business') : t('or sign up as an individual')}
             </button>
           )}
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3">
-          <label className="block text-left">
-            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Email</span>
+          <label className="block text-start">
+            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Email')}</span>
             <div className="relative mt-1">
               <Icon
                 name="mail"
                 size={16}
-                className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
+                className={`absolute start-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
               />
               <input
                 type="email"
@@ -123,20 +125,20 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
                 autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+                placeholder={t('you@example.com')}
+                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} ps-9 pe-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             </div>
           </label>
 
           {mode !== 'reset' && (
-          <label className="block text-left">
-            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Password</span>
+          <label className="block text-start">
+            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Password')}</span>
             <div className="relative mt-1">
               <Icon
                 name="lock"
                 size={16}
-                className={`absolute left-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
+                className={`absolute start-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`}
               />
               <input
                 type="password"
@@ -146,7 +148,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} pl-9 pr-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} ps-9 pe-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             </div>
           </label>
@@ -160,14 +162,14 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             {isSubmitting && (
               <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
             )}
-            {mode === 'signIn' ? 'Sign in' : mode === 'reset' ? 'Send reset link' : 'Create account'}
+            {mode === 'signIn' ? t('Sign in') : mode === 'reset' ? t('Send reset link') : t('Create account')}
           </button>
         </form>
 
         {mode !== 'reset' && (
           <>
             <div className={`flex items-center gap-3 my-4 text-[11px] ${colors.textFaint}`}>
-              <span className={`h-px flex-1 ${colors.bgPill}`} /> or <span className={`h-px flex-1 ${colors.bgPill}`} />
+              <span className={`h-px flex-1 ${colors.bgPill}`} /> {t('or')} <span className={`h-px flex-1 ${colors.bgPill}`} />
             </div>
             <button
               type="button"
@@ -183,7 +185,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
                 <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/>
                 <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/>
               </svg>
-              Continue with Google
+              {t('Continue with Google')}
             </button>
           </>
         )}
@@ -196,7 +198,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
             onClick={() => { setMode('reset'); setNotice(null); }}
             className={`mt-4 w-full text-center text-[11px] ${colors.textFaint} ${colors.textHoverStrong} transition`}
           >
-            Forgot your password?
+            {t('Forgot your password?')}
           </button>
         )}
         <button
@@ -204,10 +206,10 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
           className={`mt-3 w-full text-center text-xs ${colors.textFaint} ${colors.textHoverStrong} transition`}
         >
           {mode === 'signIn'
-            ? "Don't have an account? Sign up"
+            ? t('Don\'t have an account? Sign up')
             : mode === 'reset'
-              ? 'Back to sign in'
-              : 'Already have an account? Sign in'}
+              ? t('Back to sign in')
+              : t('Already have an account? Sign in')}
         </button>
       </div>
     </div>

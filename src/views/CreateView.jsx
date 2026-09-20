@@ -23,8 +23,10 @@ import Icon from '../components/Icon';
 import GigForm from './create/GigForm';
 import EventForm from './create/EventForm';
 import GroupForm from './create/GroupForm';
+import { useT } from '../i18n';
 
 export default function CreateView() {
+  const { t } = useT();
   const { colors, radius, font } = themeConfig;
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -51,9 +53,9 @@ export default function CreateView() {
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className={`border-b ${colors.border} pb-3`}>
         <h1 className={`text-xl ${font.heading} ${colors.textWhite} flex items-center gap-2`}>
-          <Icon name="add_circle" size={22} className={colors.accent} /> Create
+          <Icon name="add_circle" size={22} className={colors.accent} /> {t('Create')}
         </h1>
-        <p className={`text-xs ${colors.textFaint} mt-1`}>Submitted for review — it won't be public until approved.</p>
+        <p className={`text-xs ${colors.textFaint} mt-1`}>{t('Submitted for review — it won\'t be public until approved.')}</p>
       </div>
 
       <div className="flex gap-2">
@@ -68,7 +70,7 @@ export default function CreateView() {
                 : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
             }`}
           >
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>

@@ -18,6 +18,7 @@ import { PixelAvatar, PixelEmpty } from '../components/Pixel';
 import { formatLongDate } from '../components/FeedCards';
 import usePageMeta from '../lib/usePageMeta';
 import { AnswersView } from '../components/Questions';
+import { useT } from '../i18n';
 
 function StatTile({ label, value, sub }) {
   const { colors, radius } = themeConfig;
@@ -65,6 +66,7 @@ function RsvpChart({ rows }) {
 const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 
 export default function EventManageView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user, isAdmin } = useAuth();
@@ -129,14 +131,14 @@ export default function EventManageView() {
     });
   }, [rows, filter, search]);
 
-  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>Loading…</p>;
-  if (status === 'notFound') return <p className={`text-sm ${colors.textMuted}`}>Event not found.</p>;
-  if (status === 'error') return <p className={`text-sm ${colors.error}`}>Couldn&apos;t load attendees. Has 012_tickets_saves_reports_applicants.sql been run?</p>;
+  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>;
+  if (status === 'notFound') return <p className={`text-sm ${colors.textMuted}`}>{t('Event not found.')}</p>;
+  if (status === 'error') return <p className={`text-sm ${colors.error}`}>{t('Couldn\'t load attendees. Has 012_tickets_saves_reports_applicants.sql been run?')}</p>;
   if (!(isAdmin || event.posted_by_user_id === user?.id)) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-3">
-        <p className={`text-sm ${colors.textMuted}`}>Only the organizer can manage this event.</p>
-        <Link to={`/events/${id}`} className={`text-xs font-semibold ${colors.accent}`}>Back to the event</Link>
+        <p className={`text-sm ${colors.textMuted}`}>{t('Only the organizer can manage this event.')}</p>
+        <Link to={`/events/${id}`} className={`text-xs font-semibold ${colors.accent}`}>{t('Back to the event')}</Link>
       </div>
     );
   }
@@ -148,7 +150,7 @@ export default function EventManageView() {
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-8">
-      <SubPageHeader title="Manage event" fallbackTo={`/events/${id}`} />
+      <SubPageHeader title={t('Manage event')} fallbackTo={`/events/${id}`} />
 
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -157,22 +159,22 @@ export default function EventManageView() {
         </div>
         <div className="flex gap-2">
           <Link to={`/events/${id}/scan`} className={`flex items-center gap-1.5 text-xs font-bold px-4 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
-            <Icon name="search" size={14} className="text-inherit" /> Scan tickets
+            <Icon name="search" size={14} className="text-inherit" /> {t('Scan tickets')}
           </Link>
-          <button onClick={exportCsv} disabled={!total} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full} disabled:opacity-50`}>Export CSV</button>
+          <button onClick={exportCsv} disabled={!total} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full} disabled:opacity-50`}>{t('Export CSV')}</button>
         </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatTile label="RSVPs" value={total} sub={event.capacity ? `of ${event.capacity} seats` : undefined} />
-        <StatTile label="Checked in" value={inCount} sub={total ? `${Math.round((inCount / total) * 100)}% of RSVPs` : undefined} />
-        <StatTile label="Seats left" value={event.capacity ? Math.max(0, event.capacity - total) : '–'} sub={fill != null ? `${fill}% full` : undefined} />
-        <StatTile label={ended ? 'No-shows' : 'Still to arrive'} value={total - inCount} />
+        <StatTile label={t('RSVPs')} value={total} sub={event.capacity ? `of ${event.capacity} seats` : undefined} />
+        <StatTile label={t('Checked in')} value={inCount} sub={total ? `${Math.round((inCount / total) * 100)}% of RSVPs` : undefined} />
+        <StatTile label={t('Seats left')} value={event.capacity ? Math.max(0, event.capacity - total) : '–'} sub={fill != null ? `${fill}% full` : undefined} />
+        <StatTile label={ended ? t('No-shows') : t('Still to arrive')} value={total - inCount} />
       </div>
 
       {total > 0 && (
         <section className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-3`}>
-          <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>RSVPs per day</h3>
+          <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>{t('RSVPs per day')}</h3>
           <RsvpChart rows={rows} />
         </section>
       )}
@@ -184,10 +186,10 @@ export default function EventManageView() {
               <button key={k} onClick={() => setFilter(k)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === k ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{label}</button>
             ))}
           </div>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search name or university…" className={`flex-1 min-w-[160px] ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textPrimary} outline-none focus:border-md3-primary`} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('Search name or university…')} className={`flex-1 min-w-[160px] ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textPrimary} outline-none focus:border-md3-primary`} />
         </div>
 
-        {total === 0 && <PixelEmpty sprite="ghost" title="Nobody has RSVP'd yet">Share the event link to get people in.</PixelEmpty>}
+        {total === 0 && <PixelEmpty sprite="ghost" title={t('Nobody has RSVP\'d yet')}>{t('Share the event link to get people in.')}</PixelEmpty>}
 
         <div className="space-y-2">
           {shown.map((r) => (
@@ -196,15 +198,15 @@ export default function EventManageView() {
               {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-9 h-9 object-cover shrink-0" /> : <PixelAvatar seed={r.user_id} size={36} />}
               <div className="min-w-0 flex-1">
                 <p className={`text-sm font-bold ${colors.textWhite} truncate`}>
-                  {r.profile?.display_name || 'Unnamed'} {r.profile?.username && <span className={`font-normal ${colors.accent}`}>@{r.profile.username}</span>}
+                  {r.profile?.display_name || t('Unnamed')} {r.profile?.username && <span className={`font-normal ${colors.accent}`}>@{r.profile.username}</span>}
                 </p>
-                <p className={`text-[11px] ${colors.textFaint} truncate`}>{r.profile?.university || 'No school listed'} · {r.ticket_code}</p>
+                <p className={`text-[11px] ${colors.textFaint} truncate`}>{r.profile?.university || t('No school listed')} · {r.ticket_code}</p>
               </div>
               <button
                 onClick={() => toggle(r)}
                 className={`shrink-0 text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1.5 border ${r.checked_in_at ? 'bg-md3-success/15 text-md3-success border-md3-success/40' : `${colors.textMuted} ${colors.borderStrong}`}`}
               >
-                {r.checked_in_at ? 'Checked in' : 'Check in'}
+                {r.checked_in_at ? t('Checked in') : t('Check in')}
               </button>
               </div>
               {event.questions?.length > 0 && (

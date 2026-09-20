@@ -5,8 +5,10 @@ import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
 import ModerationQueue from '../../components/ModerationQueue';
+import { useT } from '../../i18n';
 
 export default function AdminGigs() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
 
   const setStatus = async (gig, next) => {
@@ -17,8 +19,8 @@ export default function AdminGigs() {
 
   return (
     <ModerationQueue
-      title="Gig moderation"
-      subtitle="New submissions stay invisible on the public Recruit feed until approved."
+      title={t('Gig moderation')}
+      subtitle={t('New submissions stay invisible on the public Recruit feed until approved.')}
       table="gigs"
       onSetStatus={setStatus}
       renderItem={(gig) => (
@@ -27,7 +29,7 @@ export default function AdminGigs() {
           <p className={`text-xs ${colors.textFaint} mt-0.5`}>
             {gig.posted_by} · {gig.compensation}
             {gig.location ? ` · ${gig.location}` : ''}
-            {gig.is_remote ? ' · Remote' : ''}
+            {gig.is_remote ? t('· Remote') : ''}
           </p>
           <p className={`text-xs ${colors.textMuted} mt-3 leading-relaxed`}>{gig.details}</p>
           <div className="flex gap-2 mt-3 flex-wrap">

@@ -18,6 +18,7 @@ import ClubCard from '../components/ClubCard';
 import Icon from '../components/Icon';
 import { PixelEmpty } from '../components/Pixel';
 import { CardSkeleton } from '../components/FeedCards';
+import { useT } from '../i18n';
 
 const STORAGE_KEY = 'clubs.university';
 
@@ -31,6 +32,7 @@ function readStoredUniversity() {
 }
 
 export default function ClubsView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const { profile, saveProfile } = useProfile();
@@ -86,50 +88,48 @@ export default function ClubsView() {
     <div className="space-y-6 w-full">
       <div className={`border-b ${colors.border} pb-3 flex items-end justify-between gap-4`}>
         <div>
-          <h2 className={`text-xl font-bold ${colors.textWhite}`}>Clubs</h2>
-          <p className={`text-xs ${colors.textFaint} mt-1`}>
-            Clubs are private: request to join and a moderator approves you. Up to {MAX_CLUBS} clubs.
-          </p>
+          <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Clubs')}</h2>
+          <p className={`text-xs ${colors.textFaint} mt-1`}>{t('Clubs are private: request to join and a moderator approves you. Up to {n} clubs.', { n: MAX_CLUBS })}</p>
         </div>
         {user && (
           <Link to="/clubs/moderator" className={`text-xs font-semibold ${colors.accent} whitespace-nowrap`}>
-            Moderator workspace
+            {t('Moderator workspace')}
           </Link>
         )}
       </div>
 
       {profileUniversity ? (
         <div className={`flex items-center gap-2 text-xs ${colors.textMuted}`}>
-          <Icon name="school" size={15} /> Showing clubs at <b className={colors.textWhite}>{profileUniversity}</b>
-          <Link to="/profile" className={colors.accent}>Change</Link>
+          <Icon name="school" size={15} /> {t('Showing clubs at')} <b className={colors.textWhite}>{profileUniversity}</b>
+          <Link to="/profile" className={colors.accent}>{t('Change')}</Link>
         </div>
       ) : (
         <div className="space-y-2">
-          <label className={`block text-xs font-semibold ${colors.textFaint}`}>Which university do you attend?</label>
+          <label className={`block text-xs font-semibold ${colors.textFaint}`}>{t('Which university do you attend?')}</label>
           <select className={selectClass} value={picked} onChange={(e) => chooseUniversity(e.target.value)}>
-            <option value="">Select your university…</option>
+            <option value="">{t('Select your university…')}</option>
             {CLUB_UNIVERSITIES.map((u) => (
               <option key={u} value={u}>{u}</option>
             ))}
           </select>
           {user && picked && !saved && (
-            <button onClick={saveToProfile} className={`text-xs font-semibold ${colors.accent}`}>Save as my university</button>
+            <button onClick={saveToProfile} className={`text-xs font-semibold ${colors.accent}`}>{t('Save as my university')}</button>
           )}
-          {saved && <p className={`text-xs ${colors.success}`}>Saved to your profile.</p>}
+          {saved && <p className={`text-xs ${colors.success}`}>{t('Saved to your profile.')}</p>}
         </div>
       )}
 
-      {!university && <PixelEmpty sprite="search" title="Pick your university">Choose it above to see its clubs.</PixelEmpty>}
+      {!university && <PixelEmpty sprite="search" title={t('Pick your university')}>{t('Choose it above to see its clubs.')}</PixelEmpty>}
 
       {university && (
         <>
           <div className="relative">
-            <Icon name="search" size={18} className={`absolute left-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+            <Icon name="search" size={18} className={`absolute start-3.5 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by club name or interests..."
-              className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} pl-10 pr-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
+              placeholder={t('Search by club name or interests...')}
+              className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} ps-10 pe-3 py-2.5 text-sm ${colors.textWhite} outline-none focus:border-md3-primary`}
             />
           </div>
 
@@ -154,18 +154,18 @@ export default function ClubsView() {
               <CardSkeleton tall />
             </div>
           )}
-          {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load clubs. Has 010_private_clubs_usernames.sql been run?</p>}
+          {status === 'error' && <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load clubs. Has 010_private_clubs_usernames.sql been run?')}</p>}
           {status === 'ready' && clubs.length === 0 && (
-            <PixelEmpty sprite="ghost" title="No clubs at this university yet">
+            <PixelEmpty sprite="ghost" title={t('No clubs at this university yet')}>
               {user ? (
-                <Link to="/create?type=group" className={`font-semibold ${colors.accent}`}>Create the first group</Link>
+                <Link to="/create?type=group" className={`font-semibold ${colors.accent}`}>{t('Create the first group')}</Link>
               ) : (
-                'Sign in to create the first group.'
+                t('Sign in to create the first group.')
               )}
             </PixelEmpty>
           )}
           {status === 'ready' && clubs.length > 0 && shown.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>No clubs match that search.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('No clubs match that search.')}</p>
           )}
 
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">

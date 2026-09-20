@@ -7,8 +7,10 @@ import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 export default function ConnectDiscordView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const [code, setCode] = useState('');
@@ -44,19 +46,18 @@ export default function ConnectDiscordView() {
     return (
       <div className="max-w-md mx-auto text-center py-16 space-y-3">
         <Icon name="link_off" size={28} className={colors.textFaint} />
-        <p className={`text-sm ${colors.textFaint}`}>Sign in first, then come back to this page.</p>
+        <p className={`text-sm ${colors.textFaint}`}>{t('Sign in first, then come back to this page.')}</p>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-sm mx-auto">
-      <SubPageHeader title="Connect Discord" fallbackTo="/account" />
+      <SubPageHeader title={t('Connect Discord')} fallbackTo="/account" />
 
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
-          Run <span className={`${colors.accent} font-mono`}>/connect</span> in Discord, then enter
-          the 6-character code it gives you below. Codes expire after 10 minutes.
+          {t('Run')} <span className={`${colors.accent} font-mono`}>{t('/connect')}</span> {t('in Discord, then enter the 6-character code it gives you below. Codes expire after 10 minutes.')}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -66,7 +67,7 @@ export default function ConnectDiscordView() {
             maxLength={6}
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="ABC123"
+            placeholder={t('ABC123')}
             className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-3 text-center text-lg tracking-[0.3em] font-bold ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
           />
 
@@ -84,7 +85,7 @@ export default function ConnectDiscordView() {
             {isSubmitting && (
               <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
             )}
-            Connect
+            {t('Connect')}
           </button>
         </form>
       </div>

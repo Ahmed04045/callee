@@ -17,6 +17,7 @@ import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
 import { cleanForSave } from '../../lib/questions';
+import { useT } from '../../i18n';
 
 const DESCRIPTION_MIN = 50;
 const TIMES = Array.from({ length: 30 }, (_, i) => {
@@ -37,6 +38,7 @@ const ERRORS = {
 };
 
 export default function GroupForm({ profile }) {
+  const { t } = useT();
   const { colors } = themeConfig;
   const { input } = useFormStyles();
   const navigate = useNavigate();
@@ -57,12 +59,12 @@ export default function GroupForm({ profile }) {
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!university) return setError('Choose the university this group belongs to.');
-    if (!category) return setError('Choose a category.');
-    if (description.trim().length < DESCRIPTION_MIN) return setError(ERRORS.DESCRIPTION_TOO_SHORT);
-    if (!whatsapp.trim() && !discord.trim()) return setError(ERRORS.LINK_REQUIRED);
-    if (whatsapp.trim() && !WHATSAPP_LINK.test(whatsapp.trim())) return setError(ERRORS.BAD_WHATSAPP_LINK + ' It should start with https://chat.whatsapp.com/');
-    if (discord.trim() && !DISCORD_LINK.test(discord.trim())) return setError(ERRORS.BAD_DISCORD_LINK + ' It should start with https://discord.gg/');
+    if (!university) return setError(t('Choose the university this group belongs to.'));
+    if (!category) return setError(t('Choose a category.'));
+    if (description.trim().length < DESCRIPTION_MIN) return setError(t(ERRORS.DESCRIPTION_TOO_SHORT));
+    if (!whatsapp.trim() && !discord.trim()) return setError(t(ERRORS.LINK_REQUIRED));
+    if (whatsapp.trim() && !WHATSAPP_LINK.test(whatsapp.trim())) return setError(`${t(ERRORS.BAD_WHATSAPP_LINK)} ${t('It should start with')} https://chat.whatsapp.com/`);
+    if (discord.trim() && !DISCORD_LINK.test(discord.trim())) return setError(`${t(ERRORS.BAD_DISCORD_LINK)} ${t('It should start with')} https://discord.gg/`);
 
     const schedule = days.length ? `${WEEKDAYS.filter((d) => days.includes(d)).join(', ')}${time ? `, ${time}` : ''}` : null;
 
@@ -88,29 +90,29 @@ export default function GroupForm({ profile }) {
     setBusy(false);
     if (rpcError) {
       const key = Object.keys(ERRORS).find((k) => rpcError.message.includes(k));
-      return setError(key ? ERRORS[key] : rpcError.message);
+      return setError(key ? t(ERRORS[key]) : rpcError.message);
     }
     navigate('/my-submissions');
   };
 
   return (
     <form onSubmit={submit} className="space-y-4">
-      <Field label="Group name">
+      <Field label={t('Group name')}>
         <input className={input} required minLength={3} maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
       </Field>
 
       <div className="grid grid-cols-2 gap-2">
-        <Field label="University">
+        <Field label={t('University')}>
           <select className={input} required value={university} onChange={(e) => setUniversity(e.target.value)}>
-            <option value="" disabled>Select…</option>
+            <option value="" disabled>{t('Select…')}</option>
             {CLUB_UNIVERSITIES.map((u) => (
               <option key={u} value={u}>{u}</option>
             ))}
           </select>
         </Field>
-        <Field label="Category">
+        <Field label={t('Category')}>
           <select className={input} required value={category} onChange={(e) => setCategory(e.target.value)}>
-            <option value="" disabled>Select…</option>
+            <option value="" disabled>{t('Select…')}</option>
             {GROUP_CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
@@ -119,48 +121,47 @@ export default function GroupForm({ profile }) {
       </div>
 
       <Field
-        label="Description"
-        hint="(50+ characters)"
+        label={t('Description')}
+        hint={t('(50+ characters)')}
         right={<span className={`text-[10px] ${description.trim().length < DESCRIPTION_MIN ? colors.error : colors.success}`}>{description.trim().length}/{DESCRIPTION_MIN}</span>}
       >
         <textarea className={`${input} resize-none`} required rows={4} maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} />
       </Field>
 
-      <Field label="Meeting days" hint="(optional)">
+      <Field label={t('Meeting days')} hint={t('(optional)')}>
         <ChipPicker multiple options={WEEKDAYS} value={days} onChange={setDays} />
         {days.length > 0 && (
           <select className={input} value={time} onChange={(e) => setTime(e.target.value)}>
-            <option value="">Time (optional)</option>
-            {TIMES.map((t) => (
-              <option key={t} value={t}>{t}</option>
+            <option value="">{t('Time (optional)')}</option>
+            {TIMES.map((slot) => (
+              <option key={slot} value={slot}>{slot}</option>
             ))}
           </select>
         )}
       </Field>
 
-      <Field label="Meeting place" hint="(optional)">
+      <Field label={t('Meeting place')} hint={t('(optional)')}>
         <PlacePicker value={place} onChange={setPlace} />
       </Field>
 
       <div className={`p-3 ${colors.bgInset} rounded-xl border ${colors.border} space-y-3`}>
         <p className={`text-[11px] ${colors.textMuted} leading-relaxed`}>
-          Groups are private. These links are never shown publicly — only approved members, this group's moderators and admins can see them.
-          Add at least one.
+          {t('Groups are private. These links are never shown publicly — only approved members, this group\'s moderators and admins can see them. Add at least one.')}
         </p>
-        <Field label="WhatsApp group invite link">
-          <input className={input} inputMode="url" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="https://chat.whatsapp.com/…" />
+        <Field label={t('WhatsApp group invite link')}>
+          <input className={input} inputMode="url" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder={t('https://chat.whatsapp.com/…')} />
         </Field>
-        <Field label="Discord invite link">
-          <input className={input} inputMode="url" value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/…" />
+        <Field label={t('Discord invite link')}>
+          <input className={input} inputMode="url" value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder={t('https://discord.gg/…')} />
         </Field>
       </div>
 
-      <Field label="Questions for people who want to join" hint="(optional)">
-        <QuestionBuilder value={questions} onChange={setQuestions} hint="Moderators see the answers next to each join request." />
+      <Field label={t('Questions for people who want to join')} hint={t('(optional)')}>
+        <QuestionBuilder value={questions} onChange={setQuestions} hint={t('Moderators see the answers next to each join request.')} />
       </Field>
 
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
-      <SubmitButton busy={busy}>Submit group for review</SubmitButton>
+      <SubmitButton busy={busy}>{t('Submit group for review')}</SubmitButton>
     </form>
   );
 }

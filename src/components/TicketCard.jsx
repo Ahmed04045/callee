@@ -12,24 +12,26 @@ import Icon from './Icon';
 import TicketQR from './TicketQR';
 import { PixelCover } from './Pixel';
 import { formatLongDate } from './FeedCards';
+import { useT } from '../i18n';
 
 export const ticketUrl = (code) => `${window.location.origin}/ticket/${code}`;
 
 export default function TicketCard({ event, ticket, holderName, compact = false }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const used = Boolean(ticket.checked_in_at);
 
   return (
-    <article className={`ticket-print ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} overflow-hidden`} aria-label={`Ticket for ${event.title}`}>
+    <article className={`ticket-print ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} overflow-hidden`} aria-label={t('Ticket for {title}', { title: event.title })}>
       <div className="h-10">
         <PixelCover seed={event.id} cols={72} rows={6} />
       </div>
       <div className={`p-5 grid ${compact ? '' : 'sm:grid-cols-[1fr_auto]'} gap-5 items-center`}>
         <div className="space-y-3 min-w-0">
           <div>
-            <p className={`text-[10px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>Admit one</p>
+            <p className={`text-[10px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('Admit one')}</p>
             <h3 className={`text-xl font-bold ${colors.textWhite} leading-snug`}>{event.title}</h3>
-            <p className={`text-xs ${colors.textMuted}`}>By {event.organizer}</p>
+            <p className={`text-xs ${colors.textMuted}`}>{t('By {name}', { name: event.organizer })}</p>
           </div>
           <dl className={`text-xs ${colors.textMuted} space-y-1.5`}>
             <div className="flex items-center gap-2"><Icon name="calendar_today" size={14} className={colors.textFaint} /> {formatLongDate(event.event_date, event.start_time)}</div>
@@ -41,9 +43,9 @@ export default function TicketCard({ event, ticket, holderName, compact = false 
               {ticket.ticket_code}
             </span>
             <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 ${used ? `${colors.bgPill} ${colors.textMuted}` : 'bg-md3-success/15 text-md3-success'}`}>
-              {used ? 'Checked in' : 'Valid'}
+              {used ? t('Checked in') : t('Valid')}
             </span>
-            <span className={`text-[10px] font-mono uppercase tracking-wider ${colors.textFaint}`}>Free entry</span>
+            <span className={`text-[10px] font-mono uppercase tracking-wider ${colors.textFaint}`}>{t('Free entry')}</span>
           </div>
         </div>
         <div className="mx-auto shrink-0 border-2 border-md3-onSurface/70 bg-white p-1">

@@ -74,6 +74,10 @@ export const t = (key, params) => translate(key, params, lang);
 
 export const currentLocale = () => LANGUAGES.find((l) => l.id === lang).locale;
 
+/** Locale-aware dates that follow the current language. */
+export const formatDate = (value, options) => new Date(value).toLocaleDateString(currentLocale(), options);
+export const formatDateTime = (value, options = { dateStyle: 'medium', timeStyle: 'short' }) => new Date(value).toLocaleString(currentLocale(), options);
+
 /** Hook: re-renders when the language changes. */
 export function useT() {
   const current = useSyncExternalStore(subscribe, () => lang);

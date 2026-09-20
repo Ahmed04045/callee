@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 const LABEL = {
   OK: { text: 'Checked in', tone: 'success', icon: 'check_circle' },
@@ -31,6 +32,7 @@ const extractCode = (text) => {
 };
 
 export default function EventScanView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user, isAdmin } = useAuth();
@@ -106,19 +108,19 @@ export default function EventScanView() {
 
   useEffect(() => stopCamera, [stopCamera]);
 
-  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>Loading…</p>;
+  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>;
   if (!canScan) {
     return (
       <div className="max-w-md mx-auto py-12 space-y-3 text-center">
-        <p className={`text-sm ${colors.textMuted}`}>Only the organizer of this event can check tickets in.</p>
-        <Link to={`/events/${id}`} className={`text-xs font-semibold ${colors.accent}`}>Back to the event</Link>
+        <p className={`text-sm ${colors.textMuted}`}>{t('Only the organizer of this event can check tickets in.')}</p>
+        <Link to={`/events/${id}`} className={`text-xs font-semibold ${colors.accent}`}>{t('Back to the event')}</Link>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-md mx-auto space-y-5">
-      <SubPageHeader title="Scan tickets" fallbackTo={`/events/${id}/manage`} />
+      <SubPageHeader title={t('Scan tickets')} fallbackTo={`/events/${id}/manage`} />
       <p className={`text-sm ${colors.textMuted}`}>{event.title}</p>
 
       <div className={`relative aspect-square bg-black ${radius.lg} overflow-hidden border ${colors.borderStrong}`}>
@@ -126,15 +128,15 @@ export default function EventScanView() {
         {cameraState !== 'on' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center">
             <p className="text-sm text-white/80">
-              {cameraState === 'unsupported' && 'This browser cannot scan in the page. Use your phone camera app on the QR code, or type the code below.'}
-              {cameraState === 'denied' && 'Camera access was blocked. Allow it in your browser settings, or type the code below.'}
-              {cameraState === 'idle' && 'Point the camera at a ticket QR code.'}
+              {cameraState === 'unsupported' && t('This browser cannot scan in the page. Use your phone camera app on the QR code, or type the code below.')}
+              {cameraState === 'denied' && t('Camera access was blocked. Allow it in your browser settings, or type the code below.')}
+              {cameraState === 'idle' && t('Point the camera at a ticket QR code.')}
             </p>
-            <button onClick={startCamera} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>Start camera</button>
+            <button onClick={startCamera} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>{t('Start camera')}</button>
           </div>
         )}
         {cameraState === 'on' && (
-          <button onClick={stopCamera} className="absolute bottom-3 right-3 text-xs font-bold bg-black/70 text-white px-3 py-1.5">Stop</button>
+          <button onClick={stopCamera} className="absolute bottom-3 end-3 text-xs font-bold bg-black/70 text-white px-3 py-1.5">{t('Stop')}</button>
         )}
       </div>
 
@@ -149,11 +151,11 @@ export default function EventScanView() {
         <input
           value={manual}
           onChange={(e) => setManual(e.target.value)}
-          placeholder="Type a ticket code"
+          placeholder={t('Type a ticket code')}
           maxLength={80}
           className={`flex-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm font-mono uppercase ${colors.textPrimary} outline-none focus:border-md3-primary`}
         />
-        <button className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-4 ${radius.full}`}>Check in</button>
+        <button className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-4 ${radius.full}`}>{t('Check in')}</button>
       </form>
 
       <div className="space-y-2" aria-live="polite">
@@ -163,8 +165,8 @@ export default function EventScanView() {
             <div key={`${r.code}-${r.at.getTime()}`} className={`flex items-center gap-3 p-3 ${colors.bgCard} border ${colors.border} ${radius.md} ${i === 0 ? 'border-md3-outline' : ''}`}>
               <Icon name={meta.icon} size={22} className={colors[meta.tone]} />
               <div className="min-w-0 flex-1">
-                <p className={`text-sm font-bold ${colors.textWhite} truncate`}>{r.name ?? meta.text}</p>
-                <p className={`text-[11px] ${colors[meta.tone]}`}>{meta.text}</p>
+                <p className={`text-sm font-bold ${colors.textWhite} truncate`}>{r.name ?? t(meta.text)}</p>
+                <p className={`text-[11px] ${colors[meta.tone]}`}>{t(meta.text)}</p>
               </div>
               <span className={`text-[10px] font-mono ${colors.textFaint}`}>{r.at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
             </div>

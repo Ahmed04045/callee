@@ -8,8 +8,10 @@ import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
 import ModerationQueue from '../../components/ModerationQueue';
+import { useT } from '../../i18n';
 
 export default function AdminEvents() {
+  const { t } = useT();
   const { colors } = themeConfig;
 
   const setStatus = async (event, next) => {
@@ -20,8 +22,8 @@ export default function AdminEvents() {
 
   return (
     <ModerationQueue
-      title="Event moderation"
-      subtitle="Events stay off Home and the Discover map until approved."
+      title={t('Event moderation')}
+      subtitle={t('Events stay off Home and the Discover map until approved.')}
       table="events"
       orderBy="created_at"
       onSetStatus={setStatus}

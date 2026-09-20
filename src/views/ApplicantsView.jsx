@@ -18,6 +18,7 @@ import usePageMeta from '../lib/usePageMeta';
 import { AnswersView } from '../components/Questions';
 import { APPLICATION_CONTACT_METHODS } from '../lib/options';
 import Icon from '../components/Icon';
+import { useT, formatDate } from '../i18n';
 
 export const APPLICATION_STAGES = [
   ['submitted', 'Applied'],
@@ -28,6 +29,7 @@ export const APPLICATION_STAGES = [
 ];
 
 export default function ApplicantsView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user, isAdmin } = useAuth();
@@ -81,34 +83,34 @@ export default function ApplicantsView() {
   const counts = useMemo(() => Object.fromEntries(APPLICATION_STAGES.map(([k]) => [k, rows.filter((r) => r.status === k).length])), [rows]);
   const shown = filter === 'all' ? rows : rows.filter((r) => r.status === filter);
 
-  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>Loading…</p>;
-  if (status === 'notFound') return <p className={`text-sm ${colors.textMuted}`}>Gig not found.</p>;
-  if (status === 'error') return <p className={`text-sm ${colors.error}`}>Couldn&apos;t load applicants. Has 012_tickets_saves_reports_applicants.sql been run?</p>;
+  if (status === 'loading') return <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>;
+  if (status === 'notFound') return <p className={`text-sm ${colors.textMuted}`}>{t('Gig not found.')}</p>;
+  if (status === 'error') return <p className={`text-sm ${colors.error}`}>{t('Couldn\'t load applicants. Has 012_tickets_saves_reports_applicants.sql been run?')}</p>;
   if (!(isAdmin || gig.posted_by_user_id === user?.id)) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-3">
-        <p className={`text-sm ${colors.textMuted}`}>Only the person who posted this gig can see its applicants.</p>
-        <Link to={`/gigs/${id}`} className={`text-xs font-semibold ${colors.accent}`}>Back to the gig</Link>
+        <p className={`text-sm ${colors.textMuted}`}>{t('Only the person who posted this gig can see its applicants.')}</p>
+        <Link to={`/gigs/${id}`} className={`text-xs font-semibold ${colors.accent}`}>{t('Back to the gig')}</Link>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
-      <SubPageHeader title="Applicants" fallbackTo={`/gigs/${id}`} />
+      <SubPageHeader title={t('Applicants')} fallbackTo={`/gigs/${id}`} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className={`text-sm ${colors.textMuted}`}>{gig.role}</p>
-        <button onClick={exportCsv} disabled={!rows.length} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full} disabled:opacity-50`}>Export CSV</button>
+        <button onClick={exportCsv} disabled={!rows.length} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full} disabled:opacity-50`}>{t('Export CSV')}</button>
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => setFilter('all')} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === 'all' ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>All ({rows.length})</button>
+        <button onClick={() => setFilter('all')} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === 'all' ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{t('All')} ({rows.length})</button>
         {APPLICATION_STAGES.map(([k, label]) => (
-          <button key={k} onClick={() => setFilter(k)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === k ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{label} ({counts[k]})</button>
+          <button key={k} onClick={() => setFilter(k)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === k ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>{t(label)} ({counts[k]})</button>
         ))}
       </div>
 
-      {rows.length === 0 && <PixelEmpty sprite="ghost" title="No applicants yet">Share the gig link to get applications.</PixelEmpty>}
+      {rows.length === 0 && <PixelEmpty sprite="ghost" title={t('No applicants yet')}>{t('Share the gig link to get applications.')}</PixelEmpty>}
 
       <div className="space-y-3">
         {shown.map((r) => (
@@ -117,10 +119,10 @@ export default function ApplicantsView() {
               {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-11 h-11 object-cover shrink-0" /> : <PixelAvatar seed={r.user_id} size={44} />}
               <div className="min-w-0 flex-1">
                 <p className={`text-sm font-bold ${colors.textWhite}`}>
-                  {r.profile?.display_name || 'Unnamed'}{' '}
+                  {r.profile?.display_name || t('Unnamed')}{' '}
                   {r.profile?.username && <Link to={`/u/${r.profile.username}`} className={`font-normal ${colors.accent}`}>@{r.profile.username}</Link>}
                 </p>
-                <p className={`text-[11px] ${colors.textFaint}`}>{r.profile?.university || 'No school listed'} · applied {new Date(r.created_at).toLocaleDateString()}</p>
+                <p className={`text-[11px] ${colors.textFaint}`}>{r.profile?.university || t('No school listed')} · {t('applied {date}', { date: formatDate(r.created_at) })}</p>
                 {r.profile?.bio && <p className={`text-xs ${colors.textMuted} mt-2 leading-relaxed`}>{r.profile.bio}</p>}
               </div>
             </div>
@@ -146,7 +148,7 @@ export default function ApplicantsView() {
                     r.status === k ? `${k === 'rejected' ? 'bg-md3-error/20 text-md3-error border-md3-error/50' : `${colors.accentBg} ${colors.accentOn} border-transparent`}` : `${colors.textMuted} ${colors.borderStrong}`
                   }`}
                 >
-                  {label}
+                  {t(label)}
                 </button>
               ))}
             </div>

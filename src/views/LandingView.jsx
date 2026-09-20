@@ -12,10 +12,12 @@ import { supabase } from '../lib/supabaseClient';
 import usePageMeta from '../lib/usePageMeta';
 import Logo from '../components/Logo';
 import ThemeMenu from '../components/ThemeMenu';
+import LanguageSwitch from '../components/LanguageSwitch';
 import { useTheme } from '../theme/theme';
 import Icon from '../components/Icon';
 import { PixelCover, PixelSprite } from '../components/Pixel';
 import { EventCard } from '../components/FeedCards';
+import { useT } from '../i18n';
 
 const FEATURES = [
   { icon: 'event_available', title: 'Events near you', text: 'Find hackathons, workshops and meetups, RSVP in one tap, and see them on a map.' },
@@ -67,6 +69,7 @@ function useLiveStats() {
 }
 
 export default function LandingView({ onOpenAuthModal }) {
+  const { t } = useT();
   usePageMeta('', 'Circosodal: find clubs, events and gigs for students in Qatar. Join private university clubs, RSVP to events and start your own.');
   const { colors, radius, brand, font } = themeConfig;
   const navigate = useNavigate();
@@ -91,17 +94,18 @@ export default function LandingView({ onOpenAuthModal }) {
     <div className="min-h-screen flex flex-col">
       <header className={`sticky top-0 z-30 border-b ${colors.border} ${colors.bgHeader} backdrop-blur`}>
         <div className="max-w-6xl mx-auto h-16 px-4 flex items-center justify-between gap-4">
-          <Link to="/" aria-label={`${brand.name} home`}><Logo size={28} /></Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold" aria-label="Main">
-            <Link to="/explore" className={colors.textMuted}>Explore</Link>
-            <Link to="/clubs" className={colors.textMuted}>Clubs</Link>
-            <Link to="/recruit" className={colors.textMuted}>Gigs</Link>
-            <Link to="/about" className={colors.textMuted}>About</Link>
+          <Link to="/" aria-label={t('{name} home', { name: brand.name })}><Logo size={28} /></Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-semibold" aria-label={t('Main')}>
+            <Link to="/explore" className={colors.textMuted}>{t('Explore')}</Link>
+            <Link to="/clubs" className={colors.textMuted}>{t('Clubs')}</Link>
+            <Link to="/recruit" className={colors.textMuted}>{t('Gigs')}</Link>
+            <Link to="/about" className={colors.textMuted}>{t('About')}</Link>
           </nav>
           <div className="flex items-center gap-2">
+            <LanguageSwitch />
             <ThemeMenu />
-            <button onClick={() => onOpenAuthModal?.('signIn')} className={`hidden sm:block text-sm font-bold ${colors.textWhite} px-3 py-2`}>Sign in</button>
-            <button onClick={() => onOpenAuthModal?.('signUp')} className={`text-sm font-bold ${colors.accentBg} ${colors.accentOn} px-4 py-2 ${radius.full}`}>Get started</button>
+            <button onClick={() => onOpenAuthModal?.('signIn')} className={`hidden sm:block text-sm font-bold ${colors.textWhite} px-3 py-2`}>{t('Sign in')}</button>
+            <button onClick={() => onOpenAuthModal?.('signUp')} className={`text-sm font-bold ${colors.accentBg} ${colors.accentOn} px-4 py-2 ${radius.full}`}>{t('Get started')}</button>
           </div>
         </div>
       </header>
@@ -116,31 +120,31 @@ export default function LandingView({ onOpenAuthModal }) {
           )}
           <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36 grid md:grid-cols-[1fr_auto] gap-10 items-center">
             <div className="space-y-6">
-              <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>For students in Qatar</p>
+              <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('For students in Qatar')}</p>
               <h1 className={`text-4xl sm:text-6xl ${font.heading} ${colors.textWhite} leading-[1.05]`}>
-                {brand.tagline}
+                {t(brand.tagline)}
                 <br />
-                <span className={colors.gradientText}>{brand.subTagline}</span>
+                <span className={colors.gradientText}>{t(brand.subTagline)}</span>
               </h1>
               <p className={`text-base sm:text-lg ${colors.textMuted} max-w-xl`}>
-                Discover events, join your university&apos;s clubs and find gigs, all in one place, built for students.
+                {t('Discover events, join your university\'s clubs and find gigs, all in one place, built for students.')}
               </p>
               <form onSubmit={go} className="max-w-xl relative">
-                <Icon name="search" size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+                <Icon name="search" size={18} className={`absolute start-4 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search events, gigs, clubs…"
-                  aria-label="Search"
-                  className={`w-full ${colors.bgCard} border ${colors.borderStrong} ${radius.full} pl-12 pr-28 py-3.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary`}
+                  placeholder={t('Search events, gigs, clubs…')}
+                  aria-label={t('Search')}
+                  className={`w-full ${colors.bgCard} border ${colors.borderStrong} ${radius.full} ps-12 pe-28 py-3.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary`}
                 />
-                <button type="submit" className={`absolute right-1.5 top-1/2 -translate-y-1/2 text-xs font-bold ${colors.accentBg} ${colors.accentOn} px-4 py-2 ${radius.full}`}>Search</button>
+                <button type="submit" className={`absolute end-1.5 top-1/2 -translate-y-1/2 text-xs font-bold ${colors.accentBg} ${colors.accentOn} px-4 py-2 ${radius.full}`}>{t('Search')}</button>
               </form>
               <div className="flex flex-wrap gap-3">
                 <button onClick={() => onOpenAuthModal?.('signUp')} className={primary}>
-                  Get started <Icon name="arrow_forward" size={16} className="text-inherit" />
+                  {t('Get started')} <Icon name="arrow_forward" size={16} className="text-inherit" />
                 </button>
-                <Link to="/explore" className={secondary}>Explore events</Link>
+                <Link to="/explore" className={secondary}>{t('Explore events')}</Link>
               </div>
             </div>
             {look === 'pixel' && (
@@ -154,11 +158,11 @@ export default function LandingView({ onOpenAuthModal }) {
         {/* LIVE NUMBERS (real counts) */}
         {statTiles.length > 0 && (
           <section className="max-w-6xl mx-auto px-4 -mt-10 relative z-10">
-            <div className={`grid ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} divide-x divide-md3-outlineVariant`} style={{ gridTemplateColumns: `repeat(${statTiles.length}, minmax(0, 1fr))` }}>
+            <div className={`grid ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} divide-x rtl:divide-x-reverse divide-md3-outlineVariant`} style={{ gridTemplateColumns: `repeat(${statTiles.length}, minmax(0, 1fr))` }}>
               {statTiles.map(([n, label]) => (
                 <div key={label} className="p-4 sm:p-6 text-center">
                   <p className={`text-3xl sm:text-4xl font-display font-bold ${colors.textWhite}`}>{n}</p>
-                  <p className={`text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider ${colors.textFaint} mt-1`}>{label}</p>
+                  <p className={`text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider ${colors.textFaint} mt-1`}>{t(label)}</p>
                 </div>
               ))}
             </div>
@@ -168,15 +172,15 @@ export default function LandingView({ onOpenAuthModal }) {
         {/* FEATURES */}
         <section className="max-w-6xl mx-auto px-4 py-20 space-y-10">
           <div className="max-w-2xl">
-            <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>What you can do</p>
-            <h2 className={`text-3xl ${colors.textWhite} mt-2`}>Everything happening on campus, in one place.</h2>
+            <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('What you can do')}</p>
+            <h2 className={`text-3xl ${colors.textWhite} mt-2`}>{t('Everything happening on campus, in one place.')}</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {FEATURES.map((f) => (
               <div key={f.title} className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-3`}>
                 <Icon name={f.icon} size={28} className={colors.accent} />
-                <h3 className={`text-base font-bold ${colors.textWhite}`}>{f.title}</h3>
-                <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{f.text}</p>
+                <h3 className={`text-base font-bold ${colors.textWhite}`}>{t(f.title)}</h3>
+                <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{t(f.text)}</p>
               </div>
             ))}
           </div>
@@ -186,8 +190,8 @@ export default function LandingView({ onOpenAuthModal }) {
         {events.length > 0 && (
           <section className="max-w-6xl mx-auto px-4 pb-20 space-y-6">
             <div className="flex items-end justify-between gap-4">
-              <h2 className={`text-2xl ${colors.textWhite}`}>Happening soon</h2>
-              <Link to="/explore" className={`text-xs font-mono font-bold uppercase tracking-wider ${colors.accent}`}>See all →</Link>
+              <h2 className={`text-2xl ${colors.textWhite}`}>{t('Happening soon')}</h2>
+              <Link to="/explore" className={`text-xs font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('See all →')}</Link>
             </div>
             <div className="grid md:grid-cols-3 gap-5">
               {events.map((event) => (
@@ -200,13 +204,13 @@ export default function LandingView({ onOpenAuthModal }) {
         {/* HOW IT WORKS */}
         <section className={`border-y ${colors.border} ${colors.bgPanel}`}>
           <div className="max-w-6xl mx-auto px-4 py-20 space-y-10">
-            <h2 className={`text-3xl ${colors.textWhite} max-w-2xl`}>Up and running in three steps.</h2>
+            <h2 className={`text-3xl ${colors.textWhite} max-w-2xl`}>{t('Up and running in three steps.')}</h2>
             <div className="grid md:grid-cols-3 gap-6">
               {STEPS.map((s) => (
                 <div key={s.n} className="space-y-2">
                   <p className={`text-4xl font-display font-bold ${colors.accent}`}>{s.n}</p>
-                  <h3 className={`text-lg font-bold ${colors.textWhite}`}>{s.title}</h3>
-                  <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{s.text}</p>
+                  <h3 className={`text-lg font-bold ${colors.textWhite}`}>{t(s.title)}</h3>
+                  <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{t(s.text)}</p>
                 </div>
               ))}
             </div>
@@ -216,36 +220,36 @@ export default function LandingView({ onOpenAuthModal }) {
         {/* ORGANIZERS + SAFETY */}
         <section className="max-w-6xl mx-auto px-4 py-20 grid md:grid-cols-2 gap-6">
           <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-3`}>
-            <h3 className={`text-xl ${colors.textWhite}`}>Run something? We&apos;ve got you.</h3>
+            <h3 className={`text-xl ${colors.textWhite}`}>{t('Run something? We\'ve got you.')}</h3>
             <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
-              Post an event and see exactly who&apos;s coming, with capacity limits and a hidden-seats option. Start a club with its own moderators and a private group chat.
+              {t('Post an event and see exactly who\'s coming, with capacity limits and a hidden-seats option. Start a club with its own moderators and a private group chat.')}
             </p>
-            <button onClick={() => onOpenAuthModal?.('signUp')} className={`text-sm font-bold ${colors.accent}`}>Create an account →</button>
+            <button onClick={() => onOpenAuthModal?.('signUp')} className={`text-sm font-bold ${colors.accent}`}>{t('Create an account →')}</button>
           </div>
           <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 space-y-3`}>
-            <h3 className={`text-xl ${colors.textWhite} flex items-center gap-2`}><Icon name="shield" size={22} className={colors.success} /> Built to be safe</h3>
+            <h3 className={`text-xl ${colors.textWhite} flex items-center gap-2`}><Icon name="shield" size={22} className={colors.success} /> {t('Built to be safe')}</h3>
             <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
-              Every listing is reviewed before it goes live. Clubs are private and moderated, group links are only shown to approved members, and you can make your profile private at any time.
+              {t('Every listing is reviewed before it goes live. Clubs are private and moderated, group links are only shown to approved members, and you can make your profile private at any time.')}
             </p>
-            <Link to="/about" className={`text-sm font-bold ${colors.accent}`}>How we keep it safe →</Link>
+            <Link to="/about" className={`text-sm font-bold ${colors.accent}`}>{t('How we keep it safe →')}</Link>
           </div>
         </section>
 
         {/* FAQ */}
         <section className="max-w-3xl mx-auto px-4 pb-20 space-y-6">
-          <h2 className={`text-3xl ${colors.textWhite}`}>Questions, answered.</h2>
+          <h2 className={`text-3xl ${colors.textWhite}`}>{t('Questions, answered.')}</h2>
           <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} divide-y divide-md3-outlineVariant`}>
             {FAQ.map(([q, a], i) => (
               <div key={q}>
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? -1 : i)}
                   aria-expanded={openFaq === i}
-                  className="w-full flex items-center justify-between gap-4 text-left p-4"
+                  className="w-full flex items-center justify-between gap-4 text-start p-4"
                 >
-                  <span className={`text-sm font-bold ${colors.textWhite}`}>{q}</span>
+                  <span className={`text-sm font-bold ${colors.textWhite}`}>{t(q)}</span>
                   <Icon name={openFaq === i ? 'close' : 'add_circle'} size={18} className={colors.accent} />
                 </button>
-                {openFaq === i && <p className={`px-4 pb-4 text-sm ${colors.textMuted} leading-relaxed`}>{a}</p>}
+                {openFaq === i && <p className={`px-4 pb-4 text-sm ${colors.textMuted} leading-relaxed`}>{t(a)}</p>}
               </div>
             ))}
           </div>
@@ -256,10 +260,10 @@ export default function LandingView({ onOpenAuthModal }) {
           <div className={`relative overflow-hidden ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-8 md:p-12 text-center`}>
             <div className="absolute inset-0 opacity-25" aria-hidden="true"><PixelCover cols={64} rows={12} seed="cta" /></div>
             <div className="relative space-y-5">
-              <h2 className={`text-3xl md:text-4xl ${colors.textWhite}`}>Ready to find your people?</h2>
+              <h2 className={`text-3xl md:text-4xl ${colors.textWhite}`}>{t('Ready to find your people?')}</h2>
               <div className="flex flex-wrap gap-3 justify-center">
-                <button onClick={() => onOpenAuthModal?.('signUp')} className={primary}>Get started</button>
-                <Link to="/explore" className={secondary}>Explore first</Link>
+                <button onClick={() => onOpenAuthModal?.('signUp')} className={primary}>{t('Get started')}</button>
+                <Link to="/explore" className={secondary}>{t('Explore first')}</Link>
               </div>
             </div>
           </div>
@@ -269,11 +273,11 @@ export default function LandingView({ onOpenAuthModal }) {
       <footer className={`border-t ${colors.border} ${colors.bgPanel}`}>
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo size={22} />
-          <nav className={`flex flex-wrap gap-5 text-xs ${colors.textMuted}`} aria-label="Footer">
-            <Link to="/about">About</Link>
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/explore">Explore</Link>
+          <nav className={`flex flex-wrap gap-5 text-xs ${colors.textMuted}`} aria-label={t('Footer')}>
+            <Link to="/about">{t('About')}</Link>
+            <Link to="/terms">{t('Terms')}</Link>
+            <Link to="/privacy">{t('Privacy')}</Link>
+            <Link to="/explore">{t('Explore')}</Link>
           </nav>
           <p className={`text-[11px] ${colors.textFaint}`}>© {new Date().getFullYear()} {brand.name}</p>
         </div>

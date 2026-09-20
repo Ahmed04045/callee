@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import Icon from './Icon';
+import { useT } from '../i18n';
 
 const TABS = [
   { id: 'pending', label: 'Pending' },
@@ -17,6 +18,7 @@ const TABS = [
 ];
 
 export default function ModerationQueue({ title, subtitle, table, select = '*', orderBy = 'created_at', renderItem, onSetStatus, allowReset = true }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const [statusFilter, setStatusFilter] = useState('pending');
   const [error, setError] = useState(null);
@@ -53,14 +55,14 @@ export default function ModerationQueue({ title, subtitle, table, select = '*', 
               statusFilter === tab.id ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
             }`}
           >
-            {tab.label}
+            {t(tab.label)}
           </button>
         ))}
       </div>
 
-      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
-      {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load. Try refreshing.</p>}
-      {status === 'ready' && data.length === 0 && <p className={`text-xs ${colors.textFaint}`}>Nothing in "{statusFilter}" right now.</p>}
+      {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>}
+      {status === 'error' && <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load. Try refreshing.')}</p>}
+      {status === 'ready' && data.length === 0 && <p className={`text-xs ${colors.textFaint}`}>{t('Nothing in "{status}" right now.', { status: t(TABS.find((x) => x.id === statusFilter)?.label ?? statusFilter) })}</p>}
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
 
       <div className="space-y-4">
@@ -70,17 +72,17 @@ export default function ModerationQueue({ title, subtitle, table, select = '*', 
             <div className="flex gap-2 mt-4">
               {item.status !== 'approved' && (
                 <button onClick={() => change(item, 'approved')} className={`${btn} ${colors.success}`}>
-                  <Icon name="check_circle" size={13} className="text-inherit" /> Approve
+                  <Icon name="check_circle" size={13} className="text-inherit" /> {t('Approve')}
                 </button>
               )}
               {item.status !== 'rejected' && (
                 <button onClick={() => change(item, 'rejected')} className={`${btn} ${colors.error}`}>
-                  <Icon name="cancel" size={13} className="text-inherit" /> Reject
+                  <Icon name="cancel" size={13} className="text-inherit" /> {t('Reject')}
                 </button>
               )}
               {allowReset && item.status !== 'pending' && (
                 <button onClick={() => change(item, 'pending')} className={`${btn} ${colors.textFaint}`}>
-                  <Icon name="restart_alt" size={13} className="text-inherit" /> Reset
+                  <Icon name="restart_alt" size={13} className="text-inherit" /> {t('Reset')}
                 </button>
               )}
             </div>

@@ -17,18 +17,20 @@ import { ACTION_LABEL, CLUB_COLUMNS, JOIN_MESSAGES, fmtDateTime } from '../lib/c
 import { AnswersView, QuestionBuilder } from '../components/Questions';
 import { PixelAvatar } from '../components/Pixel';
 import { cleanForSave } from '../lib/questions';
+import { useT } from '../i18n';
 
 export function LogList({ logs, showClub }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
-  if (!logs.length) return <p className={`text-xs ${colors.textFaint}`}>No activity logged yet.</p>;
+  if (!logs.length) return <p className={`text-xs ${colors.textFaint}`}>{t('No activity logged yet.')}</p>;
   return (
     <ul className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} divide-y divide-md3-outlineVariant`}>
       {logs.map((l) => (
         <li key={l.id} className="p-3 text-sm flex flex-wrap justify-between gap-x-4">
           <span className={colors.textMuted}>
-            <b className={colors.textWhite}>{l.user_name}</b> · {ACTION_LABEL[l.action] ?? l.action}
+            <b className={colors.textWhite}>{l.user_name}</b> · {t(ACTION_LABEL[l.action] ?? l.action)}
             {showClub && <> · {l.club_name}</>}
-            {l.actor_name && <> (by {l.actor_name})</>}
+            {l.actor_name && <> ({t('by {name}', { name: l.actor_name })})</>}
           </span>
           <span className={`text-xs ${colors.textFaint}`}>{fmtDateTime(l.created_at)}</span>
         </li>
@@ -38,6 +40,7 @@ export function LogList({ logs, showClub }) {
 }
 
 export default function ClubModeratorView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user, isAdmin, status: authStatus } = useAuth();
   const [clubId, setClubId] = useState(null);
@@ -102,7 +105,7 @@ export default function ClubModeratorView() {
     setActionError('');
     const { data, error } = await supabase.rpc('review_join_request', { p_request_id: request.id, p_approve: approve });
     if (error) setActionError(error.message);
-    else if (data !== 'OK') setActionError(JOIN_MESSAGES[data] ?? String(data));
+    else if (data !== 'OK') setActionError(JOIN_MESSAGES[data] ? t(JOIN_MESSAGES[data]) : String(data));
     load();
   };
 
@@ -114,14 +117,14 @@ export default function ClubModeratorView() {
   };
 
   if (authStatus === 'loading' || (user && modStatus === 'loading')) {
-    return <p className={`text-xs ${colors.textFaint}`}>Loading…</p>;
+    return <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>;
   }
   if (!user || mine.length === 0) {
     return (
       <div>
-        <SubPageHeader title="Moderator workspace" fallbackTo="/clubs" />
+        <SubPageHeader title={t('Moderator workspace')} fallbackTo="/clubs" />
         <p className={`text-sm ${colors.textMuted}`}>
-          You don't moderate any clubs yet. An admin can assign you to one.
+          {t('You don\'t moderate any clubs yet. An admin can assign you to one.')}
         </p>
       </div>
     );
@@ -129,7 +132,7 @@ export default function ClubModeratorView() {
 
   return (
     <div className="max-w-3xl space-y-4">
-      <SubPageHeader title="Moderator workspace" fallbackTo="/clubs" />
+      <SubPageHeader title={t('Moderator workspace')} fallbackTo="/clubs" />
       <div className="flex gap-2 overflow-x-auto pb-1">
         {mine.map((c) => (
           <button key={c.id} onClick={() => setClubId(c.id)}
@@ -141,7 +144,7 @@ export default function ClubModeratorView() {
         ))}
       </div>
       <div className="flex gap-2">
-        {[['requests', `Requests (${requests.length})`], ['members', `Members (${members.length})`], ['questions', 'Questions'], ['logs', `Activity (${logs.length})`]].map(([id, label]) => (
+        {[['requests', t('Requests ({n})', { n: requests.length })], ['members', t('Members ({n})', { n: members.length })], ['questions', t('Questions')], ['logs', t('Activity ({n})', { n: logs.length })]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={`text-xs font-semibold px-3 py-1.5 ${radius.full} ${tab === id ? colors.accentSoftBg : ''} ${colors.textWhite}`}>
             {label}
@@ -150,21 +153,21 @@ export default function ClubModeratorView() {
       </div>
 
       {loading ? (
-        <p className={`text-xs ${colors.textFaint}`}>Loading…</p>
+        <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>
       ) : tab === 'requests' ? (
         <div className="space-y-3">
           {actionError && <p className={`text-xs ${colors.error}`}>{actionError}</p>}
-          {requests.length === 0 && <p className={`text-xs ${colors.textFaint}`}>No pending requests.</p>}
+          {requests.length === 0 && <p className={`text-xs ${colors.textFaint}`}>{t('No pending requests.')}</p>}
           {requests.map((r) => (
             <div key={r.id} className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-4 space-y-3`}>
               <div className="flex items-start gap-3">
                 {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-10 h-10 object-cover shrink-0" /> : <PixelAvatar seed={r.user_id} size={40} />}
                 <div className="min-w-0">
                   <p className={`text-sm font-semibold ${colors.textWhite}`}>
-                    {r.profile?.display_name || 'Unnamed'}{' '}
+                    {r.profile?.display_name || t('Unnamed')}{' '}
                     {r.profile?.username && <Link to={`/u/${r.profile.username}`} className={`font-normal ${colors.accent}`}>@{r.profile.username}</Link>}
                   </p>
-                  <p className={`text-xs ${colors.textFaint}`}>{r.profile?.university || 'No school listed'} · {fmtDateTime(r.created_at)}</p>
+                  <p className={`text-xs ${colors.textFaint}`}>{r.profile?.university || t('No school listed')} · {fmtDateTime(r.created_at)}</p>
                   {r.profile?.email && <p className={`text-[11px] ${colors.textFaint}`}>{r.profile.email}</p>}
                   {r.profile?.bio && <p className={`text-xs ${colors.textMuted} mt-1`}>{r.profile.bio}</p>}
                 </div>
@@ -172,18 +175,18 @@ export default function ClubModeratorView() {
               {r.message && <p className={`text-xs ${colors.textMuted} ${colors.bgInset} p-3 whitespace-pre-line`}>{r.message}</p>}
               <AnswersView questions={activeClub?.join_questions} answers={r.answers} />
               <div className="flex gap-2">
-                <button onClick={() => review(r, true)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.accentBg} ${colors.accentOn}`}>Approve</button>
-                <button onClick={() => review(r, false)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${colors.borderStrong} ${colors.error}`}>Decline</button>
+                <button onClick={() => review(r, true)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.accentBg} ${colors.accentOn}`}>{t('Approve')}</button>
+                <button onClick={() => review(r, false)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${colors.borderStrong} ${colors.error}`}>{t('Decline')}</button>
               </div>
             </div>
           ))}
         </div>
       ) : tab === 'questions' ? (
         <div className="space-y-4">
-          <p className={`text-xs ${colors.textFaint}`}>Questions people answer when they ask to join this club. You see the answers on each request.</p>
+          <p className={`text-xs ${colors.textFaint}`}>{t('Questions people answer when they ask to join this club. You see the answers on each request.')}</p>
           <QuestionBuilder value={draft} onChange={setDraft} />
           <div className="flex items-center gap-3">
-            <button onClick={saveQuestions} className={`${colors.accentBg} ${colors.accentOn} text-xs font-bold px-4 py-2 ${radius.full}`}>Save questions</button>
+            <button onClick={saveQuestions} className={`${colors.accentBg} ${colors.accentOn} text-xs font-bold px-4 py-2 ${radius.full}`}>{t('Save questions')}</button>
             {savedNote && <span className={`text-xs ${colors.textMuted}`}>{savedNote}</span>}
           </div>
         </div>
@@ -193,17 +196,17 @@ export default function ClubModeratorView() {
             {members.map((p) => (
               <li key={p.user_id} className="p-3 flex items-center gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm font-semibold ${colors.textWhite} truncate`}>{p.display_name || 'Unnamed'}</p>
+                  <p className={`text-sm font-semibold ${colors.textWhite} truncate`}>{p.display_name || t('Unnamed')}</p>
                   <p className={`text-xs ${colors.textFaint} truncate`}>{p.email}</p>
                 </div>
                 {p.user_id !== user.id && (
-                  <button onClick={() => removeMember(p)} className={`text-xs font-semibold ${colors.error}`}>Remove</button>
+                  <button onClick={() => removeMember(p)} className={`text-xs font-semibold ${colors.error}`}>{t('Remove')}</button>
                 )}
               </li>
             ))}
           </ul>
         ) : (
-          <p className={`text-xs ${colors.textFaint}`}>Nobody has joined this club yet.</p>
+          <p className={`text-xs ${colors.textFaint}`}>{t('Nobody has joined this club yet.')}</p>
         )
       ) : (
         <LogList logs={logs} />

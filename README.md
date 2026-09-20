@@ -14,6 +14,8 @@ The Discord bot lives in its own project: `../../discord-bot` (it must run as a 
 
 ## Database setup order
 
-Run in the Supabase SQL editor, in order: `schema.sql`, then migrations `002` … `010` (`008` is only needed for the Discord bot; `010` removes free joining of clubs, adds usernames, user-made groups and location columns).
+Run in the Supabase SQL editor, in order: `schema.sql`, then migrations `002` … `013` (`008` is only needed for the Discord bot; `010` removes free joining of clubs, adds usernames, user-made groups and location columns; `011` notifications; `012` QR tickets, saves, reports, applicants; `013` custom questions and answers, notification preferences, event reminders).
+
+Languages: English and Arabic (right-to-left). Strings are written in English and passed through `t('...')`; the Arabic dictionary is `src/i18n/ar*.js`. A missing entry simply shows English.
 
 Google sign-in: enable the Google provider in Supabase (Auth > Providers) with an OAuth Web client, and add the site URL to Supabase redirect URLs. Location search needs "Places API (New)" enabled on `VITE_GOOGLE_MAPS_API_KEY`.

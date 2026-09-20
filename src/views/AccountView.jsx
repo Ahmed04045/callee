@@ -13,8 +13,10 @@ import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 export default function AccountView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user, updatePassword, error } = useAuth();
 
@@ -68,7 +70,7 @@ export default function AccountView() {
     setIsSubmitting(false);
 
     if (!updateError) {
-      setNotice('Password updated.');
+      setNotice(t('Password updated.'));
       setNewPassword('');
       setConfirmPassword('');
     }
@@ -76,31 +78,31 @@ export default function AccountView() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <SubPageHeader title="Account" />
+      <SubPageHeader title={t('Account')} />
 
       <div className="space-y-6">
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-1`}>
-          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Email</span>
+          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Email')}</span>
           <p className={`text-sm ${colors.textWhite} break-all`}>{user?.email}</p>
         </div>
 
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-3`}>
           <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-            <Icon name="forum" size={16} /> Discord
+            <Icon name="forum" size={16} /> {t('Discord')}
           </h2>
           {discordStatus === 'loading' && (
-            <p className={`text-xs ${colors.textFaint}`}>Checking…</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Checking…')}</p>
           )}
           {discordStatus === 'ready' && discordLink && (
             <div className="flex items-center justify-between">
               <p className={`text-xs ${colors.textMuted}`}>
-                Connected as <span className={colors.textWhite}>{discordLink.discord_username}</span>
+                {t('Connected as')} <span className={colors.textWhite}>{discordLink.discord_username}</span>
               </p>
               <button
                 onClick={handleUnlinkDiscord}
                 className={`text-[11px] font-semibold ${colors.error}`}
               >
-                Unlink
+                {t('Unlink')}
               </button>
             </div>
           )}
@@ -109,19 +111,19 @@ export default function AccountView() {
               to="/connect-discord"
               className={`inline-flex items-center gap-1.5 text-xs font-bold ${colors.accent}`}
             >
-              Connect your Discord account <Icon name="arrow_forward" size={13} />
+              {t('Connect your Discord account')} <Icon name="arrow_forward" size={13} />
             </Link>
           )}
         </div>
 
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 space-y-4`}>
           <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-            <Icon name="lock_reset" size={16} /> Change password
+            <Icon name="lock_reset" size={16} /> {t('Change password')}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-3">
-            <label className="block text-left">
-              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>New password</span>
+            <label className="block text-start">
+              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('New password')}</span>
               <input
                 type="password"
                 required
@@ -132,8 +134,8 @@ export default function AccountView() {
                 className={`w-full mt-1 ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
               />
             </label>
-            <label className="block text-left">
-              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Confirm new password</span>
+            <label className="block text-start">
+              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Confirm new password')}</span>
               <input
                 type="password"
                 required
@@ -145,7 +147,7 @@ export default function AccountView() {
               />
             </label>
 
-            {mismatch && <p className={`text-xs ${colors.error}`}>Passwords don't match.</p>}
+            {mismatch && <p className={`text-xs ${colors.error}`}>{t('Passwords don\'t match.')}</p>}
             {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
             {notice && <p className={`text-xs ${colors.success}`}>{notice}</p>}
 
@@ -157,7 +159,7 @@ export default function AccountView() {
               {isSubmitting && (
                 <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />
               )}
-              Update password
+              {t('Update password')}
             </button>
           </form>
         </div>

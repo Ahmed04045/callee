@@ -304,3 +304,27 @@ a {
     box-shadow: none !important;
   }
 }
+
+/* Arabic: a font with real Arabic glyphs, and no uppercase/letter-spacing
+   (both break Arabic letter joining). */
+html[lang='ar'] body,
+html[lang='ar'] h1,
+html[lang='ar'] h2,
+html[lang='ar'] h3,
+html[lang='ar'] h4,
+html[lang='ar'] button,
+html[lang='ar'] input,
+html[lang='ar'] textarea,
+html[lang='ar'] select {
+  font-family: 'Noto Sans Arabic', Inter, system-ui, sans-serif;
+}
+html[lang='ar'] .uppercase,
+html[lang='ar'] .font-mono {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: 'Noto Sans Arabic', Inter, system-ui, sans-serif;
+}
+html[lang='ar'] .tracking-wider,
+html[lang='ar'] .tracking-wide {
+  letter-spacing: 0;
+}

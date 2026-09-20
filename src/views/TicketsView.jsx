@@ -15,8 +15,10 @@ import TicketCard from '../components/TicketCard';
 import { CardSkeleton } from '../components/FeedCards';
 import { PixelEmpty } from '../components/Pixel';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 export default function TicketsView({ onOpenAuthModal }) {
+  const { t } = useT();
   usePageMeta('My tickets', 'Your event tickets and QR codes.');
   const { colors, radius } = themeConfig;
   const { user, status: authStatus } = useAuth();
@@ -54,8 +56,8 @@ export default function TicketsView({ onOpenAuthModal }) {
   if (!user) {
     return (
       <div className="max-w-md mx-auto text-center py-16 space-y-4">
-        <PixelEmpty sprite="box" title="Sign in to see your tickets">Your RSVPs turn into QR tickets here.</PixelEmpty>
-        <button onClick={() => onOpenAuthModal?.()} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>Sign in</button>
+        <PixelEmpty sprite="box" title={t('Sign in to see your tickets')}>{t('Your RSVPs turn into QR tickets here.')}</PixelEmpty>
+        <button onClick={() => onOpenAuthModal?.()} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>{t('Sign in')}</button>
       </div>
     );
   }
@@ -67,30 +69,30 @@ export default function TicketsView({ onOpenAuthModal }) {
       <div className={`border-b ${colors.border} pb-3 flex items-end justify-between gap-4`}>
         <div>
           <h1 className={`text-xl font-bold ${colors.textWhite} flex items-center gap-2`}>
-            <Icon name="event_available" size={22} className={colors.accent} /> My tickets
+            <Icon name="event_available" size={22} className={colors.accent} /> {t('My tickets')}
           </h1>
-          <p className={`text-xs ${colors.textFaint} mt-1`}>Show the QR code at the door. The organizer scans it to check you in.</p>
+          <p className={`text-xs ${colors.textFaint} mt-1`}>{t('Show the QR code at the door. The organizer scans it to check you in.')}</p>
         </div>
-        <button onClick={() => window.print()} className={`text-xs font-semibold ${colors.accent} whitespace-nowrap`}>Print</button>
+        <button onClick={() => window.print()} className={`text-xs font-semibold ${colors.accent} whitespace-nowrap`}>{t('Print')}</button>
       </div>
 
       {status === 'loading' && <CardSkeleton tall />}
-      {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn&apos;t load tickets. Has 012_tickets_saves_reports_applicants.sql been run?</p>}
+      {status === 'error' && <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load tickets. Has 012_tickets_saves_reports_applicants.sql been run?')}</p>}
       {status === 'ready' && rows.length === 0 && (
-        <PixelEmpty sprite="ghost" title="No tickets yet">
-          RSVP to an event and its ticket appears here. <Link to="/explore" className={colors.accent}>Find an event</Link>.
+        <PixelEmpty sprite="ghost" title={t('No tickets yet')}>
+          {t('RSVP to an event and its ticket appears here.')} <Link to="/explore" className={colors.accent}>{t('Find an event')}</Link>.
         </PixelEmpty>
       )}
 
       {upcoming.length > 0 && (
         <section className="space-y-4">
-          <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>Upcoming</h2>
+          <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>{t('Upcoming')}</h2>
           {upcoming.map(({ ticket, event }) => <TicketCard key={ticket.id} event={event} ticket={ticket} holderName={holder} />)}
         </section>
       )}
       {past.length > 0 && (
         <section className="space-y-4">
-          <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>Past</h2>
+          <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>{t('Past')}</h2>
           {past.map(({ ticket, event }) => <TicketCard key={ticket.id} event={event} ticket={ticket} holderName={holder} compact />)}
         </section>
       )}

@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import Icon from '../../components/Icon';
+import { useT } from '../../i18n';
 
 const count = (table, filters = {}, column = 'id') => {
   let q = supabase.from(table).select(column, { count: 'exact', head: true });
@@ -15,6 +16,7 @@ const count = (table, filters = {}, column = 'id') => {
 };
 
 export default function AdminOverview() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const [stats, setStats] = useState(null);
 
@@ -47,7 +49,7 @@ export default function AdminOverview() {
   return (
     <div className="max-w-3xl space-y-6">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>Overview</h2>
+        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Overview')}</h2>
       </div>
       <div className="grid sm:grid-cols-2 gap-4">
         {cards.map((c) => (

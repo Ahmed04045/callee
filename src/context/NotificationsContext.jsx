@@ -16,6 +16,7 @@ export function NotificationsProvider({ children }) {
   const uid = user?.id;
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState('idle'); // idle | loading | ready | error
+  const [muted, setMuted] = useState([]); // notification types the user switched off
 
   const load = useCallback(async () => {
     if (!uid) {
@@ -37,6 +38,33 @@ export function NotificationsProvider({ children }) {
     setItems(data ?? []);
     setStatus('ready');
   }, [uid]);
+
+  // Which types the user has muted (notification_prefs, see 013_questions_prefs_reminders.sql).
+  useEffect(() => {
+    if (!uid) {
+      setMuted([]);
+      return;
+    }
+    supabase
+      .from('notification_prefs')
+      .select('muted_types')
+      .eq('user_id', uid)
+      .maybeSingle()
+      .then(({ data }) => setMuted(data?.muted_types ?? []));
+  }, [uid]);
+
+  const saveMuted = useCallback(
+    async (next) => {
+      const previous = muted;
+      setMuted(next);
+      const { error } = await supabase
+        .from('notification_prefs')
+        .upsert({ user_id: uid, muted_types: next, updated_at: new Date().toISOString() });
+      if (error) setMuted(previous);
+      return error ? error.message : null;
+    },
+    [uid, muted]
+  );
 
   useEffect(() => {
     load();
@@ -72,8 +100,8 @@ export function NotificationsProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ items, status, unread: items.filter((n) => !n.read_at).length, markRead, markAllRead, remove, reload: load }),
-    [items, status, markRead, markAllRead, remove, load]
+    () => ({ items, status, unread: items.filter((n) => !n.read_at).length, markRead, markAllRead, remove, reload: load, muted, saveMuted }),
+    [items, status, muted, saveMuted, markRead, markAllRead, remove, load]
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

@@ -12,6 +12,7 @@ import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
 import Icon from './components/Icon';
 import Logo from './components/Logo';
 import ThemeMenu from './components/ThemeMenu';
+import LanguageSwitch from './components/LanguageSwitch';
 import NotificationBell from './components/NotificationBell';
 import { NotificationsProvider } from './context/NotificationsContext';
 import LandingView from './views/LandingView';
@@ -41,6 +42,7 @@ import AdminActivity from './views/admin/AdminActivity';
 import AboutView from './views/AboutView';
 import AccountView from './views/AccountView';
 import ThemeView from './views/ThemeView';
+import NotificationSettingsView from './views/NotificationSettingsView';
 import TermsView from './views/TermsView';
 import PrivacyView from './views/PrivacyView';
 import OnboardingView from './views/OnboardingView';
@@ -53,6 +55,7 @@ import ClubsView from './views/ClubsView';
 import ClubDetailView from './views/ClubDetailView';
 import ClubModeratorView from './views/ClubModeratorView';
 import ConnectDiscordView from './views/ConnectDiscordView';
+import { useT } from './i18n';
 
 const ONBOARDING_PATH = '/onboarding';
 
@@ -103,7 +106,7 @@ const SETTINGS_NAV_ITEM = {
 // SubPageHeader's own back button is the only way to navigate. Onboarding
 // is included for the same visual effect even though it's a different
 // kind of full-screen page (a forced interstitial, not a drill-down).
-const IMMERSIVE_PATHS = ['/account', '/theme', '/terms', '/privacy', '/about', '/my-submissions', '/connect-discord', ONBOARDING_PATH];
+const IMMERSIVE_PATHS = ['/account', '/theme', '/settings/notifications', '/terms', '/privacy', '/about', '/my-submissions', '/connect-discord', ONBOARDING_PATH];
 const isImmersivePath = (pathname) =>
   IMMERSIVE_PATHS.includes(pathname) ||
   pathname.startsWith('/clubs/') ||
@@ -142,11 +145,12 @@ function renderView(tabId, handlers) {
 // simpler than a full NavButton since it doesn't need the label/pill
 // treatment, just the icon + active state.
 function HeaderIconButton({ item, isActive, onClick, className = '' }) {
+  const { t } = useT();
   const { colors } = themeConfig;
   return (
     <button
       onClick={onClick}
-      title={item.label}
+      title={t(item.label)}
       aria-current={isActive ? 'page' : undefined}
       className={`p-2 rounded-full transition-colors ${
         isActive ? colors.accentSoftBg : colors.bgHoverInset
@@ -158,6 +162,7 @@ function HeaderIconButton({ item, isActive, onClick, className = '' }) {
 }
 
 function AppShell() {
+  const { t } = useT();
   const [isAuthModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('signIn');
   const { colors, layout, font } = themeConfig;
@@ -269,16 +274,17 @@ function AppShell() {
       >
         {!isImmersive && (
           <header
-            className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
+            className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-3 sm:px-6`}
           >
             <div className="md:hidden">
               <Logo size={26} />
             </div>
             <h2 className={`hidden md:block text-sm font-semibold ${colors.textMuted} tracking-wide uppercase`}>
-              {activeLabel}
+              {t(activeLabel)}
             </h2>
 
             <div className="flex items-center gap-1.5">
+              <LanguageSwitch />
               <ThemeMenu />
               <HeaderIconButton
                 item={ANNOUNCEMENTS_NAV_ITEM}
@@ -289,9 +295,9 @@ function AppShell() {
               {isAuthenticated && (
                 <button
                   onClick={() => navigateToTab('profile')}
-                  title="Your profile"
+                  title={t('Your profile')}
                   aria-current={activeTab === 'profile' ? 'page' : undefined}
-                  className={`flex items-center gap-2 pl-1 pr-3 py-1 rounded-full transition-colors ${
+                  className={`flex items-center gap-2 ps-1 pe-3 py-1 rounded-full transition-colors ${
                     activeTab === 'profile' ? colors.accentSoftBg : colors.bgHoverInset
                   }`}
                 >
@@ -301,7 +307,7 @@ function AppShell() {
                     <PixelAvatar seed={profile?.username || profile?.user_id || 'me'} size={28} />
                   )}
                   <span className={`text-xs font-semibold ${colors.textWhite} max-w-[110px] truncate`}>
-                    {profile?.username ? `@${profile.username}` : 'Profile'}
+                    {profile?.username ? `@${profile.username}` : t('Profile')}
                   </span>
                 </button>
               )}
@@ -320,9 +326,9 @@ function AppShell() {
                     logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
                     openAuthModal();
                   }}
-                  className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition ml-1`}
+                  className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition ms-1 whitespace-nowrap shrink-0`}
                 >
-                  <Icon name="login" size={14} className="text-inherit" /> Sign in
+                  <Icon name="login" size={14} className="text-inherit" /> {t('Sign in')}
                 </button>
               )}
             </div>
@@ -361,6 +367,7 @@ function AppShell() {
             <Route path="/account" element={<AccountView />} />
             <Route path="/my-submissions" element={<MySubmissionsView />} />
             <Route path="/theme" element={<ThemeView />} />
+            <Route path="/settings/notifications" element={<NotificationSettingsView />} />
             <Route path="/terms" element={<TermsView />} />
             <Route path="/privacy" element={<PrivacyView />} />
             <Route path={ONBOARDING_PATH} element={<OnboardingView />} />

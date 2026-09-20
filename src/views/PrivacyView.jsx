@@ -3,13 +3,15 @@
 import React from 'react';
 import themeConfig from '../theme/themeConfig';
 import SubPageHeader from '../components/SubPageHeader';
+import { useT } from '../i18n';
 
 export default function PrivacyView() {
+  const { t } = useT();
   const { colors, radius, brand } = themeConfig;
 
   return (
     <div className="w-full max-w-2xl mx-auto">
-      <SubPageHeader title="Privacy Policy" />
+      <SubPageHeader title={t('Privacy Policy')} />
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6`}>
         <p className={`text-sm ${colors.textFaint} italic leading-relaxed`}>
           Privacy Policy content goes here. Replace this placeholder with {brand.name}'s actual

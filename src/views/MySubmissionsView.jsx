@@ -13,6 +13,7 @@ import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
 import { PixelEmpty } from '../components/Pixel';
+import { useT } from '../i18n';
 
 const STATUS_META = {
   pending: { label: 'Pending', color: 'warning', icon: 'hourglass_top' },
@@ -21,13 +22,14 @@ const STATUS_META = {
 };
 
 function SubmissionRow({ item, kind, colors, onClick }) {
+  const { t } = useT();
   const meta = STATUS_META[item.status] ?? STATUS_META.pending;
   const title = kind === 'gig' ? item.role : kind === 'group' ? item.name : item.title;
 
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center justify-between gap-3 p-4 text-left ${colors.bgHoverInset} transition`}
+      className={`w-full flex items-center justify-between gap-3 p-4 text-start ${colors.bgHoverInset} transition`}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2">
@@ -35,19 +37,20 @@ function SubmissionRow({ item, kind, colors, onClick }) {
           <p className={`text-sm font-bold ${colors.textWhite} truncate`}>{title}</p>
         </div>
         <p className={`text-[11px] ${colors.textFaint} mt-0.5`}>
-          {kind === 'gig' ? 'Gig / Opportunity' : kind === 'group' ? 'Group' : 'Event'}
+          {kind === 'gig' ? t('Gig / Opportunity') : kind === 'group' ? t('Group') : t('Event')}
         </p>
       </div>
       <span
         className={`flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide shrink-0 ${colors[meta.color]}`}
       >
-        <Icon name={meta.icon} size={13} className="text-inherit" /> {meta.label}
+        <Icon name={meta.icon} size={13} className="text-inherit" /> {t(meta.label)}
       </span>
     </button>
   );
 }
 
 export default function MySubmissionsView() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -80,13 +83,13 @@ export default function MySubmissionsView() {
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <SubPageHeader title="My Submissions" />
+      <SubPageHeader title={t('My Submissions')} />
 
-      {isLoading && <p className={`text-sm ${colors.textFaint}`}>Loading…</p>}
+      {isLoading && <p className={`text-sm ${colors.textFaint}`}>{t('Loading…')}</p>}
 
       {isEmpty && (
-        <PixelEmpty sprite="box" title="Nothing here yet">
-          Anything you post from Create shows up here with its review status.
+        <PixelEmpty sprite="box" title={t('Nothing here yet')}>
+          {t('Anything you post from Create shows up here with its review status.')}
         </PixelEmpty>
       )}
 

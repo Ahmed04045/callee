@@ -11,11 +11,13 @@ import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { PixelEmpty } from '../../components/Pixel';
 import { fmtDateTime } from '../../lib/clubUtil';
+import { useT } from '../../i18n';
 
 const REASON_LABEL = { spam: 'Spam', scam: 'Scam or fake', inappropriate: 'Inappropriate', wrong_info: 'Wrong information', other: 'Other' };
 const linkFor = (r) => ({ event: `/events/${r.item_id}`, gig: `/gigs/${r.item_id}`, club: `/clubs/${r.item_id}`, profile: `/u/${r.item_id}` })[r.kind];
 
 export default function AdminReports() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const [tab, setTab] = useState('open');
@@ -42,8 +44,8 @@ export default function AdminReports() {
   return (
     <div className="w-full max-w-3xl space-y-6">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>Reports</h2>
-        <p className={`text-xs ${colors.textFaint} mt-1`}>Things people flagged. Open the item, decide, then close the report.</p>
+        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Reports')}</h2>
+        <p className={`text-xs ${colors.textFaint} mt-1`}>{t('Things people flagged. Open the item, decide, then close the report.')}</p>
       </div>
       <div className="flex gap-2">
         {[['open', 'Open'], ['resolved', 'Resolved'], ['dismissed', 'Dismissed']].map(([k, label]) => (
@@ -51,7 +53,7 @@ export default function AdminReports() {
         ))}
       </div>
 
-      {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn&apos;t load reports. Has 012_tickets_saves_reports_applicants.sql been run?</p>}
+      {status === 'error' && <p className={`text-xs ${colors.error}`}>{t('Couldn\'t load reports. Has 012_tickets_saves_reports_applicants.sql been run?')}</p>}
       {status === 'ready' && rows.length === 0 && <PixelEmpty sprite="box" title={`No ${tab} reports`} />}
 
       <div className="space-y-3">
@@ -66,8 +68,8 @@ export default function AdminReports() {
               <Link to={linkFor(r)} className={`text-xs font-semibold ${colors.accent}`}>Open reported {r.kind} →</Link>
               {r.status === 'open' && (
                 <>
-                  <button onClick={() => resolve(r, 'resolved')} className={`text-[11px] font-bold px-3 py-1.5 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>Mark resolved</button>
-                  <button onClick={() => resolve(r, 'dismissed')} className={`text-[11px] font-bold px-3 py-1.5 border ${colors.borderStrong} ${colors.textMuted} ${radius.full}`}>Dismiss</button>
+                  <button onClick={() => resolve(r, 'resolved')} className={`text-[11px] font-bold px-3 py-1.5 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>{t('Mark resolved')}</button>
+                  <button onClick={() => resolve(r, 'dismissed')} className={`text-[11px] font-bold px-3 py-1.5 border ${colors.borderStrong} ${colors.textMuted} ${radius.full}`}>{t('Dismiss')}</button>
                 </>
               )}
             </div>

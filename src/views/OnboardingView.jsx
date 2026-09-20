@@ -21,6 +21,7 @@ import {
   normalizeUsername,
   suggestAvailableUsernames,
 } from '../lib/username';
+import { useT } from '../i18n';
 
 const ACCOUNT_TYPES = [
   { id: 'personal', label: 'Personal', icon: 'person', description: 'You, as an individual — apply to gigs, offer opportunities, join clubs, build a profile.' },
@@ -28,6 +29,7 @@ const ACCOUNT_TYPES = [
 ];
 
 export default function OnboardingView() {
+  const { t } = useT();
   const { colors, radius, font, brand } = themeConfig;
   const { user } = useAuth();
   const { profile, saveProfile } = useProfile();
@@ -126,25 +128,25 @@ export default function OnboardingView() {
 
   const hint = {
     idle: null,
-    checking: { text: 'Checking…', cls: colors.textFaint },
-    ok: { text: `@${username} is available`, cls: colors.success },
-    taken: { text: 'That username is taken', cls: colors.error },
-    invalid: { text: '3–20 characters: letters, numbers, underscore', cls: colors.error },
+    checking: { text: t('Checking…'), cls: colors.textFaint },
+    ok: { text: t('@{username} is available', { username }), cls: colors.success },
+    taken: { text: t('That username is taken'), cls: colors.error },
+    invalid: { text: t('3–20 characters: letters, numbers, underscore'), cls: colors.error },
   }[usernameState];
 
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="w-full max-w-md space-y-6">
         <div className="text-center space-y-1.5">
-          <h1 className={`text-2xl ${font.heading} ${colors.textWhite}`}>Set up your {brand.name} account</h1>
+          <h1 className={`text-2xl ${font.heading} ${colors.textWhite}`}>{t('Set up your {name} account', { name: brand.name })}</h1>
           <p className={`text-xs ${colors.textFaint}`}>
-            Step {step + 1} of {steps.length}
+            {t('Step {current} of {total}', { current: step + 1, total: steps.length })}
           </p>
         </div>
 
         {current === 'type' && (
           <div className="space-y-3">
-            <p className={`text-sm text-center ${colors.textFaint}`}>What best describes you?</p>
+            <p className={`text-sm text-center ${colors.textFaint}`}>{t('What best describes you?')}</p>
             {ACCOUNT_TYPES.map((type) => (
               <button
                 key={type.id}
@@ -152,7 +154,7 @@ export default function OnboardingView() {
                   setAccountType(type.id);
                   setStep(1);
                 }}
-                className={`w-full flex items-start gap-4 text-left ${colors.bgCard} border ${
+                className={`w-full flex items-start gap-4 text-start ${colors.bgCard} border ${
                   accountType === type.id ? 'border-md3-primary' : colors.borderStrong
                 } ${radius.lg} p-4 hover:border-md3-primary transition`}
               >
@@ -160,8 +162,8 @@ export default function OnboardingView() {
                   <Icon name={type.icon} size={20} className="text-inherit" />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${colors.textWhite}`}>{type.label}</p>
-                  <p className={`text-xs ${colors.textFaint} mt-0.5 leading-relaxed`}>{type.description}</p>
+                  <p className={`text-sm font-bold ${colors.textWhite}`}>{t(type.label)}</p>
+                  <p className={`text-xs ${colors.textFaint} mt-0.5 leading-relaxed`}>{t(type.description)}</p>
                 </div>
               </button>
             ))}
@@ -170,28 +172,28 @@ export default function OnboardingView() {
 
         {current === 'name' && (
           <div className="space-y-4">
-            <label className="block text-left">
+            <label className="block text-start">
               <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
-                {accountType === 'business' ? 'Business name' : 'Your name'}
+                {accountType === 'business' ? t('Business name') : t('Your name')}
               </span>
               <input className={`${inputClass} mt-1`} maxLength={60} value={displayName} onChange={(e) => setDisplayName(e.target.value)} autoFocus />
             </label>
-            <button className={primaryBtn} disabled={!displayName.trim()} onClick={next}>Continue</button>
+            <button className={primaryBtn} disabled={!displayName.trim()} onClick={next}>{t('Continue')}</button>
           </div>
         )}
 
         {current === 'username' && (
           <div className="space-y-4">
-            <label className="block text-left">
-              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Choose your username</span>
+            <label className="block text-start">
+              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Choose your username')}</span>
               <div className="relative mt-1">
-                <span className={`absolute left-3 top-1/2 -translate-y-1/2 text-sm ${colors.textFaint}`}>@</span>
+                <span className={`absolute start-3 top-1/2 -translate-y-1/2 text-sm ${colors.textFaint}`}>@</span>
                 <input
-                  className={`${inputClass} pl-7`}
+                  className={`${inputClass} ps-7`}
                   value={username}
                   maxLength={20}
                   onChange={(e) => setUsername(normalizeUsername(e.target.value))}
-                  placeholder="username"
+                  placeholder={t('username')}
                   autoFocus
                 />
               </div>
@@ -200,7 +202,7 @@ export default function OnboardingView() {
 
             <div>
               <p className={`text-[11px] font-semibold ${colors.textFaint} mb-2`}>
-                {suggesting ? 'Finding suggestions…' : suggestions.length ? 'Suggestions' : ''}
+                {suggesting ? t('Finding suggestions…') : suggestions.length ? t('Suggestions') : ''}
               </p>
               <div className="flex flex-wrap gap-2">
                 {suggestions.map((s) => (
@@ -218,38 +220,38 @@ export default function OnboardingView() {
               </div>
             </div>
 
-            <p className={`text-[11px] ${colors.textDim}`}>Your profile link will be /u/{username || 'username'} — you can change it later.</p>
+            <p className={`text-[11px] ${colors.textDim}`}>{t('Your profile link will be /u/{username}. You can change it later.', { username: username || t('username') })}</p>
             {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
             <button className={primaryBtn} disabled={usernameState !== 'ok' || saving} onClick={next}>
               {saving && <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />}
-              {steps[step + 1] === undefined ? 'Finish' : 'Continue'}
+              {steps[step + 1] === undefined ? t('Finish') : t('Continue')}
             </button>
           </div>
         )}
 
         {current === 'school' && (
           <div className="space-y-4">
-            <label className="block text-left">
-              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>Where do you study?</span>
+            <label className="block text-start">
+              <span className={`text-[11px] font-semibold ${colors.textFaint}`}>{t('Where do you study?')}</span>
               <select className={`${inputClass} mt-1`} value={education} onChange={(e) => setEducation(e.target.value)}>
-                <option value="">Select…</option>
+                <option value="">{t('Select…')}</option>
                 {EDUCATION_OPTIONS.map((option) => (
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
             </label>
-            <p className={`text-[11px] ${colors.textDim}`}>This decides which university's clubs you see. You can skip and set it later.</p>
+            <p className={`text-[11px] ${colors.textDim}`}>{t('This decides which university\'s clubs you see. You can skip and set it later.')}</p>
             {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
             <button className={primaryBtn} disabled={saving} onClick={() => finish(education)}>
               {saving && <Icon name="progress_activity" size={16} className="animate-spin text-inherit" />}
-              {education ? 'Finish' : 'Skip and finish'}
+              {education ? t('Finish') : t('Skip and finish')}
             </button>
           </div>
         )}
 
         {step > 0 && (
           <button onClick={() => setStep((s) => s - 1)} className={`block mx-auto text-xs ${colors.textFaint} ${colors.textHoverStrong}`}>
-            Back
+            {t('Back')}
           </button>
         )}
       </div>

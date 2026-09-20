@@ -10,8 +10,10 @@ import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps';
 import themeConfig from '../theme/themeConfig';
 import Icon from './Icon';
 import { MAPS_API_KEY, MAP_ID, googleMapsUrl } from '../lib/maps';
+import { useT } from '../i18n';
 
 export default function LocationMap({ name, lat, lng, placeId, height = 'h-44' }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const hasCoords = lat != null && lng != null;
   const href = googleMapsUrl({ name, lat, lng, placeId });
@@ -26,7 +28,7 @@ export default function LocationMap({ name, lat, lng, placeId, height = 'h-44' }
         rel="noreferrer"
         className={`inline-flex items-center gap-1.5 text-xs font-semibold ${colors.accent}`}
       >
-        <Icon name="map" size={14} /> Open in Google Maps
+        <Icon name="map" size={14} /> {t('Open in Google Maps')}
       </a>
     );
   }
@@ -50,11 +52,11 @@ export default function LocationMap({ name, lat, lng, placeId, height = 'h-44' }
         href={href}
         target="_blank"
         rel="noreferrer"
-        aria-label={`Open ${name || 'this location'} in Google Maps`}
+        aria-label={t('Open {name} in Google Maps', { name: name || t('this location') })}
         className="absolute inset-0 flex items-end justify-start p-2"
       >
         <span className={`flex items-center gap-1 text-[11px] font-semibold ${colors.textWhite} ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.full} px-2.5 py-1 shadow`}>
-          <Icon name="open_in_new" size={12} className="text-inherit" /> Open in Google Maps
+          <Icon name="open_in_new" size={12} className="text-inherit" /> {t('Open in Google Maps')}
         </span>
       </a>
     </div>

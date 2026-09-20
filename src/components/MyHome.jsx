@@ -14,6 +14,7 @@ import Icon from './Icon';
 import ClubCard from './ClubCard';
 import { CardSkeleton, DateBadge, EventCard, formatLongDate } from './FeedCards';
 import { PixelEmpty } from './Pixel';
+import { useT } from '../i18n';
 
 function SectionTitle({ icon, children, to, toLabel }) {
   const { colors } = themeConfig;
@@ -48,6 +49,7 @@ const savedLink = (s) => (s.kind === 'event' ? `/events/${s.item.id}` : s.kind =
 const savedTitle = (s) => (s.kind === 'event' ? s.item.title : s.kind === 'gig' ? s.item.role : s.item.name);
 
 export default function MyHome() {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
   const { profile } = useProfile();
@@ -57,29 +59,29 @@ export default function MyHome() {
   if (!user) return null;
   const name = profile?.display_name?.split(' ')[0] || (profile?.username ? `@${profile.username}` : 'there');
   const loading = status === 'loading';
-  const row = `w-full text-left flex items-center gap-3 p-3 ${colors.bgCardSoft} border ${colors.border} ${radius.md} ${colors.borderHover} transition`;
+  const row = `w-full text-start flex items-center gap-3 p-3 ${colors.bgCardSoft} border ${colors.border} ${radius.md} ${colors.borderHover} transition`;
 
   return (
     <div className="space-y-10">
       <section className="space-y-4">
         <div>
-          <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>Your home</p>
-          <h2 className={`text-2xl sm:text-3xl font-display font-bold ${colors.textWhite}`}>Welcome back, {name}.</h2>
+          <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('Your home')}</p>
+          <h2 className={`text-2xl sm:text-3xl font-display font-bold ${colors.textWhite}`}>{t('Welcome back, {name}.', { name })}</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatTile icon="event_available" value={loading ? '–' : going.length} label="Tickets" to="/tickets" />
-          <StatTile icon="history" value={loading ? '–' : attended.length} label="Attended" to="/tickets" />
-          <StatTile icon="groups" value={loading ? '–' : clubs.length} label="Clubs" to="/clubs" />
-          <StatTile icon="work" value={loading ? '–' : applications.length} label="Applied" to="/recruit" />
+          <StatTile icon="event_available" value={loading ? '–' : going.length} label={t('Tickets')} to="/tickets" />
+          <StatTile icon="history" value={loading ? '–' : attended.length} label={t('Attended')} to="/tickets" />
+          <StatTile icon="groups" value={loading ? '–' : clubs.length} label={t('Clubs')} to="/clubs" />
+          <StatTile icon="work" value={loading ? '–' : applications.length} label={t('Applied')} to="/recruit" />
         </div>
       </section>
 
       <section className="space-y-4">
-        <SectionTitle icon="event_available" to="/tickets" toLabel="My tickets">You&apos;re going</SectionTitle>
+        <SectionTitle icon="event_available" to="/tickets" toLabel={t('My tickets')}>{t('You\'re going')}</SectionTitle>
         {loading && <CardSkeleton tall />}
         {!loading && going.length === 0 && (
-          <PixelEmpty sprite="ghost" title="Nothing planned yet">
-            Join an event and it will show up here.
+          <PixelEmpty sprite="ghost" title={t('Nothing planned yet')}>
+            {t('Join an event and it will show up here.')}
           </PixelEmpty>
         )}
         <div className="grid gap-5 sm:grid-cols-2">
@@ -90,16 +92,16 @@ export default function MyHome() {
       </section>
 
       <section className="space-y-4">
-        <SectionTitle icon="groups" to="/clubs" toLabel="Browse clubs">Your clubs</SectionTitle>
+        <SectionTitle icon="groups" to="/clubs" toLabel={t('Browse clubs')}>{t('Your clubs')}</SectionTitle>
         {pendingRequests > 0 && (
           <p className={`text-xs ${colors.textMuted} flex items-center gap-2`}>
-            <Icon name="hourglass_top" size={14} className={colors.warning} /> {pendingRequests} join request{pendingRequests === 1 ? '' : 's'} waiting for a moderator.
+            <Icon name="hourglass_top" size={14} className={colors.warning} /> {t(pendingRequests === 1 ? '{n} join request waiting for a moderator.' : '{n} join requests waiting for a moderator.', { n: pendingRequests })}
           </p>
         )}
         {loading && <CardSkeleton tall />}
         {!loading && clubs.length === 0 && (
-          <PixelEmpty sprite="box" title="You haven't joined a club yet">
-            Clubs are private — request to join and a moderator lets you in.
+          <PixelEmpty sprite="box" title={t('You haven\'t joined a club yet')}>
+            {t('Clubs are private — request to join and a moderator lets you in.')}
           </PixelEmpty>
         )}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -111,7 +113,7 @@ export default function MyHome() {
 
       {attended.length > 0 && (
         <section className="space-y-4">
-          <SectionTitle icon="history">You&apos;ve been to</SectionTitle>
+          <SectionTitle icon="history">{t('You\'ve been to')}</SectionTitle>
           <div className="grid gap-2 sm:grid-cols-2">
             {attended.map((event) => (
               <button key={event.id} onClick={() => navigate(`/events/${event.id}`)} className={row}>
@@ -130,14 +132,14 @@ export default function MyHome() {
 
       {saved.length > 0 && (
         <section className="space-y-4">
-          <SectionTitle icon="star">Saved</SectionTitle>
+          <SectionTitle icon="star">{t('Saved')}</SectionTitle>
           <div className="grid gap-2 sm:grid-cols-2">
             {saved.map((s) => (
               <button key={`${s.kind}-${s.item.id}`} onClick={() => navigate(savedLink(s))} className={row}>
                 <Icon name={SAVED_ICON[s.kind]} size={20} className={colors.accent} />
                 <span className="min-w-0 flex-1">
                   <span className={`block text-sm font-bold ${colors.textWhite} truncate`}>{savedTitle(s)}</span>
-                  <span className={`block text-[11px] ${colors.textFaint} capitalize`}>{s.kind}</span>
+                  <span className={`block text-[11px] ${colors.textFaint} capitalize`}>{t(s.kind)}</span>
                 </span>
               </button>
             ))}
@@ -147,7 +149,7 @@ export default function MyHome() {
 
       {applications.length > 0 && (
         <section className="space-y-4">
-          <SectionTitle icon="work" to="/recruit" toLabel="Find more">Your applications</SectionTitle>
+          <SectionTitle icon="work" to="/recruit" toLabel={t('Find more')}>{t('Your applications')}</SectionTitle>
           <div className="grid gap-2 sm:grid-cols-2">
             {applications.map(({ gig, status: appStatus }) => (
               <button key={gig.id} onClick={() => navigate(`/gigs/${gig.id}`)} className={row}>
@@ -157,7 +159,7 @@ export default function MyHome() {
                   <span className={`block text-[11px] ${colors.textFaint} truncate`}>{gig.posted_by}</span>
                 </span>
                 <span className={`shrink-0 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 ${colors.bgPill} ${colors.textMuted}`}>
-                  {APPLICATION_LABEL[appStatus] ?? appStatus}
+                  {t(APPLICATION_LABEL[appStatus] ?? appStatus)}
                 </span>
               </button>
             ))}

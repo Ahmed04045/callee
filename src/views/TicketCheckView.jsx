@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import Icon from '../components/Icon';
 import { PixelEmpty } from '../components/Pixel';
+import { useT } from '../i18n';
 
 const RESULTS = {
   OK: { icon: 'check_circle', tone: 'success', title: 'Checked in', text: 'Welcome in.' },
@@ -24,6 +25,7 @@ const RESULTS = {
 };
 
 export default function TicketCheckView({ onOpenAuthModal }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { code } = useParams();
   const { user, status: authStatus } = useAuth();
@@ -56,10 +58,10 @@ export default function TicketCheckView({ onOpenAuthModal }) {
   if (!user) {
     return (
       <div className="max-w-md mx-auto text-center py-16 space-y-4 px-4">
-        <PixelEmpty sprite="box" title="Sign in to use this ticket">
-          Organizers: sign in to check people in. Attendees: sign in to see your ticket.
+        <PixelEmpty sprite="box" title={t('Sign in to use this ticket')}>
+          {t('Organizers: sign in to check people in. Attendees: sign in to see your ticket.')}
         </PixelEmpty>
-        <button onClick={() => onOpenAuthModal?.()} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>Sign in</button>
+        <button onClick={() => onOpenAuthModal?.()} className={`${colors.accentBg} ${colors.accentOn} font-bold text-sm px-5 py-2.5 ${radius.full}`}>{t('Sign in')}</button>
       </div>
     );
   }
@@ -70,24 +72,24 @@ export default function TicketCheckView({ onOpenAuthModal }) {
 
   return (
     <div className="max-w-md mx-auto py-10 px-4">
-      {busy && !result && <p className={`text-center text-sm ${colors.textFaint}`}>Checking ticket…</p>}
+      {busy && !result && <p className={`text-center text-sm ${colors.textFaint}`}>{t('Checking ticket…')}</p>}
       {result?.status === 'ERROR' && <p className={`text-center text-sm ${colors.error}`}>{result.message}</p>}
       {meta && (
         <div className={`${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-8 text-center space-y-4`}>
           <Icon name={meta.icon} size={56} className={`mx-auto ${colors[meta.tone]}`} />
-          <h1 className={`text-2xl font-bold ${colors.textWhite}`}>{meta.title}</h1>
+          <h1 className={`text-2xl font-bold ${colors.textWhite}`}>{t(meta.title)}</h1>
           {result.name && <p className={`text-xl font-display font-bold ${colors.textWhite}`}>{result.name}</p>}
           {result.event_title && <p className={`text-sm ${colors.textMuted}`}>{result.event_title}</p>}
-          <p className={`text-xs ${colors.textFaint}`}>{meta.text}</p>
+          <p className={`text-xs ${colors.textFaint}`}>{t(meta.text)}</p>
           <div className="flex flex-wrap gap-3 justify-center pt-2">
             {(result.status === 'OK' || result.status === 'ALREADY') && (
-              <button onClick={undo} disabled={busy} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full}`}>Undo check-in</button>
+              <button onClick={undo} disabled={busy} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full}`}>{t('Undo check-in')}</button>
             )}
             {result.event_id && (result.status === 'OK' || result.status === 'ALREADY') && (
-              <Link to={`/events/${result.event_id}/scan`} className={`text-xs font-bold px-4 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>Scan next ticket</Link>
+              <Link to={`/events/${result.event_id}/scan`} className={`text-xs font-bold px-4 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>{t('Scan next ticket')}</Link>
             )}
             {result.status === 'OWN_TICKET' && (
-              <Link to="/tickets" className={`text-xs font-bold px-4 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>Open my tickets</Link>
+              <Link to="/tickets" className={`text-xs font-bold px-4 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>{t('Open my tickets')}</Link>
             )}
           </div>
         </div>

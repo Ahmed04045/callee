@@ -11,14 +11,16 @@ import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import Icon from '../components/Icon';
+import { useT } from '../i18n';
 
 const ALWAYS_VISIBLE_ITEMS = [
-  { id: 'theme', label: 'Theme', path: '/theme', icon: 'dark_mode' },
+  { id: 'theme', label: 'Appearance and language', path: '/theme', icon: 'dark_mode' },
   { id: 'terms', label: 'Terms of Service', path: '/terms', icon: 'description' },
   { id: 'privacy', label: 'Privacy Policy', path: '/privacy', icon: 'privacy_tip' },
 ];
 
 const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/account', icon: 'manage_accounts' };
+const NOTIFICATIONS_ITEM = { id: 'notifications', label: 'Notifications', path: '/settings/notifications', icon: 'notifications' };
 const MY_SUBMISSIONS_ITEM = {
   id: 'my-submissions',
   label: 'My Submissions',
@@ -27,17 +29,18 @@ const MY_SUBMISSIONS_ITEM = {
 };
 
 export default function SettingsView() {
+  const { t } = useT();
   const { colors, radius, font, brand } = themeConfig;
   const { status } = useAuth();
-  const aboutItem = { id: 'about', label: `About ${brand.name}`, path: '/about', icon: 'info' };
+  const aboutItem = { id: 'about', label: t('About {name}', { name: brand.name }), path: '/about', icon: 'info' };
   const menuItems =
     status === 'authenticated'
-      ? [ACCOUNT_ITEM, MY_SUBMISSIONS_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
+      ? [ACCOUNT_ITEM, MY_SUBMISSIONS_ITEM, NOTIFICATIONS_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
       : [...ALWAYS_VISIBLE_ITEMS, aboutItem];
 
   return (
     <div className="w-full max-w-md mx-auto space-y-4">
-      <h1 className={`text-2xl ${font.heading} ${colors.textWhite}`}>Settings</h1>
+      <h1 className={`text-2xl ${font.heading} ${colors.textWhite}`}>{t('Settings')}</h1>
 
       <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} overflow-hidden`}>
         {menuItems.map((item, index) => (
@@ -50,7 +53,7 @@ export default function SettingsView() {
           >
             <span className={`flex items-center gap-3 text-sm font-semibold ${colors.textWhite}`}>
               <Icon name={item.icon} size={18} className={colors.textFaint} />
-              {item.label}
+              {t(item.label)}
             </span>
             <Icon name="chevron_right" size={18} className={colors.textFaint} />
           </Link>

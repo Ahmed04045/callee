@@ -5,6 +5,7 @@
 
 import React from 'react';
 import themeConfig from '../../theme/themeConfig';
+import { useT } from '../../i18n';
 import Icon from '../../components/Icon';
 
 export const useFormStyles = () => {
@@ -17,7 +18,7 @@ export const useFormStyles = () => {
 export function Field({ label, hint, right, children }) {
   const { colors } = themeConfig;
   return (
-    <div className="block text-left">
+    <div className="block text-start">
       <div className="flex items-baseline justify-between">
         <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
           {label} {hint && <span className={colors.textDim}>{hint}</span>}
@@ -31,6 +32,7 @@ export function Field({ label, hint, right, children }) {
 
 /** Single- or multi-select chip picker. `value` is a string (single) or array (multi). */
 export function ChipPicker({ options, value, onChange, multiple = false, max }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const selected = multiple ? value : [value];
   const toggle = (option) => {
@@ -54,7 +56,7 @@ export function ChipPicker({ options, value, onChange, multiple = false, max }) 
               on ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textMuted} ${colors.borderStrong} ${colors.textHoverStrong}`
             }`}
           >
-            {option}
+            {t(option)}
           </button>
         );
       })}

@@ -13,8 +13,10 @@ import { ReportButton, SaveButton } from '../components/SaveReportButtons';
 import AnswerModal from '../components/AnswerModal';
 import { hasQuestions } from '../lib/questions';
 import { PixelCover } from '../components/Pixel';
+import { useT } from '../i18n';
 
 export default function GigDetailView({ onOpenAuthModal }) {
+  const { t } = useT();
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user } = useAuth();
@@ -79,7 +81,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
     const { error } = await supabase.from('applications').insert({ gig_id: id, user_id: user.id, ...payload });
     if (error) {
       const key = Object.keys(APPLY_ERRORS).find((k) => error.message.includes(k));
-      return key ? APPLY_ERRORS[key] : error.message;
+      return key ? t(APPLY_ERRORS[key]) : error.message;
     }
     setHasApplied(true);
     return null;
@@ -99,7 +101,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
   }, [searchParams, user, status, hasApplied]);
 
   if (status === 'loading') {
-    return <p className={`text-sm ${colors.textFaint}`}>Loading…</p>;
+    return <p className={`text-sm ${colors.textFaint}`}>{t('Loading…')}</p>;
   }
 
   if (status === 'notFound' || status === 'error') {
@@ -107,10 +109,10 @@ export default function GigDetailView({ onOpenAuthModal }) {
       <div className="max-w-md mx-auto text-center py-16 space-y-3">
         <Icon name="search_off" size={28} className={colors.textFaint} />
         <p className={`text-sm ${colors.textFaint}`}>
-          {status === 'notFound' ? "This listing doesn't exist (or isn't public)." : "Couldn't load this listing."}
+          {status === 'notFound' ? t('This listing doesn\'t exist (or isn\'t public).') : t('Couldn\'t load this listing.')}
         </p>
         <Link to="/recruit" className={`text-xs font-semibold ${colors.accent}`}>
-          Back to Recruit
+          {t('Back to Recruit')}
         </Link>
       </div>
     );
@@ -127,7 +129,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
         to="/recruit"
         className={`inline-flex items-center gap-1 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition`}
       >
-        <Icon name="arrow_back" size={14} /> Back to Recruit
+        <Icon name="arrow_back" size={14} /> {t('Back to Recruit')}
       </Link>
 
       <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} overflow-hidden`}>
@@ -141,21 +143,21 @@ export default function GigDetailView({ onOpenAuthModal }) {
               <h1 className={`text-xl font-bold ${colors.textWhite}`}>{gig.role}</h1>
               {gig.verified && (
                 <span className={`flex items-center gap-1 text-[10px] ${colors.success}`}>
-                  <Icon name="verified" size={13} /> Verified
+                  <Icon name="verified" size={13} /> {t('Verified')}
                 </span>
               )}
             </div>
-            <p className={`text-xs ${colors.textMuted} mt-1`}>Posted by {gig.posted_by}</p>
+            <p className={`text-xs ${colors.textMuted} mt-1`}>{t('Posted by {name}', { name: gig.posted_by })}</p>
             {gig.deadline && (
               <p className={`text-xs mt-1 font-semibold ${expired ? colors.error : daysLeft <= 7 ? colors.warning : colors.textMuted}`}>
-                {expired ? 'Applications closed' : daysLeft === 0 ? 'Closes today' : `Closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} · {gig.deadline}
+                {expired ? t('Applications closed') : daysLeft === 0 ? t('Closes today') : daysLeft === 1 ? t('Closes tomorrow') : t('Closes in {n} days', { n: daysLeft })} · {gig.deadline}
               </p>
             )}
           </div>
           <span
             className={`text-xs ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full} shrink-0`}
           >
-            {gig.compensation}
+            {t(gig.compensation)}
           </span>
         </div>
 
@@ -167,14 +169,14 @@ export default function GigDetailView({ onOpenAuthModal }) {
               key={tag}
               className={`text-[10px] ${colors.textFaint} ${colors.bgPill} px-2.5 py-1 ${radius.full} border ${colors.border}`}
             >
-              #{tag}
+              <bdi>#{t(tag)}</bdi>
             </span>
           ))}
         </div>
 
         {gig.is_remote ? (
           <p className={`mt-4 flex items-center gap-2 text-sm ${colors.textMuted}`}>
-            <Icon name="public" size={16} className={colors.textFaint} /> Remote
+            <Icon name="public" size={16} className={colors.textFaint} /> {t('Remote')}
           </p>
         ) : (
           gig.location && (
@@ -195,14 +197,14 @@ export default function GigDetailView({ onOpenAuthModal }) {
         {!isPoster && <ReportButton kind="gig" itemId={gig.id} onNeedAuth={() => onOpenAuthModal?.()} />}
         {isPoster && (
           <Link to={`/gigs/${gig.id}/applicants`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
-            <Icon name="group" size={14} className="text-inherit" /> Applicants{applicantCount != null ? ` (${applicantCount})` : ''}
+            <Icon name="group" size={14} className="text-inherit" /> {t('Applicants')}{applicantCount != null ? ` (${applicantCount})` : ''}
           </Link>
         )}
       </div>
 
-      <StickyAction summary={gig.role} sub={`${gig.posted_by} · ${gig.compensation}`}>
+      <StickyAction summary={gig.role} sub={`${gig.posted_by} · ${t(gig.compensation)}`}>
           {!user ? (
-            <p className={`text-xs ${colors.textFaint}`}>Sign in to apply.</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Sign in to apply.')}</p>
           ) : (
             <button
               onClick={handleApply}
@@ -215,11 +217,11 @@ export default function GigDetailView({ onOpenAuthModal }) {
             >
               {hasApplied ? (
                 <>
-                  Submitted <Icon name="check_circle" size={13} className="text-inherit" />
+                  {t('Submitted')} <Icon name="check_circle" size={13} className="text-inherit" />
                 </>
               ) : (
                 <>
-                  Submit Project Request <Icon name="arrow_forward" size={13} className="text-inherit" />
+                  {t('Submit Project Request')} <Icon name="arrow_forward" size={13} className="text-inherit" />
                 </>
               )}
             </button>
@@ -228,14 +230,14 @@ export default function GigDetailView({ onOpenAuthModal }) {
 
       {applyOpen && (
         <AnswerModal
-          title={`Apply: ${gig.role}`}
-          intro="Tell them a bit about yourself."
+          title={t('Apply: {title}', { title: gig.role })}
+          intro={t('Tell them a bit about yourself.')}
           questions={hasQuestions(gig.questions) ? gig.questions : []}
           withMessage
-          messageLabel="Message (optional)"
+          messageLabel={t('Message (optional)')}
           withContact
-          submitLabel="Send application"
-          shares="Your name, username, school, bio, answers and contact details will be shared with the person who posted this gig."
+          submitLabel={t('Send application')}
+          shares={t('Your name, username, school, bio, answers and contact details will be shared with the person who posted this gig.')}
           onSubmit={submitApplication}
           onClose={() => setApplyOpen(false)}
         />
