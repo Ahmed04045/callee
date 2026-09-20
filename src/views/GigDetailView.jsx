@@ -11,6 +11,7 @@ import LocationMap from '../components/LocationMap';
 import StickyAction from '../components/StickyAction';
 import { ReportButton, SaveButton } from '../components/SaveReportButtons';
 import AnswerModal from '../components/AnswerModal';
+import { AnswersView } from '../components/Questions';
 import { hasQuestions } from '../lib/questions';
 import { PixelCover } from '../components/Pixel';
 import { useT } from '../i18n';
@@ -24,6 +25,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
   const [gig, setGig] = useState(null);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'notFound' | 'error'
   const [hasApplied, setHasApplied] = useState(false);
+  const [myApplication, setMyApplication] = useState(null);
   const [applyOpen, setApplyOpen] = useState(false);
   const [searchParams] = useSearchParams();
 
@@ -49,11 +51,14 @@ export default function GigDetailView({ onOpenAuthModal }) {
       if (user) {
         const { data: existingApplication } = await supabase
           .from('applications')
-          .select('id')
+          .select('id, answers, message, status')
           .eq('gig_id', id)
           .eq('user_id', user.id)
           .maybeSingle();
-        if (isMounted) setHasApplied(Boolean(existingApplication));
+        if (isMounted) {
+          setHasApplied(Boolean(existingApplication));
+          setMyApplication(existingApplication);
+        }
       }
     }
 
@@ -76,7 +81,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
     'duplicate key': 'You already applied to this gig.',
   };
   const submitApplication = async (payload) => {
-    if (!user) return 'Please sign in first.';
+    if (!user) return t('Please sign in first.');
     logUserAction('APPLY_SUBMIT', { gigId: id, source: 'detail' });
     const { error } = await supabase.from('applications').insert({ gig_id: id, user_id: user.id, ...payload });
     if (error) {
@@ -84,6 +89,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
       return key ? t(APPLY_ERRORS[key]) : error.message;
     }
     setHasApplied(true);
+    setMyApplication({ answers: payload.answers, message: payload.message, status: 'submitted' });
     return null;
   };
   const handleApply = () => user && setApplyOpen(true);
@@ -201,6 +207,14 @@ export default function GigDetailView({ onOpenAuthModal }) {
           </Link>
         )}
       </div>
+
+      {myApplication && (myApplication.message || hasQuestions(gig.questions)) && (
+        <section className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-3`}>
+          <h2 className={`text-sm font-bold ${colors.textWhite}`}>{t('Your application')}</h2>
+          {myApplication.message && <p className={`text-sm ${colors.textMuted} whitespace-pre-line`}>{myApplication.message}</p>}
+          <AnswersView questions={gig.questions} answers={myApplication.answers} />
+        </section>
+      )}
 
       <StickyAction summary={gig.role} sub={`${gig.posted_by} · ${t(gig.compensation)}`}>
           {!user ? (

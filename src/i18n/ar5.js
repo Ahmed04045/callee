@@ -21,4 +21,6 @@ export default {
   "Find your people.": "اعثر على أشخاصك.",
   "Play the real world.": "العب في العالم الحقيقي.",
   "Checking…": "جارٍ التحقق…",
+  "Your application": "طلبك",
+  "Please sign in first.": "يرجى تسجيل الدخول أولاً.",
 };
