@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /onboarding
+
+Sitemap: https://callee-sooty.vercel.app/sitemap.xml

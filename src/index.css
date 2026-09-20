@@ -2,25 +2,160 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------
+   Circosodal themes. Each block defines the full md3-* palette as "R G B"
+   triplets (see tailwind.config.js). `electric` is the default; the theme
+   picker (Settings > Theme) sets data-theme on <html> and remembers it.
+   --------------------------------------------------------------------- */
+:root,
+:root[data-theme='electric'] {
+  --md3-primary: 61 139 255;
+  --md3-onPrimary: 0 16 51;
+  --md3-primaryContainer: 10 36 94;
+  --md3-onPrimaryContainer: 207 225 255;
+  --md3-secondary: 92 225 255;
+  --md3-secondaryContainer: 6 43 58;
+  --md3-onSecondaryContainer: 190 240 255;
+  --md3-tertiary: 255 61 165;
+  --md3-surface: 4 6 15;
+  --md3-surfaceVariant: 27 42 85;
+  --md3-surfaceContainerLow: 7 11 24;
+  --md3-surfaceContainer: 10 16 34;
+  --md3-surfaceContainerHigh: 15 24 50;
+  --md3-surfaceContainerHighest: 22 34 70;
+  --md3-onSurface: 232 238 255;
+  --md3-onSurfaceVariant: 152 168 214;
+  --md3-outline: 91 108 153;
+  --md3-outlineVariant: 27 42 85;
+  --md3-error: 255 107 129;
+  --md3-errorContainer: 92 14 30;
+  --md3-success: 61 255 162;
+  --md3-successContainer: 5 60 38;
+  --glow-strength: 0.35;
+  --grid-alpha: 0.07;
+  color-scheme: dark;
+}
+
+:root[data-theme='ultraviolet'] {
+  --md3-primary: 178 107 255;
+  --md3-onPrimary: 30 0 61;
+  --md3-primaryContainer: 59 20 110;
+  --md3-onPrimaryContainer: 233 214 255;
+  --md3-secondary: 255 79 216;
+  --md3-secondaryContainer: 74 10 60;
+  --md3-onSecondaryContainer: 255 214 244;
+  --md3-tertiary: 61 255 209;
+  --md3-surface: 8 4 15;
+  --md3-surfaceVariant: 46 30 85;
+  --md3-surfaceContainerLow: 12 7 22;
+  --md3-surfaceContainer: 17 10 33;
+  --md3-surfaceContainerHigh: 26 16 52;
+  --md3-surfaceContainerHighest: 38 24 76;
+  --md3-onSurface: 240 232 255;
+  --md3-onSurfaceVariant: 176 158 214;
+  --md3-outline: 120 96 168;
+  --md3-outlineVariant: 46 30 85;
+  --md3-error: 255 107 129;
+  --md3-errorContainer: 92 14 30;
+  --md3-success: 61 255 162;
+  --md3-successContainer: 5 60 38;
+  --glow-strength: 0.35;
+  --grid-alpha: 0.07;
+  color-scheme: dark;
+}
+
+:root[data-theme='acid'] {
+  --md3-primary: 124 255 61;
+  --md3-onPrimary: 10 26 0;
+  --md3-primaryContainer: 28 71 8;
+  --md3-onPrimaryContainer: 214 255 190;
+  --md3-secondary: 255 230 0;
+  --md3-secondaryContainer: 66 58 0;
+  --md3-onSecondaryContainer: 255 247 178;
+  --md3-tertiary: 0 229 255;
+  --md3-surface: 3 8 4;
+  --md3-surfaceVariant: 26 56 30;
+  --md3-surfaceContainerLow: 6 13 7;
+  --md3-surfaceContainer: 10 20 12;
+  --md3-surfaceContainerHigh: 15 30 18;
+  --md3-surfaceContainerHighest: 22 44 26;
+  --md3-onSurface: 232 255 234;
+  --md3-onSurfaceVariant: 150 196 156;
+  --md3-outline: 86 130 92;
+  --md3-outlineVariant: 26 56 30;
+  --md3-error: 255 107 129;
+  --md3-errorContainer: 92 14 30;
+  --md3-success: 61 255 162;
+  --md3-successContainer: 5 60 38;
+  --glow-strength: 0.3;
+  --grid-alpha: 0.07;
+  color-scheme: dark;
+}
+
+:root[data-theme='paper'] {
+  --md3-primary: 31 79 255;
+  --md3-onPrimary: 255 255 255;
+  --md3-primaryContainer: 214 224 255;
+  --md3-onPrimaryContainer: 5 24 96;
+  --md3-secondary: 0 130 178;
+  --md3-secondaryContainer: 210 240 250;
+  --md3-onSecondaryContainer: 0 50 70;
+  --md3-tertiary: 214 0 120;
+  --md3-surface: 244 247 255;
+  --md3-surfaceVariant: 201 212 245;
+  --md3-surfaceContainerLow: 250 251 255;
+  --md3-surfaceContainer: 255 255 255;
+  --md3-surfaceContainerHigh: 234 239 252;
+  --md3-surfaceContainerHighest: 221 228 248;
+  --md3-onSurface: 10 16 48;
+  --md3-onSurfaceVariant: 70 84 130;
+  --md3-outline: 120 134 180;
+  --md3-outlineVariant: 201 212 245;
+  --md3-error: 200 30 60;
+  --md3-errorContainer: 255 218 224;
+  --md3-success: 0 140 80;
+  --md3-successContainer: 205 245 226;
+  --glow-strength: 0.12;
+  --grid-alpha: 0.09;
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------------
+   STYLE variables. Plain (default): rounded shapes, no glow. Pixel: square
+   corners and glow. Components use rounded-[var(--r-*)] via themeConfig.
+   --------------------------------------------------------------------- */
+:root {
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-full: 9999px;
+}
+:root:not([data-style='pixel']) {
+  --glow-strength: 0;
+}
+:root[data-style='pixel'] {
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-full: 0px;
+}
+
+/* --------------------------------------------------------------------- */
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color-scheme: dark;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Full-bleed reset. The old Vite template centered #root with
-   `body { display:flex; place-items:center }`, which shrinks the app
-   to its content size instead of letting it fill the viewport — that's
-   what was reading as a "black screen" / non-full-width layout. */
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
   width: 100%;
 }
 
@@ -28,14 +163,144 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0a0a0a; /* matches Tailwind neutral-950, avoids any flash */
+  background-color: rgb(var(--md3-surface));
+  color: rgb(var(--md3-onSurface));
+}
+
+/* PIXEL style only: a faint 24px lattice, like graph paper on a CRT. */
+:root[data-style='pixel'] body {
+  background-image:
+    linear-gradient(rgb(var(--md3-primary) / var(--grid-alpha)) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--md3-primary) / var(--grid-alpha)) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-attachment: fixed;
+}
+
+/* PIXEL style only: barely-there scanlines over everything (pointer-events: none). */
+:root[data-style='pixel'] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 200;
+  background: repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.07) 0, rgb(0 0 0 / 0.07) 1px, transparent 1px, transparent 3px);
+  opacity: 0.5;
+}
+:root[data-style='pixel'][data-theme='paper'] body::after {
+  display: none;
+}
+
+/* Clean type on purpose: the pixel style lives in icons, shapes and
+   placeholders, not in the fonts. Headings use Space Grotesk, body Inter. */
+h1,
+h2,
+h3 {
+  font-family: 'Space Grotesk', Inter, system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 a {
-  font-weight: 500;
-  color: #22d3ee;
+  color: rgb(var(--md3-primary));
   text-decoration: inherit;
 }
-a:hover {
-  color: #67e8f9;
+
+::selection {
+  background: rgb(var(--md3-primary) / 0.35);
+}
+
+/* Visible, on-brand keyboard focus. */
+:focus-visible {
+  outline: 2px solid rgb(var(--md3-primary));
+  outline-offset: 2px;
+}
+
+/* --- Pixel utilities ---------------------------------------------------- */
+
+/* Pixel frame: square corners (so the 1px border stays continuous) plus a
+   hard, un-blurred offset shadow. Used by cards, panels and map frames via
+   the bg* tokens in themeConfig. */
+:root[data-style='pixel'] .px-box {
+  border-radius: 0;
+  box-shadow: 3px 3px 0 0 rgb(var(--md3-primary) / 0.22);
+}
+
+/* PIXEL style only: square, chunky scrollbars. */
+:root[data-style='pixel'] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--md3-outline)) rgb(var(--md3-surfaceContainerLow));
+}
+:root[data-style='pixel'] ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+:root[data-style='pixel'] ::-webkit-scrollbar-track {
+  background: rgb(var(--md3-surfaceContainerLow));
+}
+:root[data-style='pixel'] ::-webkit-scrollbar-thumb {
+  background: rgb(var(--md3-outline));
+  border: 2px solid rgb(var(--md3-surfaceContainerLow));
+}
+
+/* PIXEL style only: loading spinners tick in 8 frames instead of turning smoothly. */
+:root[data-style='pixel'] .animate-spin {
+  animation: spin 0.9s steps(8) infinite;
+}
+
+.px-crisp {
+  image-rendering: pixelated;
+}
+
+/* Stepped (frame-by-frame) transitions instead of smooth easing. */
+.px-steps {
+  transition-timing-function: steps(4, end);
+}
+
+/* Users who ask for reduced motion get no transitions at all. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* --- Printing a ticket: light colours, only the ticket is shown -------- */
+@media print {
+  :root,
+  :root[data-theme] {
+    --md3-surface: 255 255 255;
+    --md3-surfaceContainer: 255 255 255;
+    --md3-surfaceContainerLow: 255 255 255;
+    --md3-surfaceContainerHigh: 240 240 240;
+    --md3-surfaceContainerHighest: 230 230 230;
+    --md3-onSurface: 0 0 0;
+    --md3-onSurfaceVariant: 60 60 60;
+    --md3-outline: 120 120 120;
+    --md3-outlineVariant: 190 190 190;
+    --md3-primary: 31 79 255;
+    --md3-success: 0 120 60;
+    color-scheme: light;
+  }
+  body {
+    background: #fff !important;
+    background-image: none !important;
+  }
+  body::after {
+    display: none;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .ticket-print,
+  .ticket-print * {
+    visibility: visible;
+  }
+  .ticket-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    box-shadow: none !important;
+  }
 }

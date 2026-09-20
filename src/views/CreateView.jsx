@@ -19,6 +19,7 @@ import { useSearchParams } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
+import Icon from '../components/Icon';
 import GigForm from './create/GigForm';
 import EventForm from './create/EventForm';
 import GroupForm from './create/GroupForm';
@@ -49,7 +50,9 @@ export default function CreateView() {
   return (
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className={`border-b ${colors.border} pb-3`}>
-        <h1 className={`text-xl ${font.heading} ${colors.textWhite}`}>Create</h1>
+        <h1 className={`text-xl ${font.heading} ${colors.textWhite} flex items-center gap-2`}>
+          <Icon name="add_circle" size={22} className={colors.accent} /> Create
+        </h1>
         <p className={`text-xs ${colors.textFaint} mt-1`}>Submitted for review — it won't be public until approved.</p>
       </div>
 

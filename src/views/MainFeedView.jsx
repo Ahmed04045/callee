@@ -1,18 +1,16 @@
 // src/views/MainFeedView.jsx
 
 import React, { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import usePageMeta from '../lib/usePageMeta';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
-
-function formatDate(dateString) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  if (Number.isNaN(date.getTime())) return dateString;
-  return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-}
+import { PixelEmpty } from '../components/Pixel';
+import { CardSkeleton, EventCard, GigCard, WeekTile } from '../components/FeedCards';
+import MyHome from '../components/MyHome';
+import { useAuth } from '../context/AuthContext';
 
 // Local calendar date (YYYY-MM-DD) — events dated today still count as upcoming.
 function todayLocalISO() {
@@ -27,8 +25,11 @@ function matches(query, ...fields) {
 
 export default function MainFeedView() {
   const { colors, radius, font, brand } = themeConfig;
-  const [searchQuery, setSearchQuery] = useState('');
+  const [params] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(params.get('q') ?? '');
+  usePageMeta('Explore', 'Upcoming events, gigs and recruitment calls for students in Qatar.');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Only approved events (admins and organizers can also *read* their pending
   // ones under RLS, which must not leak into the public feed) and only ones
@@ -51,17 +52,37 @@ export default function MainFeedView() {
   const query = searchQuery.trim().toLowerCase();
   const isSearching = query.length > 0;
 
+  // Type chips are built from the types that actually have upcoming events.
+  const [typeFilter, setTypeFilter] = useState('');
+  const eventTypes = useMemo(() => [...new Set(events.map((e) => e.event_type || e.tag).filter(Boolean))].sort(), [events]);
+
   const visibleEvents = useMemo(() => {
-    if (!isSearching) return events;
-    return events.filter((e) => matches(query, e.title, e.organizer, e.tag, e.location));
-  }, [events, isSearching, query]);
+    const byType = typeFilter ? events.filter((e) => (e.event_type || e.tag) === typeFilter) : events;
+    if (!isSearching) return byType;
+    return byType.filter((e) => matches(query, e.title, e.organizer, e.tag, e.location));
+  }, [events, isSearching, query, typeFilter]);
 
   const visibleGigs = useMemo(() => {
-    if (!isSearching) return allGigs.filter((g) => g.featured);
-    return allGigs.filter(
+    const today = todayLocalISO();
+    const open = allGigs.filter((g) => !g.deadline || g.deadline >= today);
+    if (!isSearching) return open.filter((g) => g.featured);
+    return open.filter(
       (g) => matches(query, g.role, g.posted_by, g.details) || (g.tags ?? []).some((t) => t.toLowerCase().includes(query))
     );
   }, [allGigs, isSearching, query]);
+
+  // Events in the next 7 days (a quick "what's on" strip above the full list).
+  const thisWeek = useMemo(() => {
+    const start = todayLocalISO();
+    const end = new Date();
+    end.setDate(end.getDate() + 7);
+    const pad = (n) => String(n).padStart(2, '0');
+    const endISO = `${end.getFullYear()}-${pad(end.getMonth() + 1)}-${pad(end.getDate())}`;
+    return events.filter((e) => e.event_date >= start && e.event_date <= endISO);
+  }, [events]);
+
+  const openEvent = (event) => navigate(`/events/${event.id}`);
+  const openGig = (gig) => navigate(`/gigs/${gig.id}`);
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -72,13 +93,20 @@ export default function MainFeedView() {
 
   return (
     <div className="space-y-10">
-      {/* Hero + search */}
-      <div className="text-center py-6 space-y-4">
-        <h2 className={`text-2xl sm:text-4xl ${font.heading} ${colors.textWhite} tracking-tight`}>
-          {brand.tagline}
-          <br />
-          <span className={colors.gradientText}>{brand.subTagline}</span>
-        </h2>
+      {/* Personal Home (signed in): your events, clubs, history, applications */}
+      {user && <MyHome />}
+
+      {/* Hero + search. Signed in, the hero shrinks to a "Discover" heading. */}
+      <div className={`text-center space-y-4 ${user ? 'pt-2' : 'py-6'}`}>
+        {user ? (
+          <h2 className={`text-lg ${font.heading} ${colors.textWhite} text-left border-t ${colors.border} pt-8`}>Discover something new</h2>
+        ) : (
+          <h2 className={`text-2xl sm:text-4xl ${font.heading} ${colors.textWhite} tracking-tight`}>
+            {brand.tagline}
+            <br />
+            <span className={colors.gradientText}>{brand.subTagline}</span>
+          </h2>
+        )}
 
         <form onSubmit={handleSearchSubmit} className="max-w-xl mx-auto relative mt-4">
           <Icon
@@ -106,106 +134,76 @@ export default function MainFeedView() {
         </form>
       </div>
 
+      {!isSearching && thisWeek.length > 0 && (
+        <section className="space-y-3">
+          <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}>
+            <Icon name="bolt" size={16} className={colors.warning} /> Happening this week
+          </h3>
+          <div className="flex gap-3 overflow-x-auto pb-3 -mx-1 px-1">
+            {thisWeek.map((event) => (
+              <WeekTile key={event.id} event={event} onOpen={openEvent} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Events */}
         <div className="md:col-span-2 space-y-4">
-          <h3
-            className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
-          >
-            <Icon
-              name={isSearching ? 'search' : 'local_fire_department'}
-              size={16}
-              className={isSearching ? colors.textFaint : colors.warning}
-            />
+          <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}>
+            <Icon name={isSearching ? 'search' : 'local_fire_department'} size={16} className={isSearching ? colors.textFaint : colors.warning} />
             {isSearching ? `Events matching "${searchQuery.trim()}"` : 'Upcoming Events'}
           </h3>
 
-          {eventsStatus === 'loading' && (
-            <p className={`text-xs ${colors.textFaint}`}>Loading events…</p>
-          )}
-          {eventsStatus === 'error' && (
-            <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>
-          )}
-          {eventsStatus === 'ready' && visibleEvents.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>
-              {isSearching ? 'No matching events.' : 'No upcoming events yet — be the first to create one.'}
-            </p>
+          {eventTypes.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {['', ...eventTypes].map((t) => (
+                <button
+                  key={t || 'all'}
+                  onClick={() => setTypeFilter(t)}
+                  aria-pressed={typeFilter === t}
+                  className={`text-xs font-bold whitespace-nowrap px-3 py-1.5 ${radius.full} border ${typeFilter === t ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}
+                >
+                  {t || 'All'}
+                </button>
+              ))}
+            </div>
           )}
 
-          <div className="grid grid-cols-1 gap-4">
+          {eventsStatus === 'loading' && (
+            <div className="grid gap-4">
+              <CardSkeleton tall />
+              <CardSkeleton tall />
+            </div>
+          )}
+          {eventsStatus === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load events. Try refreshing.</p>}
+          {eventsStatus === 'ready' && visibleEvents.length === 0 && (
+            <PixelEmpty sprite={isSearching ? 'search' : 'ghost'} title={isSearching ? 'No matching events' : 'No upcoming events yet'}>
+              {isSearching ? 'Try a different search.' : 'Be the first to create one from the Create tab.'}
+            </PixelEmpty>
+          )}
+
+          <div className="grid grid-cols-1 gap-5">
             {visibleEvents.map((event) => (
-              <div
-                key={event.id}
-                onClick={() => navigate(`/events/${event.id}`)}
-                className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-5 ${colors.borderHover} transition cursor-pointer`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span
-                      className={`text-[10px] ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2.5 py-0.5 ${radius.full}`}
-                    >
-                      {event.tag}
-                    </span>
-                    <h4 className={`text-lg font-bold ${colors.textWhite} mt-2`}>{event.title}</h4>
-                    <p className={`text-xs ${colors.textMuted} mt-0.5`}>By {event.organizer}</p>
-                  </div>
-                  {!event.capacity_hidden && (
-                    <span className={`text-[10px] ${colors.textFaint}`}>{event.spots} spots left</span>
-                  )}
-                </div>
-                <div
-                  className={`mt-4 flex justify-between items-center text-xs ${colors.textFaint} pt-3 border-t ${colors.border}`}
-                >
-                  <div>{formatDate(event.event_date)}</div>
-                  <div className="flex items-center gap-1">
-                    <Icon name="location_on" size={13} /> {event.location}
-                  </div>
-                </div>
-              </div>
+              <EventCard key={event.id} event={event} onOpen={openEvent} />
             ))}
           </div>
         </div>
 
         {/* Gigs & Opportunities */}
         <div className="space-y-4">
-          <h3
-            className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}
-          >
+          <h3 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider flex items-center gap-2`}>
             <Icon name="work" size={16} className={colors.secondary} />
             {isSearching ? 'Matching Gigs' : 'Featured Recruitment Calls'}
           </h3>
 
-          {gigsStatus === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading…</p>}
+          {gigsStatus === 'loading' && <CardSkeleton />}
           {gigsStatus === 'ready' && visibleGigs.length === 0 && (
-            <p className={`text-xs ${colors.textFaint}`}>
-              {isSearching ? 'No matching gigs.' : 'No featured roles right now.'}
-            </p>
+            <PixelEmpty sprite="box" title={isSearching ? 'No matching gigs' : 'No featured roles right now'} />
           )}
 
           {visibleGigs.map((gig) => (
-            <div
-              key={gig.id}
-              onClick={() => navigate(`/gigs/${gig.id}`)}
-              className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-4 space-y-3 cursor-pointer ${colors.borderHover} transition`}
-            >
-              <div>
-                <span
-                  className={`text-[9px] font-bold ${colors.secondarySoftBg} ${colors.secondary} px-2.5 py-0.5 ${radius.full}`}
-                >
-                  {gig.compensation}
-                </span>
-                <h4 className={`text-sm font-bold ${colors.textWhite} mt-1.5`}>{gig.role}</h4>
-                <p className={`text-[11px] ${colors.textFaint}`}>{gig.posted_by}</p>
-              </div>
-              <p className={`text-xs ${colors.textMuted} line-clamp-2 leading-relaxed`}>
-                {gig.details}
-              </p>
-              <span
-                className={`block w-full text-center text-[11px] font-bold ${colors.accent} ${colors.bgCard} py-2 ${radius.full} border ${colors.borderStrong}`}
-              >
-                View Details
-              </span>
-            </div>
+            <GigCard key={gig.id} gig={gig} onOpen={openGig} />
           ))}
         </div>
       </div>

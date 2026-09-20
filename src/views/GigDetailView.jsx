@@ -7,8 +7,12 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
+import LocationMap from '../components/LocationMap';
+import StickyAction from '../components/StickyAction';
+import { ReportButton, SaveButton } from '../components/SaveReportButtons';
+import { PixelCover } from '../components/Pixel';
 
-export default function GigDetailView() {
+export default function GigDetailView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user } = useAuth();
@@ -81,6 +85,11 @@ export default function GigDetailView() {
     );
   }
 
+  const isPoster = Boolean(user && gig.posted_by_user_id === user.id);
+  const today = new Date().toLocaleDateString('en-CA');
+  const expired = Boolean(gig.deadline && gig.deadline < today);
+  const daysLeft = gig.deadline ? Math.round((new Date(gig.deadline) - new Date(today)) / 86400000) : null;
+
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       <Link
@@ -90,7 +99,11 @@ export default function GigDetailView() {
         <Icon name="arrow_back" size={14} /> Back to Recruit
       </Link>
 
-      <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6`}>
+      <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} overflow-hidden`}>
+      <div className="h-20">
+        <PixelCover seed={gig.id} cols={72} rows={10} />
+      </div>
+      <div className="p-6">
         <div className="flex justify-between items-start gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -102,6 +115,11 @@ export default function GigDetailView() {
               )}
             </div>
             <p className={`text-xs ${colors.textMuted} mt-1`}>Posted by {gig.posted_by}</p>
+            {gig.deadline && (
+              <p className={`text-xs mt-1 font-semibold ${expired ? colors.error : daysLeft <= 7 ? colors.warning : colors.textMuted}`}>
+                {expired ? 'Applications closed' : daysLeft === 0 ? 'Closes today' : `Closes in ${daysLeft} day${daysLeft === 1 ? '' : 's'}`} · {gig.deadline}
+              </p>
+            )}
           </div>
           <span
             className={`text-xs ${colors.bgInset} border ${colors.borderStrong} ${colors.success} px-2.5 py-1 ${radius.full} shrink-0`}
@@ -123,13 +141,41 @@ export default function GigDetailView() {
           ))}
         </div>
 
-        <div className={`mt-6 pt-4 border-t ${colors.border}`}>
+        {gig.is_remote ? (
+          <p className={`mt-4 flex items-center gap-2 text-sm ${colors.textMuted}`}>
+            <Icon name="public" size={16} className={colors.textFaint} /> Remote
+          </p>
+        ) : (
+          gig.location && (
+            <div className="mt-4 space-y-2">
+              <p className={`flex items-center gap-2 text-sm ${colors.textMuted}`}>
+                <Icon name="location_on" size={16} className={colors.textFaint} /> {gig.location}
+              </p>
+              <LocationMap name={gig.location} lat={gig.lat} lng={gig.lng} placeId={gig.place_id} />
+            </div>
+          )
+        )}
+
+      </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <SaveButton kind="gig" itemId={gig.id} onNeedAuth={() => onOpenAuthModal?.()} />
+        {!isPoster && <ReportButton kind="gig" itemId={gig.id} onNeedAuth={() => onOpenAuthModal?.()} />}
+        {isPoster && (
+          <Link to={`/gigs/${gig.id}/applicants`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
+            <Icon name="group" size={14} className="text-inherit" /> Applicants
+          </Link>
+        )}
+      </div>
+
+      <StickyAction summary={gig.role} sub={`${gig.posted_by} · ${gig.compensation}`}>
           {!user ? (
             <p className={`text-xs ${colors.textFaint}`}>Sign in to apply.</p>
           ) : (
             <button
               onClick={handleApply}
-              disabled={hasApplied || isApplying}
+              disabled={hasApplied || isApplying || expired}
               className={`flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider px-4 py-2 ${radius.full} transition ${
                 hasApplied
                   ? `${colors.success} ${colors.bgInset} border ${colors.borderStrong} cursor-default`
@@ -147,8 +193,7 @@ export default function GigDetailView() {
               )}
             </button>
           )}
-        </div>
-      </div>
+      </StickyAction>
     </div>
   );
 }

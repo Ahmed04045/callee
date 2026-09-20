@@ -28,6 +28,7 @@ export default function GigForm({ user, postedBy, kind }) {
   const [remote, setRemote] = useState(false);
   const [place, setPlace] = useState(null);
   const [details, setDetails] = useState('');
+  const [deadline, setDeadline] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -54,6 +55,7 @@ export default function GigForm({ user, postedBy, kind }) {
         kind,
         status: 'pending',
         is_remote: remote,
+        deadline: deadline || null,
         location: remote ? null : place.name,
         place_id: remote ? null : place.placeId,
         lat: remote ? null : place.lat,
@@ -89,6 +91,10 @@ export default function GigForm({ user, postedBy, kind }) {
           <input type="checkbox" checked={remote} onChange={(e) => setRemote(e.target.checked)} className="accent-md3-primary" />
         </label>
         {!remote && <PlacePicker value={place} onChange={setPlace} />}
+      </Field>
+
+      <Field label="Application deadline" hint="(optional)">
+        <input type="date" className={input} min={new Date().toLocaleDateString('en-CA')} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
       </Field>
 
       <Field

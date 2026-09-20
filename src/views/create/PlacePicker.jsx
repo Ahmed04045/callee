@@ -17,17 +17,12 @@ import { AdvancedMarker, APIProvider, Map, useMapsLibrary } from '@vis.gl/react-
 import themeConfig from '../../theme/themeConfig';
 import Icon from '../../components/Icon';
 import { useFormStyles } from './formKit';
-
-const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-// Advanced markers need a Map ID; DEMO_MAP_ID works until you create your own in Google Cloud.
-const MAP_ID = import.meta.env.VITE_GOOGLE_MAP_ID || 'DEMO_MAP_ID';
-const DOHA = { lat: 25.2854, lng: 51.531 };
+import { DOHA, MAPS_API_KEY as API_KEY, MAP_ID } from '../../lib/maps';
 
 function PickerInner({ value, onChange, allowManual }) {
   const { colors, radius } = themeConfig;
   const { input } = useFormStyles();
   const places = useMapsLibrary('places');
-  const geocoding = useMapsLibrary('geocoding');
   const [mapOpen, setMapOpen] = useState(false);
   const [mapAuthFailed, setMapAuthFailed] = useState(false);
   const [mapKey, setMapKey] = useState(0); // bumped when a search result should recenter the map
@@ -104,21 +99,13 @@ function PickerInner({ value, onChange, allowManual }) {
     }
   };
 
-  // Move/click the pin: keep the searched name, refresh the address by reverse
-  // geocoding (best effort — needs Geocoding API), and drop the place id since
-  // the point no longer matches that exact place.
-  const setPin = async (lat, lng) => {
-    let address = '';
-    try {
-      const { results } = await new geocoding.Geocoder().geocode({ location: { lat, lng } });
-      address = results?.[0]?.formatted_address ?? '';
-    } catch {
-      /* no Geocoding API — keep coordinates only */
-    }
-    const name = value?.name || address.split(',')[0] || 'Pinned location';
+  // Move/click the pin: keep the searched name, drop the address and place id
+  // (they no longer match the exact point) and remember the pin was adjusted.
+  // No reverse geocoding on purpose — that would need the Geocoding API.
+  const setPin = (lat, lng) => {
+    const name = value?.name || 'Pinned location';
     setText(name);
-    // If reverse geocoding isn't available, do NOT keep the old address: it no longer matches the pin.
-    onChange({ name, address, placeId: null, lat, lng });
+    onChange({ name, address: '', placeId: null, lat, lng, adjusted: true });
   };
 
   const clear = () => {
@@ -180,7 +167,7 @@ function PickerInner({ value, onChange, allowManual }) {
 
       {value && (
         <p className={`text-[11px] ${colors.success} mt-1 flex items-center gap-1`}>
-          <Icon name="check_circle" size={13} className="text-inherit" /> {value.address || `${value.name} (pin at ${value.lat?.toFixed(4)}, ${value.lng?.toFixed(4)})`}
+          <Icon name="check_circle" size={13} className="text-inherit" /> {value.adjusted ? `${value.name} — pin adjusted` : value.address || value.name}
         </p>
       )}
 
@@ -189,7 +176,7 @@ function PickerInner({ value, onChange, allowManual }) {
         {mapOpen ? 'Hide map' : value ? 'Adjust pin on map' : 'Pick on map'}
       </button>
       {mapOpen && (
-        <div className={`mt-2 h-56 ${radius.md} overflow-hidden border ${colors.borderStrong}`}>
+        <div className={`mt-2 h-56 ${radius.md} overflow-hidden border ${colors.borderStrong} px-box`}>
           <Map
             key={mapKey}
             mapId={MAP_ID}

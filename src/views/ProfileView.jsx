@@ -17,6 +17,7 @@ import { useProfile } from '../context/ProfileContext';
 import { logUserAction } from '../components/TelemetryLog';
 import { uploadImage, fileExtension } from '../lib/imageUpload';
 import Icon from '../components/Icon';
+import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { EDUCATION_OPTIONS } from '../lib/education';
 import { USERNAME_PATTERN, isUsernameAvailable, normalizeUsername } from '../lib/username';
 
@@ -25,7 +26,7 @@ const todayISO = new Date().toISOString().split('T')[0];
 
 
 export default function ProfileView() {
-  const { colors, radius, font } = themeConfig;
+  const { colors, radius } = themeConfig;
   const { status, user, signOut } = useAuth();
   const { profile, status: profileStatus, error, saveProfile } = useProfile();
   const isAuthenticated = status === 'authenticated' && user;
@@ -180,21 +181,20 @@ export default function ProfileView() {
     <div className="w-full max-w-md mx-auto space-y-6">
       {/* Identity */}
       <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
+        <div className="-mx-6 -mt-6 h-24">
+          <PixelCover seed={profile?.username || user.id} cols={72} rows={10} />
+        </div>
         <button
           type="button"
           onClick={() => avatarInputRef.current?.click()}
           disabled={isUploadingAvatar}
-          className={`relative w-20 h-20 mx-auto block ${radius.full} overflow-hidden group`}
+          className={`relative -mt-14 w-20 h-20 mx-auto block rounded-[var(--r-md)] overflow-hidden group border-4 border-md3-surfaceContainer bg-md3-surfaceContainer`}
           title="Change photo"
         >
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <div
-              className={`w-full h-full ${colors.gradientBrand} flex items-center justify-center text-2xl ${font.heading} ${colors.accentOn}`}
-            >
-              {heading?.[0]?.toUpperCase() ?? 'U'}
-            </div>
+            <PixelAvatar seed={profile?.username || user.id} size={80} className="w-full h-full" />
           )}
           <div
             className={`absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center`}

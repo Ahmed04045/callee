@@ -21,7 +21,7 @@ export default function AdminEvents() {
   return (
     <ModerationQueue
       title="Event moderation"
-      subtitle="Events stay off the Feed and Discover map until approved."
+      subtitle="Events stay off Home and the Discover map until approved."
       table="events"
       orderBy="created_at"
       onSetStatus={setStatus}

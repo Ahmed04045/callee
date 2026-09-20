@@ -1,38 +1,36 @@
 // src/theme/themeConfig.js
 //
-// Single source of truth for Povolum's visual language.
+// Single source of truth for Circosodal's visual language.
 // Every view/component reads its Tailwind classes from here instead of
 // hard-coding color/spacing utilities. Rebranding later means editing
 // this file only.
 //
-// Material 3 "Deep Purple" DARK scheme is the default (same purple brand
-// seed as before — #6750A4 family — flipped to M3's dark-mode roles, true
-// black page background per spec). Token NAMES are unchanged from earlier
-// iterations (e.g. `textWhite`) even though the values aren't literally
-// white — components reference these names, not their meaning, so
-// repointing values here (or in tailwind.config.js, where the actual hex
-// values live) is what makes the single-file reskin work. A future light
-// mode toggle would mean adding a second palette and switching which one
-// tailwind.config.js points `md3-*` at — not touching this file or any
-// component.
+// Colours are theme-driven: tailwind.config.js maps every `md3-*` name to a
+// CSS variable, and src/index.css defines the four palettes (electric,
+// ultraviolet, acid, paper). Components only ever use the class names below,
+// so re-skinning never touches them. Pixel look: near-square radii, notched
+// framed cards (`px-box`), pixel display font on headings, electric glow on
+// primary actions.
 
 const themeConfig = {
   brand: {
-    name: 'Povolum',
-    shortMark: 'PV',
-    tagline: 'Stop looking for ordinary jobs.',
-    subTagline: 'Build real things instead.',
+    name: 'Circosodal',
+    shortMark: 'C',
+    tagline: 'Find your people.',
+    subTagline: 'Play the real world.',
     // Shown on the About page when set; leave empty until you have a real address.
     contactEmail: '',
+    // Shown on the About page when set, e.g. 'NoSuits Labs'.
+    builtBy: '',
   },
 
   colors: {
     // Surfaces
     bgPage: 'bg-md3-surface',
     bgHeader: 'bg-md3-surfaceContainerLow/90',
-    bgCard: 'bg-md3-surfaceContainer',
-    bgCardSoft: 'bg-md3-surfaceContainerLow',
-    bgCardStrong: 'bg-md3-surfaceContainer',
+    bgCard: 'bg-md3-surfaceContainer px-box',
+    bgCardSoft: 'bg-md3-surfaceContainerLow px-box',
+    bgCardStrong: 'bg-md3-surfaceContainer px-box',
     bgPanel: 'bg-md3-surfaceContainerLow',
     bgInset: 'bg-md3-surfaceContainerHigh',
     bgPill: 'bg-md3-surfaceContainerHighest',
@@ -62,7 +60,7 @@ const themeConfig = {
 
     // Accents (primary role)
     accent: 'text-md3-primary',
-    accentBg: 'bg-md3-primary',
+    accentBg: 'bg-md3-primary shadow-glow-sm',
     accentBgHover: 'hover:brightness-90',
     accentSoftBg: 'bg-md3-primaryContainer',
     accentBorder: 'border-md3-primary/20',
@@ -84,10 +82,11 @@ const themeConfig = {
   },
 
   radius: {
-    sm: 'rounded-lg',
-    md: 'rounded-xl',
-    lg: 'rounded-2xl',
-    full: 'rounded-full',
+    // Driven by --r-* in index.css: rounded in the plain style, square in the pixel style.
+    sm: 'rounded-[var(--r-sm)]',
+    md: 'rounded-[var(--r-md)]',
+    lg: 'rounded-[var(--r-lg)]',
+    full: 'rounded-[var(--r-full)]',
   },
 
   spacing: {
@@ -100,14 +99,14 @@ const themeConfig = {
 
   font: {
     base: 'font-sans',
-    heading: 'font-black',
+    heading: 'font-display font-bold',
   },
 
   // Structural measurements for the app shell.
   layout: {
-    sidebarWidth: 'w-16',
+    sidebarWidth: 'w-[76px]',
     sidebarWidthLg: '',
-    sidebarOffset: 'md:pl-16',
+    sidebarOffset: 'md:pl-[76px]',
     mobileNavHeight: 'h-14',
     mobileNavOffset: 'pb-14 md:pb-0',
     contentMaxWidth: 'w-full',
@@ -120,10 +119,10 @@ const themeConfig = {
   nav: {
     itemText: 'text-md3-onSurfaceVariant',
     itemHoverText: 'group-hover:text-md3-onSurface',
-    itemActiveText: 'text-md3-onSecondaryContainer',
-    itemIndicatorBg: 'bg-md3-secondaryContainer',
+    itemActiveText: 'text-md3-onPrimaryContainer',
+    itemIndicatorBg: 'bg-md3-primaryContainer',
     itemHoverBg: 'hover:bg-md3-surfaceContainerHigh/60',
-    itemRadius: 'rounded-2xl',
+    itemRadius: 'rounded-[var(--r-md)]',
   },
 
   transition: 'transition duration-150',

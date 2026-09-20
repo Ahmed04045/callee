@@ -10,6 +10,19 @@ import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
 import Icon from './components/Icon';
+import Logo from './components/Logo';
+import ThemeMenu from './components/ThemeMenu';
+import NotificationBell from './components/NotificationBell';
+import { NotificationsProvider } from './context/NotificationsContext';
+import LandingView from './views/LandingView';
+import ActivityView from './views/ActivityView';
+import TicketsView from './views/TicketsView';
+import TicketCheckView from './views/TicketCheckView';
+import EventManageView from './views/EventManageView';
+import EventScanView from './views/EventScanView';
+import ApplicantsView from './views/ApplicantsView';
+import AdminReports from './views/admin/AdminReports';
+import { PixelAvatar } from './components/Pixel';
 
 import MainFeedView from './views/MainFeedView';
 import RecruitView from './views/RecruitView';
@@ -70,6 +83,7 @@ const ANNOUNCEMENTS_NAV_ITEM = {
   iconType: 'material',
   iconSource: 'campaign',
 };
+const ACTIVITY_NAV_ITEM = { id: 'activity', label: 'Activity', path: '/activity', iconType: 'material', iconSource: 'history' };
 const PROFILE_NAV_ITEM = {
   id: 'profile',
   label: 'Profile',
@@ -94,12 +108,17 @@ const isImmersivePath = (pathname) =>
   IMMERSIVE_PATHS.includes(pathname) ||
   pathname.startsWith('/clubs/') ||
   pathname.startsWith('/u/') ||
+  pathname.startsWith('/ticket/') ||
+  /^\/events\/[^/]+\/(manage|scan)$/.test(pathname) ||
+  /^\/gigs\/[^/]+\/applicants$/.test(pathname) ||
   pathname.startsWith('/admin');
 
 function renderView(tabId, handlers) {
   switch (tabId) {
     case 'main':
-      return <MainFeedView />;
+      // Signed-out visitors get the public landing page; signed-in users get their Home.
+      if (handlers.status === 'loading') return null;
+      return handlers.status === 'authenticated' ? <MainFeedView /> : <LandingView onOpenAuthModal={handlers.openAuthModal} />;
     case 'recruit':
       return <RecruitView onOpenAuthModal={handlers.openAuthModal} />;
     case 'discover':
@@ -149,7 +168,8 @@ function AppShell() {
 
   const isAuthenticated = status === 'authenticated';
   // Detail pages, profiles and the admin area bring their own header/nav.
-  const isImmersive = isImmersivePath(location.pathname);
+  const isLanding = location.pathname === '/' && status !== 'authenticated';
+  const isImmersive = isImmersivePath(location.pathname) || isLanding;
 
   const openAuthModal = (mode = 'signIn') => {
     setAuthModalMode(mode);
@@ -161,7 +181,8 @@ function AppShell() {
   // routes via .map() below).
   const railItems = useMemo(() => {
     const items = [...NAV_ITEMS];
-    if (isAuthenticated) items.push(CREATE_NAV_ITEM);
+    // Create sits in the middle so it becomes the raised centre button on mobile.
+    if (isAuthenticated) items.splice(2, 0, CREATE_NAV_ITEM);
     return items;
   }, [isAuthenticated]);
 
@@ -172,6 +193,7 @@ function AppShell() {
     () => [
       ...railItems,
       ANNOUNCEMENTS_NAV_ITEM,
+      ACTIVITY_NAV_ITEM,
       ...(isAuthenticated ? [{ ...PROFILE_NAV_ITEM, label: profile?.username ? `@${profile.username}` : PROFILE_NAV_ITEM.label }] : []),
       SETTINGS_NAV_ITEM,
     ],
@@ -227,7 +249,7 @@ function AppShell() {
     navigate,
   ]);
 
-  const handlers = { navigateToTab, openAuthModal };
+  const handlers = { navigateToTab, openAuthModal, status };
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
@@ -250,20 +272,20 @@ function AppShell() {
             className={`sticky top-0 z-30 flex items-center justify-between border-b ${colors.border} ${colors.bgHeader} backdrop-blur ${layout.topBarHeight} px-6`}
           >
             <div className="md:hidden">
-              <span className={`${font.heading} text-base tracking-tight ${colors.textWhite}`}>
-                {themeConfig.brand.name}
-              </span>
+              <Logo size={26} />
             </div>
             <h2 className={`hidden md:block text-sm font-semibold ${colors.textMuted} tracking-wide uppercase`}>
               {activeLabel}
             </h2>
 
             <div className="flex items-center gap-1.5">
+              <ThemeMenu />
               <HeaderIconButton
                 item={ANNOUNCEMENTS_NAV_ITEM}
                 isActive={activeTab === 'announcements'}
                 onClick={() => navigateToTab('announcements')}
               />
+              {isAuthenticated && <NotificationBell />}
               {isAuthenticated && (
                 <button
                   onClick={() => navigateToTab('profile')}
@@ -274,11 +296,9 @@ function AppShell() {
                   }`}
                 >
                   {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-full object-cover" />
+                    <img src={profile.avatar_url} alt="" className="w-7 h-7 rounded-[var(--r-sm)] object-cover" />
                   ) : (
-                    <span className={`w-7 h-7 rounded-full ${colors.gradientBrand} flex items-center justify-center text-xs font-black ${colors.accentOn}`}>
-                      {(profile?.username || profile?.display_name || '?')[0].toUpperCase()}
-                    </span>
+                    <PixelAvatar seed={profile?.username || profile?.user_id || 'me'} size={28} />
                   )}
                   <span className={`text-xs font-semibold ${colors.textWhite} max-w-[110px] truncate`}>
                     {profile?.username ? `@${profile.username}` : 'Profile'}
@@ -310,7 +330,7 @@ function AppShell() {
         )}
 
         <main
-          className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden px-4 md:px-6 py-8`}
+          className={`flex-1 ${layout.contentMaxWidth} min-w-0 overflow-x-hidden ${isLanding ? '' : 'px-4 md:px-6 py-8'}`}
         >
           <Routes>
             {railItems
@@ -329,11 +349,14 @@ function AppShell() {
               <Route path="groups" element={<AdminGroups />} />
               <Route path="moderators" element={<AdminModerators />} />
               <Route path="people" element={<AdminPeople />} />
+              <Route path="reports" element={<AdminReports />} />
               <Route path="activity" element={<AdminActivity />} />
             </Route>
             <Route path="/clubs/moderator" element={<ClubModeratorView />} />
             <Route path="/clubs/:clubId" element={<ClubDetailView onOpenAuthModal={openAuthModal} />} />
             <Route path="/connect-discord" element={<ConnectDiscordView />} />
+            <Route path="/explore" element={<MainFeedView />} />
+            <Route path="/activity" element={<ActivityView onOpenAuthModal={openAuthModal} />} />
             <Route path="/about" element={<AboutView />} />
             <Route path="/account" element={<AccountView />} />
             <Route path="/my-submissions" element={<MySubmissionsView />} />
@@ -342,8 +365,13 @@ function AppShell() {
             <Route path="/privacy" element={<PrivacyView />} />
             <Route path={ONBOARDING_PATH} element={<OnboardingView />} />
             <Route path="/onboarding/account-type" element={<Navigate to={ONBOARDING_PATH} replace />} />
-            <Route path="/gigs/:id" element={<GigDetailView />} />
-            <Route path="/events/:id" element={<EventDetailView />} />
+            <Route path="/gigs/:id" element={<GigDetailView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/gigs/:id/applicants" element={<ApplicantsView />} />
+            <Route path="/events/:id" element={<EventDetailView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/events/:id/manage" element={<EventManageView />} />
+            <Route path="/events/:id/scan" element={<EventScanView />} />
+            <Route path="/tickets" element={<TicketsView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/ticket/:code" element={<TicketCheckView onOpenAuthModal={openAuthModal} />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
@@ -359,7 +387,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ProfileProvider>
-          <AppShell />
+          <NotificationsProvider>
+            <AppShell />
+          </NotificationsProvider>
         </ProfileProvider>
       </AuthProvider>
     </BrowserRouter>

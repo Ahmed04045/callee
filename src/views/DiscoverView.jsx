@@ -38,7 +38,7 @@ export default function DiscoverView() {
           </div>
 
           <div
-            className={`w-full h-80 ${colors.bgPanel} border ${colors.borderStrong} ${radius.lg} relative overflow-hidden`}
+            className={`w-full h-80 ${colors.bgPanel} border ${colors.borderStrong} ${radius.lg} px-box relative overflow-hidden`}
           >
             {eventsStatus === 'loading' ? (
               <div className="absolute inset-0 flex items-center justify-center">

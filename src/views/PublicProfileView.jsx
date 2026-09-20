@@ -12,9 +12,10 @@ import { useProfile } from '../context/ProfileContext';
 import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { PixelAvatar, PixelCover } from '../components/Pixel';
 
 export default function PublicProfileView() {
-  const { colors, radius, font } = themeConfig;
+  const { colors, radius } = themeConfig;
   const { username } = useParams();
   const { profile: myProfile } = useProfile();
   const [person, setPerson] = useState(null);
@@ -65,13 +66,16 @@ export default function PublicProfileView() {
 
       {status === 'ready' && (
         <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
-          {person.avatar_url ? (
-            <img src={person.avatar_url} alt="" className="w-24 h-24 rounded-full object-cover mx-auto" />
-          ) : (
-            <div className={`w-24 h-24 mx-auto rounded-full ${colors.gradientBrand} flex items-center justify-center text-3xl ${font.heading} ${colors.accentOn}`}>
-              {(person.display_name || person.username)[0].toUpperCase()}
-            </div>
-          )}
+          <div className="-mx-6 -mt-6 h-28">
+            <PixelCover seed={person.username} cols={72} rows={12} />
+          </div>
+          <div className="-mt-14 inline-block border-4 border-md3-surfaceContainer bg-md3-surfaceContainer">
+            {person.avatar_url ? (
+              <img src={person.avatar_url} alt="" className="w-24 h-24 rounded-[var(--r-md)] object-cover" />
+            ) : (
+              <PixelAvatar seed={person.username} size={96} />
+            )}
+          </div>
           <div>
             <h2 className={`text-xl font-bold ${colors.textWhite}`}>{person.display_name || `@${person.username}`}</h2>
             <p className={`text-sm ${colors.accent}`}>@{person.username}</p>

@@ -16,6 +16,8 @@ import { CLUB_COLUMNS, MAX_CLUBS } from '../lib/clubUtil';
 import { CLUB_UNIVERSITIES } from '../lib/education';
 import ClubCard from '../components/ClubCard';
 import Icon from '../components/Icon';
+import { PixelEmpty } from '../components/Pixel';
+import { CardSkeleton } from '../components/FeedCards';
 
 const STORAGE_KEY = 'clubs.university';
 
@@ -117,7 +119,7 @@ export default function ClubsView() {
         </div>
       )}
 
-      {!university && <p className={`text-sm ${colors.textFaint}`}>Pick your university to see its clubs.</p>}
+      {!university && <PixelEmpty sprite="search" title="Pick your university">Choose it above to see its clubs.</PixelEmpty>}
 
       {university && (
         <>
@@ -145,17 +147,22 @@ export default function ClubsView() {
             ))}
           </div>
 
-          {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>Loading clubs…</p>}
+          {status === 'loading' && (
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              <CardSkeleton tall />
+              <CardSkeleton tall />
+              <CardSkeleton tall />
+            </div>
+          )}
           {status === 'error' && <p className={`text-xs ${colors.error}`}>Couldn't load clubs. Has 010_private_clubs_usernames.sql been run?</p>}
           {status === 'ready' && clubs.length === 0 && (
-            <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 text-center space-y-2`}>
-              <p className={`text-sm font-semibold ${colors.textWhite}`}>No clubs at this university yet</p>
+            <PixelEmpty sprite="ghost" title="No clubs at this university yet">
               {user ? (
-                <Link to="/create?type=group" className={`text-xs font-semibold ${colors.accent}`}>Create the first group</Link>
+                <Link to="/create?type=group" className={`font-semibold ${colors.accent}`}>Create the first group</Link>
               ) : (
-                <p className={`text-xs ${colors.textFaint}`}>Sign in to create the first group.</p>
+                'Sign in to create the first group.'
               )}
-            </div>
+            </PixelEmpty>
           )}
           {status === 'ready' && clubs.length > 0 && shown.length === 0 && (
             <p className={`text-xs ${colors.textFaint}`}>No clubs match that search.</p>

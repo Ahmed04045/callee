@@ -8,6 +8,13 @@ import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import { uploadImage, fileExtension } from '../lib/imageUpload';
 import Icon from '../components/Icon';
+import LocationMap from '../components/LocationMap';
+import StickyAction from '../components/StickyAction';
+import TicketCard from '../components/TicketCard';
+import { ReportButton, SaveButton } from '../components/SaveReportButtons';
+import { useProfile } from '../context/ProfileContext';
+import { PixelAvatar, PixelCover } from '../components/Pixel';
+import { DateBadge } from '../components/FeedCards';
 
 const CONTACT_LABELS = {
   phone: 'Phone',
@@ -26,10 +33,12 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-export default function EventDetailView() {
+export default function EventDetailView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
   const { id } = useParams();
   const { user } = useAuth();
+  const { profile } = useProfile();
+  const [myTicket, setMyTicket] = useState(null);
 
   const [event, setEvent] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -99,17 +108,20 @@ export default function EventDetailView() {
   useEffect(() => {
     if (!event || !user) {
       setIsAttending(false);
+      setMyTicket(null);
       return;
     }
     let isMounted = true;
     supabase
       .from('event_attendees')
-      .select('id')
+      .select('id, ticket_code, checked_in_at')
       .eq('event_id', event.id)
       .eq('user_id', user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (isMounted) setIsAttending(Boolean(data));
+        if (!isMounted) return;
+        setIsAttending(Boolean(data));
+        setMyTicket(data?.ticket_code ? data : null);
       });
     return () => {
       isMounted = false;
@@ -241,7 +253,7 @@ export default function EventDetailView() {
           {status === 'notFound' ? "This event doesn't exist." : "Couldn't load this event."}
         </p>
         <Link to="/" className={`text-xs font-semibold ${colors.accent}`}>
-          Back to Feed
+          Back to Home
         </Link>
       </div>
     );
@@ -255,16 +267,27 @@ export default function EventDetailView() {
         to="/"
         className={`inline-flex items-center gap-1 text-xs font-semibold ${colors.textFaint} ${colors.textHoverAccent} transition`}
       >
-        <Icon name="arrow_back" size={14} /> Back to Feed
+        <Icon name="arrow_back" size={14} /> Back to Home
       </Link>
 
-      <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6`}>
-        <span
-          className={`text-[10px] ${colors.accentSoftBg} ${colors.accent} border ${colors.accentBorder} px-2.5 py-0.5 ${radius.full}`}
-        >
-          {event.tag}
-        </span>
-        <h1 className={`text-xl font-bold ${colors.textWhite} mt-3`}>{event.title}</h1>
+      <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} overflow-hidden`}>
+      <div className="relative h-32 md:h-40">
+        {photosStatus === 'ready' && photos.length > 0 ? (
+          <img src={photos[0].url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <PixelCover seed={event.id} cols={72} rows={14} />
+        )}
+        <div className="absolute left-5 bottom-[-22px]">
+          <DateBadge date={event.event_date} />
+        </div>
+        {event.tag && (
+          <span className={`absolute right-4 top-4 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 bg-md3-surface/85 ${colors.accent} border ${colors.accentBorder}`}>
+            {event.tag}
+          </span>
+        )}
+      </div>
+      <div className="p-6 pt-9">
+        <h1 className={`text-2xl font-bold ${colors.textWhite}`}>{event.title}</h1>
         <div className="flex items-center gap-1.5 mt-1">
           <p className={`text-xs ${colors.textMuted}`}>By {event.organizer}</p>
           {event.organizer_verified && (
@@ -300,9 +323,11 @@ export default function EventDetailView() {
             <Icon name="location_on" size={16} className={colors.textFaint} />
             {event.location}
           </div>
+          <LocationMap name={event.location} lat={event.lat} lng={event.lng} placeId={event.place_id} />
           {showSpots && (
             <div className="flex items-center gap-2">
               <Icon name="group" size={16} className={colors.textFaint} />
+              {event.capacity != null && event.capacity - event.spots > 0 ? `${event.capacity - event.spots} going · ` : ''}
               {event.spots} spots left
               {isOrganizer && event.capacity_hidden && (
                 <span className={`text-[10px] ${colors.textDim}`}>(hidden from public)</span>
@@ -317,7 +342,35 @@ export default function EventDetailView() {
           )}
         </div>
 
-        <div className={`mt-6 pt-4 border-t ${colors.border}`}>
+      </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <SaveButton kind="event" itemId={event.id} onNeedAuth={() => onOpenAuthModal?.()} />
+        {!isOrganizer && <ReportButton kind="event" itemId={event.id} onNeedAuth={() => onOpenAuthModal?.()} />}
+        {isOrganizer && (
+          <>
+            <Link to={`/events/${event.id}/manage`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
+              <Icon name="dashboard" size={14} className="text-inherit" /> Manage &amp; stats
+            </Link>
+            <Link to={`/events/${event.id}/scan`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full}`}>
+              <Icon name="search" size={14} className="text-inherit" /> Scan tickets
+            </Link>
+          </>
+        )}
+      </div>
+
+      {myTicket && !isOrganizer && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className={`text-sm font-bold ${colors.textMuted} uppercase tracking-wider`}>Your ticket</h2>
+            <button onClick={() => window.print()} className={`text-xs font-semibold ${colors.accent}`}>Print</button>
+          </div>
+          <TicketCard event={event} ticket={myTicket} holderName={profile?.display_name || (profile?.username ? `@${profile.username}` : user.email)} />
+        </section>
+      )}
+
+      <StickyAction summary={event.title} sub={`${formatDate(event.event_date)} · ${event.location}`}>
           {!user ? (
             <p className={`text-xs ${colors.textFaint}`}>Sign in to RSVP.</p>
           ) : isOrganizer ? (
@@ -343,8 +396,7 @@ export default function EventDetailView() {
               )}
             </button>
           )}
-        </div>
-      </div>
+      </StickyAction>
 
       {isOrganizer && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>
@@ -419,14 +471,10 @@ export default function EventDetailView() {
                   <img
                     src={a.profile.avatar_url}
                     alt=""
-                    className={`w-9 h-9 ${radius.full} object-cover shrink-0`}
+                    className="w-9 h-9 object-cover shrink-0"
                   />
                 ) : (
-                  <div
-                    className={`w-9 h-9 ${colors.gradientBrand} ${radius.full} flex items-center justify-center text-xs font-bold ${colors.accentOn} shrink-0`}
-                  >
-                    {(a.profile?.display_name || '?')[0]?.toUpperCase() ?? '?'}
-                  </div>
+                  <PixelAvatar seed={a.user_id} size={36} />
                 )}
                 <div className="min-w-0">
                   <p className={`text-xs font-bold ${colors.textWhite} truncate`}>

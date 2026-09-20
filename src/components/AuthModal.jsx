@@ -8,6 +8,7 @@ import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { logUserAction } from './TelemetryLog';
 import Icon from './Icon';
+import { LogoMark } from './Logo';
 
 export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
   const { colors, radius, spacing, font, brand } = themeConfig;
@@ -88,11 +89,7 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
         </button>
 
         <div className="text-center space-y-1 mb-6">
-          <div
-            className={`w-12 h-12 mx-auto ${colors.gradientBrand} ${radius.md} flex items-center justify-center ${colors.accentOn} ${font.heading} text-sm`}
-          >
-            {brand.shortMark}
-          </div>
+          <LogoMark size={48} className="mx-auto" />
           <h2 id="auth-modal-title" className={`text-lg ${font.heading} ${colors.textWhite} mt-3`}>
             {mode === 'signIn'
               ? `Sign in to ${brand.name}`

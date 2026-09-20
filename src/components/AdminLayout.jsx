@@ -21,6 +21,7 @@ export const ADMIN_SECTIONS = [
   { to: '/admin/events', label: 'Events', icon: 'event' },
   { to: '/admin/groups', label: 'Groups', icon: 'groups' },
   { to: '/admin/moderators', label: 'Moderators', icon: 'shield_person' },
+  { to: '/admin/reports', label: 'Reports', icon: 'gpp_maybe' },
   { to: '/admin/people', label: 'People', icon: 'badge' },
   { to: '/admin/activity', label: 'Activity', icon: 'history' },
 ];

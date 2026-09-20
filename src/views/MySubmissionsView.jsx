@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
+import { PixelEmpty } from '../components/Pixel';
 
 const STATUS_META = {
   pending: { label: 'Pending', color: 'warning', icon: 'hourglass_top' },
@@ -19,7 +20,7 @@ const STATUS_META = {
   rejected: { label: 'Rejected', color: 'error', icon: 'cancel' },
 };
 
-function SubmissionRow({ item, kind, colors, radius, onClick }) {
+function SubmissionRow({ item, kind, colors, onClick }) {
   const meta = STATUS_META[item.status] ?? STATUS_META.pending;
   const title = kind === 'gig' ? item.role : kind === 'group' ? item.name : item.title;
 
@@ -84,12 +85,9 @@ export default function MySubmissionsView() {
       {isLoading && <p className={`text-sm ${colors.textFaint}`}>Loading…</p>}
 
       {isEmpty && (
-        <div className="text-center py-12 space-y-3">
-          <Icon name="inbox" size={28} className={colors.textFaint} />
-          <p className={`text-sm ${colors.textFaint}`}>
-            Nothing here yet — anything you post from Create shows up here with its review status.
-          </p>
-        </div>
+        <PixelEmpty sprite="box" title="Nothing here yet">
+          Anything you post from Create shows up here with its review status.
+        </PixelEmpty>
       )}
 
       {!isLoading && (myGigs.length > 0 || myEvents.length > 0 || myGroups.length > 0) && (
@@ -100,7 +98,6 @@ export default function MySubmissionsView() {
               item={gig}
               kind="gig"
               colors={colors}
-              radius={radius}
               onClick={() => navigate(`/gigs/${gig.id}`)}
             />
           ))}
@@ -110,7 +107,6 @@ export default function MySubmissionsView() {
               item={group}
               kind="group"
               colors={colors}
-              radius={radius}
               onClick={() => navigate(`/clubs/${group.id}`)}
             />
           ))}
@@ -120,7 +116,6 @@ export default function MySubmissionsView() {
               item={event}
               kind="event"
               colors={colors}
-              radius={radius}
               onClick={() => navigate(`/events/${event.id}`)}
             />
           ))}

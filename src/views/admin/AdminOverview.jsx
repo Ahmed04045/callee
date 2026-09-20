@@ -6,8 +6,8 @@ import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import Icon from '../../components/Icon';
 
-const count = (table, filters = {}) => {
-  let q = supabase.from(table).select('*', { count: 'exact', head: true });
+const count = (table, filters = {}, column = 'id') => {
+  let q = supabase.from(table).select(column, { count: 'exact', head: true });
   Object.entries(filters).forEach(([k, v]) => {
     q = q.eq(k, v);
   });
@@ -24,10 +24,11 @@ export default function AdminOverview() {
       count('gigs', { status: 'pending' }),
       count('events', { status: 'pending' }),
       count('clubs', { status: 'pending' }),
-      count('profiles'),
+      count('profiles', {}, 'user_id'),
       count('club_join_requests', { status: 'pending' }),
-    ]).then(([gigs, events, groups, people, requests]) => {
-      if (active) setStats({ gigs, events, groups, people, requests });
+      count('reports', { status: 'open' }),
+    ]).then(([gigs, events, groups, people, requests, reports]) => {
+      if (active) setStats({ gigs, events, groups, people, requests, reports });
     });
     return () => {
       active = false;
@@ -39,6 +40,7 @@ export default function AdminOverview() {
     { label: 'Events awaiting review', key: 'events', to: '/admin/events', icon: 'event' },
     { label: 'Groups awaiting approval', key: 'groups', to: '/admin/groups', icon: 'groups' },
     { label: 'Open club join requests', key: 'requests', to: '/admin/activity', icon: 'how_to_reg' },
+    { label: 'Open reports', key: 'reports', to: '/admin/reports', icon: 'gpp_maybe' },
     { label: 'People', key: 'people', to: '/admin/people', icon: 'badge' },
   ];
 

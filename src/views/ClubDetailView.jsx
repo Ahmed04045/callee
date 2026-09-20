@@ -16,7 +16,10 @@ import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
-import { bannerStyle, CLUB_COLUMNS, JOIN_MESSAGES, MAX_CLUBS } from '../lib/clubUtil';
+import LocationMap from '../components/LocationMap';
+import { argbToHex, CLUB_COLUMNS, JOIN_MESSAGES, MAX_CLUBS } from '../lib/clubUtil';
+import { PixelCover } from '../components/Pixel';
+import { ReportButton, SaveButton } from '../components/SaveReportButtons';
 
 export default function ClubDetailView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
@@ -114,10 +117,13 @@ export default function ClubDetailView({ onOpenAuthModal }) {
       <SubPageHeader title={club.name} fallbackTo="/clubs" />
 
       <div className={`overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg}`}>
-        <div style={bannerStyle(club)} className="h-32 p-4 flex items-end gap-2">
-          <span className={`text-xs font-semibold bg-black/40 text-white ${radius.full} px-3 py-1`}>{club.category}</span>
+        <div className="relative h-32 p-4 flex items-end gap-2">
+          <div className="absolute inset-0">
+            <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} cols={64} rows={16} />
+          </div>
+          <span className={`relative text-xs font-semibold bg-black/60 text-white ${radius.full} px-3 py-1`}>{club.category}</span>
           {club.status === 'pending' && (
-            <span className={`text-xs font-bold bg-white text-black ${radius.full} px-3 py-1`}>Pending approval</span>
+            <span className={`relative text-xs font-bold bg-white text-black ${radius.full} px-3 py-1`}>Pending approval</span>
           )}
         </div>
         <div className="p-6 space-y-5">
@@ -137,6 +143,15 @@ export default function ClubDetailView({ onOpenAuthModal }) {
               </div>
             ))}
           </div>
+
+          <div className="flex flex-wrap gap-2">
+            <SaveButton kind="club" itemId={club.id} onNeedAuth={() => onOpenAuthModal?.()} />
+            <ReportButton kind="club" itemId={club.id} onNeedAuth={() => onOpenAuthModal?.()} />
+          </div>
+
+          {club.lat != null && club.lng != null && (
+            <LocationMap name={club.room_or_location} lat={club.lat} lng={club.lng} placeId={club.place_id} />
+          )}
 
           {club.status !== 'approved' ? (
             <p className={`text-xs ${colors.textMuted} text-center`}>This group is waiting for admin approval before it goes public.</p>
