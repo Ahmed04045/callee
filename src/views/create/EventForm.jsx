@@ -12,6 +12,8 @@ import { logUserAction } from '../../components/TelemetryLog';
 import { CONTACT_METHODS, EVENT_TYPES, validateContact } from '../../lib/options';
 import { ChipPicker, Field, SubmitButton, todayISO, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
+import { QuestionBuilder } from '../../components/Questions';
+import { cleanForSave } from '../../lib/questions';
 
 const DESCRIPTION_MIN = 50;
 
@@ -30,6 +32,7 @@ export default function EventForm({ user, postedBy }) {
   const [description, setDescription] = useState('');
   const [capacity, setCapacity] = useState('');
   const [capacityHidden, setCapacityHidden] = useState(false);
+  const [questions, setQuestions] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -68,6 +71,7 @@ export default function EventForm({ user, postedBy }) {
         contact_value: contact.value,
         capacity: seats,
         capacity_hidden: capacityHidden,
+        questions: cleanForSave(questions).length ? cleanForSave(questions) : null,
         spots: seats, // no RSVPs yet — kept in sync by a DB trigger from here on
         status: 'pending',
       })
@@ -144,6 +148,10 @@ export default function EventForm({ user, postedBy }) {
       <p className={`text-[10px] ${colors.textDim} -mt-2`}>
         You'll always see the real number and who's attending. You can add up to 5 photos from the event page right after creating it.
       </p>
+
+      <Field label="Questions for people who RSVP" hint="(optional)">
+        <QuestionBuilder value={questions} onChange={setQuestions} hint="For example dietary needs or what they want to learn. Answers appear on your event dashboard." />
+      </Field>
 
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
       <SubmitButton busy={busy} />

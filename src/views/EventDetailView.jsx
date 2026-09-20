@@ -13,6 +13,8 @@ import StickyAction from '../components/StickyAction';
 import TicketCard from '../components/TicketCard';
 import { ReportButton, SaveButton } from '../components/SaveReportButtons';
 import { useProfile } from '../context/ProfileContext';
+import AnswerModal from '../components/AnswerModal';
+import { hasQuestions } from '../lib/questions';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { DateBadge } from '../components/FeedCards';
 
@@ -39,6 +41,7 @@ export default function EventDetailView({ onOpenAuthModal }) {
   const { user } = useAuth();
   const { profile } = useProfile();
   const [myTicket, setMyTicket] = useState(null);
+  const [askOpen, setAskOpen] = useState(false);
 
   const [event, setEvent] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -176,8 +179,27 @@ export default function EventDetailView({ onOpenAuthModal }) {
     };
   }, [isOrganizer, event]);
 
+  // Save the RSVP (with answers when the event asks questions). Returns an error sentence or null.
+  const saveRsvp = async (answers = {}) => {
+    const { error } = await supabase.from('event_attendees').insert({ event_id: event.id, user_id: user.id, answers });
+    if (error) {
+      if (/ANSWER_REQUIRED/.test(error.message)) return 'Please answer all the required questions.';
+      if (/ANSWER_/.test(error.message)) return 'One of your answers is not valid.';
+      return error.message;
+    }
+    setIsAttending(true);
+    const { data } = await supabase.from('events').select('*').eq('id', event.id).maybeSingle();
+    if (data) setEvent(data);
+    return null;
+  };
+
   const handleToggleRsvp = async () => {
     if (!user || !event) return;
+    // Joining an event that asks questions: ask them first.
+    if (!isAttending && hasQuestions(event.questions)) {
+      setAskOpen(true);
+      return;
+    }
     setIsRsvpLoading(true);
     logUserAction('EVENT_RSVP_TOGGLE', { eventId: event.id, attending: !isAttending });
 
@@ -185,8 +207,7 @@ export default function EventDetailView({ onOpenAuthModal }) {
       await supabase.from('event_attendees').delete().eq('event_id', event.id).eq('user_id', user.id);
       setIsAttending(false);
     } else {
-      await supabase.from('event_attendees').insert({ event_id: event.id, user_id: user.id });
-      setIsAttending(true);
+      await saveRsvp();
     }
 
     // events.spots is kept accurate by a DB trigger — refetch to reflect it.
@@ -397,6 +418,18 @@ export default function EventDetailView({ onOpenAuthModal }) {
             </button>
           )}
       </StickyAction>
+
+      {askOpen && (
+        <AnswerModal
+          title={`RSVP: ${event.title}`}
+          intro="The organizer has a few questions."
+          questions={event.questions}
+          submitLabel="Get my ticket"
+          shares="Your answers will be shared with the event organizer."
+          onSubmit={(payload) => saveRsvp(payload.answers)}
+          onClose={() => setAskOpen(false)}
+        />
+      )}
 
       {isOrganizer && (
         <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6 space-y-4`}>

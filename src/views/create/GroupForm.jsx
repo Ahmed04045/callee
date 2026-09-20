@@ -15,6 +15,8 @@ import { CLUB_UNIVERSITIES } from '../../lib/education';
 import { DISCORD_LINK, GROUP_CATEGORIES, WEEKDAYS, WHATSAPP_LINK } from '../../lib/options';
 import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
+import { QuestionBuilder } from '../../components/Questions';
+import { cleanForSave } from '../../lib/questions';
 
 const DESCRIPTION_MIN = 50;
 const TIMES = Array.from({ length: 30 }, (_, i) => {
@@ -48,6 +50,7 @@ export default function GroupForm({ profile }) {
   const [place, setPlace] = useState(null);
   const [whatsapp, setWhatsapp] = useState('');
   const [discord, setDiscord] = useState('');
+  const [questions, setQuestions] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -65,7 +68,7 @@ export default function GroupForm({ profile }) {
 
     setBusy(true);
     logUserAction('CREATE_POST_SUBMIT', { kind: 'group' });
-    const { error: rpcError } = await supabase.rpc('create_group', {
+    const { data: newId, error: rpcError } = await supabase.rpc('create_group', {
       p_name: name,
       p_description: description,
       p_category: category,
@@ -78,6 +81,10 @@ export default function GroupForm({ profile }) {
       p_lat: place?.lat ?? null,
       p_lng: place?.lng ?? null,
     });
+    const cleaned = cleanForSave(questions);
+    if (!rpcError && newId && cleaned.length) {
+      await supabase.rpc('set_join_questions', { p_club_id: newId, p_questions: cleaned });
+    }
     setBusy(false);
     if (rpcError) {
       const key = Object.keys(ERRORS).find((k) => rpcError.message.includes(k));
@@ -147,6 +154,10 @@ export default function GroupForm({ profile }) {
           <input className={input} inputMode="url" value={discord} onChange={(e) => setDiscord(e.target.value)} placeholder="https://discord.gg/…" />
         </Field>
       </div>
+
+      <Field label="Questions for people who want to join" hint="(optional)">
+        <QuestionBuilder value={questions} onChange={setQuestions} hint="Moderators see the answers next to each join request." />
+      </Field>
 
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
       <SubmitButton busy={busy}>Submit group for review</SubmitButton>

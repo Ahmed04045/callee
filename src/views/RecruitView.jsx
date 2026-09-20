@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
-import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
 import Icon from '../components/Icon';
 import { PixelEmpty } from '../components/Pixel';
@@ -27,7 +26,6 @@ export default function RecruitView({ onOpenAuthModal }) {
   const {
     data: applications,
     status: applicationsStatus,
-    refetch: refetchApplications,
   } = useSupabaseTable('applications', {
     filters: user ? { user_id: user.id } : undefined,
     enabled: Boolean(user),
@@ -73,23 +71,15 @@ export default function RecruitView({ onOpenAuthModal }) {
     [applications]
   );
 
-  const handleApply = async (e, gig) => {
-    e.stopPropagation(); // don't also trigger the card's click-through to the detail page
+  // Applying happens on the gig's page so its questions can be asked.
+  const handleApply = (e, gig) => {
+    e.stopPropagation(); // don't also trigger the card's click-through
     if (!user) {
       logUserAction('APPLY_BLOCKED_UNAUTHENTICATED', { gigId: gig.id });
       onOpenAuthModal?.();
       return;
     }
-
-    logUserAction('APPLY_SUBMIT', { gigId: gig.id, role: gig.role, postedBy: gig.posted_by });
-
-    const { error } = await supabase
-      .from('applications')
-      .insert({ gig_id: gig.id, user_id: user.id });
-
-    if (!error) {
-      refetchApplications();
-    }
+    navigate(`/gigs/${gig.id}?apply=1`);
   };
 
   return (

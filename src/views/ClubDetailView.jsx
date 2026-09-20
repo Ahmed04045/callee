@@ -20,6 +20,8 @@ import LocationMap from '../components/LocationMap';
 import { argbToHex, CLUB_COLUMNS, JOIN_MESSAGES, MAX_CLUBS } from '../lib/clubUtil';
 import { PixelCover } from '../components/Pixel';
 import { ReportButton, SaveButton } from '../components/SaveReportButtons';
+import AnswerModal from '../components/AnswerModal';
+import { hasQuestions } from '../lib/questions';
 
 export default function ClubDetailView({ onOpenAuthModal }) {
   const { colors, radius } = themeConfig;
@@ -28,6 +30,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [note, setNote] = useState('');
+  const [askOpen, setAskOpen] = useState(false);
   const [links, setLinks] = useState(null);
 
   const { data: clubRows, status, refetch: refetchClub } = useSupabaseTable('clubs', {
@@ -72,16 +75,35 @@ export default function ClubDetailView({ onOpenAuthModal }) {
 
   const refresh = () => Promise.all([refetchClub(), refetchMemberships(), refetchRequests()]);
 
-  const handleRequest = async () => {
+  // Returns an error sentence (or null). With join questions, the modal collects
+  // the answers and passes them here; without, the inline note is used.
+  const ANSWER_ERRORS = {
+    ANSWER_REQUIRED: 'Please answer all the required questions.',
+    ANSWER_TOO_LONG: 'One of your answers is too long.',
+    ANSWER_INVALID: 'One of your answers is not valid.',
+  };
+  const handleRequest = async (payload) => {
     setBusy(true);
     setMessage('');
     logUserAction('CLUB_JOIN_REQUEST', { clubId });
-    const { data, error } = await supabase.rpc('request_join_club', { p_club_id: clubId, p_message: note });
-    if (error) setMessage(error.message);
-    else if (data !== 'OK') setMessage(JOIN_MESSAGES[data] ?? String(data));
-    else setNote('');
+    const { data, error } = await supabase.rpc('request_join_club', {
+      p_club_id: clubId,
+      p_message: payload?.message ?? note,
+      p_answers: payload?.answers ?? {},
+    });
+    let problem = null;
+    if (error) {
+      const key = Object.keys(ANSWER_ERRORS).find((k) => error.message.includes(k));
+      problem = key ? ANSWER_ERRORS[key] : error.message;
+    } else if (data !== 'OK') {
+      problem = JOIN_MESSAGES[data] ?? String(data);
+    } else {
+      setNote('');
+    }
+    setMessage(problem ?? '');
     await refresh();
     setBusy(false);
+    return problem;
   };
 
   const handleCancelRequest = async () => {
@@ -195,7 +217,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
                 className={`w-full ${colors.bgInset} border ${colors.border} ${radius.md} px-3 py-2 text-sm ${colors.textPrimary} outline-none focus:border-md3-primary resize-none`}
               />
               <button
-                onClick={handleRequest}
+                onClick={() => (hasQuestions(club.join_questions) ? setAskOpen(true) : handleRequest())}
                 disabled={busy || atLimit}
                 className={`w-full ${colors.accentBg} ${colors.accentOn} ${colors.accentBgHover} font-bold text-sm py-3 ${radius.full} disabled:opacity-50`}
               >
@@ -230,6 +252,20 @@ export default function ClubDetailView({ onOpenAuthModal }) {
           <p className={`text-xs ${colors.textFaint}`}>This club is private. Once a moderator approves your request, its WhatsApp group and Discord server unlock here.</p>
         )}
       </div>
+
+      {askOpen && (
+        <AnswerModal
+          title={`Join ${club.name}`}
+          intro="The moderators would like to know a little about you."
+          questions={club.join_questions}
+          withMessage
+          messageLabel="Message (optional)"
+          submitLabel="Send request"
+          shares="Your name, username, school, bio and answers will be shared with this group's moderators."
+          onSubmit={handleRequest}
+          onClose={() => setAskOpen(false)}
+        />
+      )}
 
       {news.length > 0 && (
         <div className="space-y-3">

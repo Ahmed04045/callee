@@ -7,12 +7,16 @@
 // date_of_birth (see the note in 009_clubs.sql).
 
 import React, { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import { ACTION_LABEL, CLUB_COLUMNS, JOIN_MESSAGES, fmtDateTime } from '../lib/clubUtil';
+import { AnswersView, QuestionBuilder } from '../components/Questions';
+import { PixelAvatar } from '../components/Pixel';
+import { cleanForSave } from '../lib/questions';
 
 export function LogList({ logs, showClub }) {
   const { colors, radius } = themeConfig;
@@ -40,6 +44,8 @@ export default function ClubModeratorView() {
   const [tab, setTab] = useState('requests');
   const [requests, setRequests] = useState([]);
   const [actionError, setActionError] = useState('');
+  const [draft, setDraft] = useState([]);
+  const [savedNote, setSavedNote] = useState('');
   const [members, setMembers] = useState([]);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,11 +66,11 @@ export default function ClubModeratorView() {
     const [m, l, r] = await Promise.all([
       supabase.from('club_memberships').select('user_id, joined_at').eq('club_id', active),
       supabase.from('club_audit_logs').select('*').eq('club_id', active).order('created_at', { ascending: false }).limit(200),
-      supabase.from('club_join_requests').select('id, user_id, message, created_at').eq('club_id', active).eq('status', 'pending').order('created_at'),
+      supabase.from('club_join_requests').select('id, user_id, message, answers, created_at').eq('club_id', active).eq('status', 'pending').order('created_at'),
     ]);
     const reqRows = r.data ?? [];
     const reqProfiles = reqRows.length
-      ? (await supabase.from('profiles').select('user_id, display_name, username, email').in('user_id', reqRows.map((x) => x.user_id))).data ?? []
+      ? (await supabase.from('profiles').select('user_id, display_name, username, email, university, bio, avatar_url').in('user_id', reqRows.map((x) => x.user_id))).data ?? []
       : [];
     setRequests(reqRows.map((x) => ({ ...x, profile: reqProfiles.find((p) => p.user_id === x.user_id) })));
     const ids = (m.data ?? []).map((r) => r.user_id);
@@ -79,6 +85,18 @@ export default function ClubModeratorView() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const activeClub = mine.find((c) => c.id === active);
+  useEffect(() => {
+    setDraft(activeClub?.join_questions ?? []);
+    setSavedNote('');
+  }, [activeClub?.id, activeClub?.join_questions]);
+
+  const saveQuestions = async () => {
+    setSavedNote('');
+    const { error } = await supabase.rpc('set_join_questions', { p_club_id: active, p_questions: cleanForSave(draft) });
+    setSavedNote(error ? error.message : 'Saved. New requests will see these questions.');
+  };
 
   const review = async (request, approve) => {
     setActionError('');
@@ -123,7 +141,7 @@ export default function ClubModeratorView() {
         ))}
       </div>
       <div className="flex gap-2">
-        {[['requests', `Requests (${requests.length})`], ['members', `Members (${members.length})`], ['logs', `Activity (${logs.length})`]].map(([id, label]) => (
+        {[['requests', `Requests (${requests.length})`], ['members', `Members (${members.length})`], ['questions', 'Questions'], ['logs', `Activity (${logs.length})`]].map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={`text-xs font-semibold px-3 py-1.5 ${radius.full} ${tab === id ? colors.accentSoftBg : ''} ${colors.textWhite}`}>
             {label}
@@ -138,20 +156,36 @@ export default function ClubModeratorView() {
           {actionError && <p className={`text-xs ${colors.error}`}>{actionError}</p>}
           {requests.length === 0 && <p className={`text-xs ${colors.textFaint}`}>No pending requests.</p>}
           {requests.map((r) => (
-            <div key={r.id} className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-4 space-y-2`}>
-              <div>
-                <p className={`text-sm font-semibold ${colors.textWhite}`}>
-                  {r.profile?.display_name || 'Unnamed'} {r.profile?.username && <span className={`font-normal ${colors.accent}`}>@{r.profile.username}</span>}
-                </p>
-                <p className={`text-xs ${colors.textFaint}`}>{r.profile?.email} · {fmtDateTime(r.created_at)}</p>
+            <div key={r.id} className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-4 space-y-3`}>
+              <div className="flex items-start gap-3">
+                {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-10 h-10 object-cover shrink-0" /> : <PixelAvatar seed={r.user_id} size={40} />}
+                <div className="min-w-0">
+                  <p className={`text-sm font-semibold ${colors.textWhite}`}>
+                    {r.profile?.display_name || 'Unnamed'}{' '}
+                    {r.profile?.username && <Link to={`/u/${r.profile.username}`} className={`font-normal ${colors.accent}`}>@{r.profile.username}</Link>}
+                  </p>
+                  <p className={`text-xs ${colors.textFaint}`}>{r.profile?.university || 'No school listed'} · {fmtDateTime(r.created_at)}</p>
+                  {r.profile?.email && <p className={`text-[11px] ${colors.textFaint}`}>{r.profile.email}</p>}
+                  {r.profile?.bio && <p className={`text-xs ${colors.textMuted} mt-1`}>{r.profile.bio}</p>}
+                </div>
               </div>
-              {r.message && <p className={`text-xs ${colors.textMuted}`}>"{r.message}"</p>}
+              {r.message && <p className={`text-xs ${colors.textMuted} ${colors.bgInset} p-3 whitespace-pre-line`}>{r.message}</p>}
+              <AnswersView questions={activeClub?.join_questions} answers={r.answers} />
               <div className="flex gap-2">
                 <button onClick={() => review(r, true)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} ${colors.accentBg} ${colors.accentOn}`}>Approve</button>
                 <button onClick={() => review(r, false)} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${colors.borderStrong} ${colors.error}`}>Decline</button>
               </div>
             </div>
           ))}
+        </div>
+      ) : tab === 'questions' ? (
+        <div className="space-y-4">
+          <p className={`text-xs ${colors.textFaint}`}>Questions people answer when they ask to join this club. You see the answers on each request.</p>
+          <QuestionBuilder value={draft} onChange={setDraft} />
+          <div className="flex items-center gap-3">
+            <button onClick={saveQuestions} className={`${colors.accentBg} ${colors.accentOn} text-xs font-bold px-4 py-2 ${radius.full}`}>Save questions</button>
+            {savedNote && <span className={`text-xs ${colors.textMuted}`}>{savedNote}</span>}
+          </div>
         </div>
       ) : tab === 'members' ? (
         members.length ? (

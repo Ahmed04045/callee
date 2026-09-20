@@ -1,7 +1,7 @@
 // src/views/GigDetailView.jsx
 
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
@@ -10,6 +10,8 @@ import Icon from '../components/Icon';
 import LocationMap from '../components/LocationMap';
 import StickyAction from '../components/StickyAction';
 import { ReportButton, SaveButton } from '../components/SaveReportButtons';
+import AnswerModal from '../components/AnswerModal';
+import { hasQuestions } from '../lib/questions';
 import { PixelCover } from '../components/Pixel';
 
 export default function GigDetailView({ onOpenAuthModal }) {
@@ -20,7 +22,8 @@ export default function GigDetailView({ onOpenAuthModal }) {
   const [gig, setGig] = useState(null);
   const [status, setStatus] = useState('loading'); // 'loading' | 'ready' | 'notFound' | 'error'
   const [hasApplied, setHasApplied] = useState(false);
-  const [isApplying, setIsApplying] = useState(false);
+  const [applyOpen, setApplyOpen] = useState(false);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     let isMounted = true;
@@ -58,14 +61,42 @@ export default function GigDetailView({ onOpenAuthModal }) {
     };
   }, [id, user]);
 
-  const handleApply = async () => {
-    if (!user) return;
-    setIsApplying(true);
-    logUserAction('APPLY_SUBMIT', { gigId: id, source: 'detail' });
-    const { error } = await supabase.from('applications').insert({ gig_id: id, user_id: user.id });
-    setIsApplying(false);
-    if (!error) setHasApplied(true);
+  // Applying always goes through the dialog: it asks the poster's questions, an
+  // optional message and how to reach the applicant. Database errors come back as
+  // codes (deadline passed, missing answer...) and are shown as plain sentences.
+  const APPLY_ERRORS = {
+    DEADLINE_PASSED: 'Applications for this gig have closed.',
+    GIG_NOT_AVAILABLE: 'This gig is no longer available.',
+    OWN_GIG: "You can't apply to your own gig.",
+    ANSWER_REQUIRED: 'Please answer all the required questions.',
+    ANSWER_TOO_LONG: 'One of your answers is too long.',
+    ANSWER_INVALID: 'One of your answers is not valid.',
+    'duplicate key': 'You already applied to this gig.',
   };
+  const submitApplication = async (payload) => {
+    if (!user) return 'Please sign in first.';
+    logUserAction('APPLY_SUBMIT', { gigId: id, source: 'detail' });
+    const { error } = await supabase.from('applications').insert({ gig_id: id, user_id: user.id, ...payload });
+    if (error) {
+      const key = Object.keys(APPLY_ERRORS).find((k) => error.message.includes(k));
+      return key ? APPLY_ERRORS[key] : error.message;
+    }
+    setHasApplied(true);
+    return null;
+  };
+  const handleApply = () => user && setApplyOpen(true);
+
+  // The poster sees how many people applied.
+  const [applicantCount, setApplicantCount] = useState(null);
+  useEffect(() => {
+    if (!gig || !user || gig.posted_by_user_id !== user.id) return;
+    supabase.from('applications').select('id', { count: 'exact', head: true }).eq('gig_id', gig.id).then(({ count }) => setApplicantCount(count ?? 0));
+  }, [gig, user]);
+
+  // The Recruit list sends people here with ?apply=1 so the questions are always shown.
+  useEffect(() => {
+    if (searchParams.get('apply') === '1' && user && status === 'ready' && !hasApplied) setApplyOpen(true);
+  }, [searchParams, user, status, hasApplied]);
 
   if (status === 'loading') {
     return <p className={`text-sm ${colors.textFaint}`}>Loading…</p>;
@@ -164,7 +195,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
         {!isPoster && <ReportButton kind="gig" itemId={gig.id} onNeedAuth={() => onOpenAuthModal?.()} />}
         {isPoster && (
           <Link to={`/gigs/${gig.id}/applicants`} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 ${colors.accentBg} ${colors.accentOn} ${radius.full}`}>
-            <Icon name="group" size={14} className="text-inherit" /> Applicants
+            <Icon name="group" size={14} className="text-inherit" /> Applicants{applicantCount != null ? ` (${applicantCount})` : ''}
           </Link>
         )}
       </div>
@@ -175,7 +206,7 @@ export default function GigDetailView({ onOpenAuthModal }) {
           ) : (
             <button
               onClick={handleApply}
-              disabled={hasApplied || isApplying || expired}
+              disabled={hasApplied || expired}
               className={`flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider px-4 py-2 ${radius.full} transition ${
                 hasApplied
                   ? `${colors.success} ${colors.bgInset} border ${colors.borderStrong} cursor-default`
@@ -194,6 +225,21 @@ export default function GigDetailView({ onOpenAuthModal }) {
             </button>
           )}
       </StickyAction>
+
+      {applyOpen && (
+        <AnswerModal
+          title={`Apply: ${gig.role}`}
+          intro="Tell them a bit about yourself."
+          questions={hasQuestions(gig.questions) ? gig.questions : []}
+          withMessage
+          messageLabel="Message (optional)"
+          withContact
+          submitLabel="Send application"
+          shares="Your name, username, school, bio, answers and contact details will be shared with the person who posted this gig."
+          onSubmit={submitApplication}
+          onClose={() => setApplyOpen(false)}
+        />
+      )}
     </div>
   );
 }

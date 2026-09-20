@@ -15,7 +15,7 @@ export const bannerStyle = (club) => ({
 // The two member-only link columns are deliberately NOT selectable from the
 // clubs table (see 009_clubs.sql) — always use this explicit column list.
 export const CLUB_COLUMNS =
-  'id,name,university_id,university_name,university,description,member_count,category,banner_gradient_start,banner_gradient_end,meeting_schedule,room_or_location,status,owner_user_id,place_id,lat,lng';
+  'id,name,university_id,university_name,university,description,member_count,category,banner_gradient_start,banner_gradient_end,meeting_schedule,room_or_location,status,owner_user_id,place_id,lat,lng,join_questions';
 
 export const fmtDateTime = (iso) =>
   new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });

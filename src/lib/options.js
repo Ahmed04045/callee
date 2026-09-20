@@ -29,12 +29,18 @@ export const CONTACT_METHODS = [
   { id: 'discord', label: 'Discord username', placeholder: 'username', kind: 'discord' },
 ];
 
+// Applications may also be reached by email (events can't, see the events.contact_method check).
+export const APPLICATION_CONTACT_METHODS = [
+  ...CONTACT_METHODS,
+  { id: 'email', label: 'Email', placeholder: 'you@example.com', kind: 'email' },
+];
+
 /**
  * Validates and normalizes a contact value for a given method.
  * @returns {{ok: boolean, value?: string, error?: string}}
  */
-export function validateContact(methodId, raw) {
-  const method = CONTACT_METHODS.find((m) => m.id === methodId);
+export function validateContact(methodId, raw, methods = CONTACT_METHODS) {
+  const method = methods.find((m) => m.id === methodId);
   const value = (raw || '').trim();
   if (!method) return { ok: false, error: 'Pick a contact method.' };
   if (!value) return { ok: false, error: 'Enter your contact details.' };
@@ -50,6 +56,10 @@ export function validateContact(methodId, raw) {
     const handle = value.replace(/^@/, '');
     if (!/^[A-Za-z0-9._]{2,30}$/.test(handle)) return { ok: false, error: 'Handles use letters, numbers, dots and underscores.' };
     return { ok: true, value: `@${handle}` };
+  }
+  if (method.kind === 'email') {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) return { ok: false, error: 'Enter a valid email address.' };
+    return { ok: true, value: value.toLowerCase() };
   }
   // discord
   const name = value.replace(/^@/, '');

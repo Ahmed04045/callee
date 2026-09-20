@@ -17,6 +17,7 @@ import Icon from '../components/Icon';
 import { PixelAvatar, PixelEmpty } from '../components/Pixel';
 import { formatLongDate } from '../components/FeedCards';
 import usePageMeta from '../lib/usePageMeta';
+import { AnswersView } from '../components/Questions';
 
 function StatTile({ label, value, sub }) {
   const { colors, radius } = themeConfig;
@@ -80,7 +81,7 @@ export default function EventManageView() {
     setEvent(ev);
     const { data: att, error } = await supabase
       .from('event_attendees')
-      .select('id, user_id, ticket_code, checked_in_at, created_at')
+      .select('id, user_id, ticket_code, checked_in_at, created_at, answers')
       .eq('event_id', id)
       .order('created_at');
     if (error) return setStatus('error');
@@ -103,10 +104,11 @@ export default function EventManageView() {
   };
 
   const exportCsv = () => {
-    const header = ['Name', 'Username', 'University', 'Ticket code', 'RSVP time', 'Checked in'];
+    const qs = event?.questions ?? [];
+    const header = ['Name', 'Username', 'University', 'Ticket code', 'RSVP time', 'Checked in', ...qs.map((q) => q.label)];
     const lines = rows.map((r) => [
       r.profile?.display_name, r.profile?.username ? `@${r.profile.username}` : '', r.profile?.university, r.ticket_code,
-      r.created_at, r.checked_in_at ?? '',
+      r.created_at, r.checked_in_at ?? '', ...qs.map((q) => r.answers?.[q.id] ?? ''),
     ].map(csvCell).join(','));
     const blob = new Blob([[header.map(csvCell).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -189,7 +191,8 @@ export default function EventManageView() {
 
         <div className="space-y-2">
           {shown.map((r) => (
-            <div key={r.id} className={`flex items-center gap-3 p-3 ${colors.bgCard} border ${colors.border} ${radius.md}`}>
+            <div key={r.id} className={`${colors.bgCard} border ${colors.border} ${radius.md}`}>
+              <div className="flex items-center gap-3 p-3">
               {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-9 h-9 object-cover shrink-0" /> : <PixelAvatar seed={r.user_id} size={36} />}
               <div className="min-w-0 flex-1">
                 <p className={`text-sm font-bold ${colors.textWhite} truncate`}>
@@ -203,6 +206,10 @@ export default function EventManageView() {
               >
                 {r.checked_in_at ? 'Checked in' : 'Check in'}
               </button>
+              </div>
+              {event.questions?.length > 0 && (
+                <div className="px-3 pb-3"><AnswersView questions={event.questions} answers={r.answers} /></div>
+              )}
             </div>
           ))}
         </div>

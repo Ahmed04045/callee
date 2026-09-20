@@ -15,6 +15,9 @@ import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import { PixelAvatar, PixelEmpty } from '../components/Pixel';
 import usePageMeta from '../lib/usePageMeta';
+import { AnswersView } from '../components/Questions';
+import { APPLICATION_CONTACT_METHODS } from '../lib/options';
+import Icon from '../components/Icon';
 
 export const APPLICATION_STAGES = [
   ['submitted', 'Applied'],
@@ -35,10 +38,10 @@ export default function ApplicantsView() {
   usePageMeta(gig ? `Applicants: ${gig.role}` : 'Applicants');
 
   const load = useCallback(async () => {
-    const { data: g } = await supabase.from('gigs').select('id, role, posted_by_user_id').eq('id', id).maybeSingle();
+    const { data: g } = await supabase.from('gigs').select('id, role, posted_by_user_id, questions').eq('id', id).maybeSingle();
     if (!g) return setStatus('notFound');
     setGig(g);
-    const { data: apps, error } = await supabase.from('applications').select('id, user_id, status, created_at').eq('gig_id', id).order('created_at', { ascending: false });
+    const { data: apps, error } = await supabase.from('applications').select('id, user_id, status, created_at, answers, message, contact_method, contact_value').eq('gig_id', id).order('created_at', { ascending: false });
     if (error) return setStatus('error');
     const ids = (apps ?? []).map((a) => a.user_id);
     const { data: profiles } = ids.length
@@ -56,6 +59,23 @@ export default function ApplicantsView() {
     setRows((prev) => prev.map((r) => (r.id === row.id ? { ...r, status: next } : r)));
     const { error } = await supabase.from('applications').update({ status: next }).eq('id', row.id);
     if (error) load();
+  };
+
+  const csvCell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const exportCsv = () => {
+    const qs = gig?.questions ?? [];
+    const header = ['Name', 'Username', 'University', 'Status', 'Applied', 'Contact', 'Message', ...qs.map((q) => q.label)];
+    const lines = rows.map((r) => [
+      r.profile?.display_name, r.profile?.username ? `@${r.profile.username}` : '', r.profile?.university, r.status, r.created_at,
+      r.contact_method ? `${r.contact_method}: ${r.contact_value}` : '', r.message, ...qs.map((q) => r.answers?.[q.id] ?? ''),
+    ].map(csvCell).join(','));
+    const blob = new Blob([[header.map(csvCell).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(gig?.role ?? 'gig').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-applicants.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const counts = useMemo(() => Object.fromEntries(APPLICATION_STAGES.map(([k]) => [k, rows.filter((r) => r.status === k).length])), [rows]);
@@ -76,7 +96,10 @@ export default function ApplicantsView() {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       <SubPageHeader title="Applicants" fallbackTo={`/gigs/${id}`} />
-      <p className={`text-sm ${colors.textMuted}`}>{gig.role}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className={`text-sm ${colors.textMuted}`}>{gig.role}</p>
+        <button onClick={exportCsv} disabled={!rows.length} className={`text-xs font-bold px-4 py-2 border ${colors.borderStrong} ${colors.textWhite} ${radius.full} disabled:opacity-50`}>Export CSV</button>
+      </div>
 
       <div className="flex flex-wrap gap-2">
         <button onClick={() => setFilter('all')} className={`text-xs font-bold px-3 py-1.5 ${radius.full} border ${filter === 'all' ? `${colors.accentBg} ${colors.accentOn} border-transparent` : `${colors.textFaint} ${colors.borderStrong}`}`}>All ({rows.length})</button>
@@ -101,6 +124,18 @@ export default function ApplicantsView() {
                 {r.profile?.bio && <p className={`text-xs ${colors.textMuted} mt-2 leading-relaxed`}>{r.profile.bio}</p>}
               </div>
             </div>
+
+            {r.contact_method && (
+              <p className={`flex items-center gap-2 text-xs ${colors.textWhite}`}>
+                <Icon name="chat" size={14} className={colors.accent} />
+                <span className={colors.textFaint}>{APPLICATION_CONTACT_METHODS.find((m) => m.id === r.contact_method)?.label ?? r.contact_method}:</span>
+                <span className="font-semibold select-all">{r.contact_value}</span>
+              </p>
+            )}
+            {r.message && (
+              <p className={`text-xs ${colors.textMuted} leading-relaxed ${colors.bgInset} p-3 whitespace-pre-line`}>{r.message}</p>
+            )}
+            <AnswersView questions={gig.questions} answers={r.answers} />
             <div className="flex flex-wrap gap-2">
               {APPLICATION_STAGES.map(([k, label]) => (
                 <button

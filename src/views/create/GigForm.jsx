@@ -12,6 +12,8 @@ import { logUserAction } from '../../components/TelemetryLog';
 import { COMPENSATION_OPTIONS, GIG_TAGS, MAX_TAGS, PAID_COMPENSATIONS } from '../../lib/options';
 import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
+import { QuestionBuilder } from '../../components/Questions';
+import { cleanForSave } from '../../lib/questions';
 
 const DETAILS_MIN = 30;
 
@@ -29,6 +31,7 @@ export default function GigForm({ user, postedBy, kind }) {
   const [place, setPlace] = useState(null);
   const [details, setDetails] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [questions, setQuestions] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -56,6 +59,7 @@ export default function GigForm({ user, postedBy, kind }) {
         status: 'pending',
         is_remote: remote,
         deadline: deadline || null,
+        questions: cleanForSave(questions).length ? cleanForSave(questions) : null,
         location: remote ? null : place.name,
         place_id: remote ? null : place.placeId,
         lat: remote ? null : place.lat,
@@ -102,6 +106,10 @@ export default function GigForm({ user, postedBy, kind }) {
         right={<span className={`text-[10px] ${details.trim().length < DETAILS_MIN ? colors.error : colors.success}`}>{details.trim().length}/{DETAILS_MIN}+</span>}
       >
         <textarea className={`${input} resize-none`} required rows={4} maxLength={500} value={details} onChange={(e) => setDetails(e.target.value)} />
+      </Field>
+
+      <Field label="Questions for applicants" hint="(optional)">
+        <QuestionBuilder value={questions} onChange={setQuestions} hint="Ask applicants anything you need to know. You'll see their answers next to each application." />
       </Field>
 
       {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
