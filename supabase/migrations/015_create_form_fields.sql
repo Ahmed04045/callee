@@ -15,6 +15,10 @@ alter table events add column if not exists is_free boolean not null default tru
 alter table events add column if not exists price text check (price is null or char_length(price) <= 40);
 
 alter table clubs add column if not exists who_can_join text check (who_can_join is null or char_length(who_can_join) <= 140);
+-- clubs uses column-level grants, not a table-level one (see 009/010) — a
+-- new public-facing column needs its own grant or PostgREST rejects any
+-- query selecting it at all, alongside every other column in that query.
+grant select (who_can_join) on clubs to anon, authenticated;
 
 -- create_group() (010) gets a 12th parameter. Postgres identifies a function
 -- by name + argument TYPES, so CREATE OR REPLACE with an extra parameter

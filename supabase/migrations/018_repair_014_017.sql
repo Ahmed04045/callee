@@ -100,6 +100,7 @@ alter table events add column if not exists is_free boolean not null default tru
 alter table events add column if not exists price text check (price is null or char_length(price) <= 40);
 
 alter table clubs add column if not exists who_can_join text check (who_can_join is null or char_length(who_can_join) <= 140);
+grant select (who_can_join) on clubs to anon, authenticated;
 
 drop function if exists public.create_group(text, text, text, text, text, text, text, text, text, double precision, double precision);
 create or replace function public.create_group(
@@ -152,6 +153,7 @@ grant execute on function public.create_group(text, text, text, text, text, text
 -- ---------------------------------------------------------------------
 alter table gigs add column if not exists cover_image_url text;
 alter table clubs add column if not exists banner_image_url text;
+grant select (banner_image_url) on clubs to anon, authenticated;
 
 insert into storage.buckets (id, name, public) values ('gig-photos', 'gig-photos', true) on conflict (id) do nothing;
 insert into storage.buckets (id, name, public) values ('club-photos', 'club-photos', true) on conflict (id) do nothing;

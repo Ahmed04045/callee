@@ -14,6 +14,9 @@
 
 alter table gigs add column if not exists cover_image_url text;
 alter table clubs add column if not exists banner_image_url text;
+-- clubs uses column-level grants, not a table-level one (see 009/010/015) —
+-- same reason as who_can_join's grant in 015.
+grant select (banner_image_url) on clubs to anon, authenticated;
 
 insert into storage.buckets (id, name, public)
 values ('gig-photos', 'gig-photos', true)

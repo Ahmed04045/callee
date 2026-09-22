@@ -45,6 +45,7 @@ Run these **in order**, every time you set up a new Supabase project. Nothing he
 | `016_gig_and_group_photos.sql` | Cover photo for gigs, banner photo for groups |
 | `017_identity_word.sql` | Drops the old "Aura" score; adds the identity-word columns |
 | `018_repair_014_017.sql` | Only needed if 014–017 errored partway through for you and left the database in a mixed state (a Postgres quirk: `CREATE OR REPLACE FUNCTION` can't change a function's return columns — needs `DROP FUNCTION` first, which 014/017 didn't originally do). Safe to run even if 014–017 already applied cleanly; it's fully idempotent and ends with a sanity-check query — all 7 columns should read `true`. |
+| `019_grant_new_club_columns.sql` | Fixes "permission denied for table clubs" on the Clubs page. `clubs` uses column-level grants (the WhatsApp/Discord link columns are deliberately left ungranted, invisible to a direct read); 015 and 016 added two new public columns (`who_can_join`, `banner_image_url`) but forgot to grant them, so selecting either alongside the rest broke the whole query. Fixed directly in 015/016/018 too, but if you already ran those, run 019 to grant the two columns now. |
 
 After running everything, promote yourself to admin (replace the email):
 
