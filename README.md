@@ -44,6 +44,7 @@ Run these **in order**, every time you set up a new Supabase project. Nothing he
 | `015_create_form_fields.sql` | Gig time commitment, event free/paid, club eligibility line; extends `create_group()` |
 | `016_gig_and_group_photos.sql` | Cover photo for gigs, banner photo for groups |
 | `017_identity_word.sql` | Drops the old "Aura" score; adds the identity-word columns |
+| `018_repair_014_017.sql` | Only needed if 014–017 errored partway through for you and left the database in a mixed state (a Postgres quirk: `CREATE OR REPLACE FUNCTION` can't change a function's return columns — needs `DROP FUNCTION` first, which 014/017 didn't originally do). Safe to run even if 014–017 already applied cleanly; it's fully idempotent and ends with a sanity-check query — all 7 columns should read `true`. |
 
 After running everything, promote yourself to admin (replace the email):
 
