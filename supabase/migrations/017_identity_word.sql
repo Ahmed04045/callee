@@ -17,6 +17,8 @@ alter table profiles add column if not exists identity_word text check (identity
 alter table profiles add column if not exists identity_word_reason text check (identity_word_reason is null or char_length(identity_word_reason) <= 600);
 
 -- get_public_profile() (010, extended in 014) drops aura and picks up the two new columns.
+-- Same reshape issue as 014 and create_group() in 015 — drop the old shape first.
+drop function if exists public.get_public_profile(text);
 create or replace function public.get_public_profile(p_username text)
 returns table (
   username text, display_name text, avatar_url text, bio text, university text, account_type text,

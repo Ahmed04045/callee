@@ -89,8 +89,12 @@ revoke all on function public.record_profile_view(text) from public;
 grant execute on function public.record_profile_view(text) to anon, authenticated;
 
 -- =====================================================================
--- 4. get_public_profile() (010) needs the three new fields too.
+-- 4. get_public_profile() (010) needs the three new fields too. Postgres
+-- won't let CREATE OR REPLACE change a RETURNS TABLE's column list (same
+-- issue as create_group() in 015 — see that migration's comment) — drop
+-- the old shape first.
 -- =====================================================================
+drop function if exists public.get_public_profile(text);
 create or replace function public.get_public_profile(p_username text)
 returns table (username text, display_name text, avatar_url text, bio text, university text, account_type text, aura int, profile_views int, looking_for text[])
 language sql stable security definer set search_path = public as $$
