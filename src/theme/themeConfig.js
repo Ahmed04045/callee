@@ -75,9 +75,6 @@ const themeConfig = {
     error: 'text-md3-error',
     warning: 'text-amber-400',
 
-    gradientBrand: 'bg-gradient-to-tr from-md3-primary to-md3-secondary',
-    gradientText: 'bg-gradient-to-r from-md3-primary to-md3-secondary bg-clip-text text-transparent',
-
     selection: 'selection:bg-md3-primaryContainer selection:text-md3-onPrimaryContainer',
   },
 

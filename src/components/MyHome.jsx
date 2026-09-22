@@ -65,7 +65,6 @@ export default function MyHome() {
     <div className="space-y-10">
       <section className="space-y-4">
         <div>
-          <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('Your home')}</p>
           <h2 className={`text-2xl sm:text-3xl font-display font-bold ${colors.textWhite}`}>{t('Welcome back, {name}.', { name })}</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

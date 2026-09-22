@@ -120,14 +120,13 @@ export default function LandingView({ onOpenAuthModal }) {
           )}
           <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36 grid md:grid-cols-[1fr_auto] gap-10 items-center">
             <div className="space-y-6">
-              <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('For students in Qatar')}</p>
               <h1 className={`text-4xl sm:text-6xl ${font.heading} ${colors.textWhite} leading-[1.05]`}>
                 {t(brand.tagline)}
                 <br />
-                <span className={colors.gradientText}>{t(brand.subTagline)}</span>
+                <span className={colors.secondary}>{t(brand.subTagline)}</span>
               </h1>
               <p className={`text-base sm:text-lg ${colors.textMuted} max-w-xl`}>
-                {t('Discover events, join your university\'s clubs and find gigs, all in one place, built for students.')}
+                {t('Discover events, join your university\'s clubs and find gigs — all in one place, built for students in Qatar.')}
               </p>
               <form onSubmit={go} className="max-w-xl relative">
                 <Icon name="search" size={18} className={`absolute start-4 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
@@ -172,8 +171,7 @@ export default function LandingView({ onOpenAuthModal }) {
         {/* FEATURES */}
         <section className="max-w-6xl mx-auto px-4 py-20 space-y-10">
           <div className="max-w-2xl">
-            <p className={`text-[11px] font-mono font-bold uppercase tracking-wider ${colors.accent}`}>{t('What you can do')}</p>
-            <h2 className={`text-3xl ${colors.textWhite} mt-2`}>{t('Everything happening on campus, in one place.')}</h2>
+            <h2 className={`text-3xl ${colors.textWhite}`}>{t('Everything happening on campus, in one place.')}</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {FEATURES.map((f) => (

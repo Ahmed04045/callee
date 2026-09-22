@@ -106,7 +106,7 @@ export default function MainFeedView() {
           <h2 className={`text-2xl sm:text-4xl ${font.heading} ${colors.textWhite} tracking-tight`}>
             {t(brand.tagline)}
             <br />
-            <span className={colors.gradientText}>{t(brand.subTagline)}</span>
+            <span className={colors.secondary}>{t(brand.subTagline)}</span>
           </h2>
         )}
 
