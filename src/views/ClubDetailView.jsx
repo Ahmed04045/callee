@@ -143,7 +143,11 @@ export default function ClubDetailView({ onOpenAuthModal }) {
       <div className={`overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg}`}>
         <div className="relative h-32 p-4 flex items-end gap-2">
           <div className="absolute inset-0">
-            <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} cols={64} rows={16} />
+            {club.banner_image_url ? (
+              <img src={club.banner_image_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} cols={64} rows={16} />
+            )}
           </div>
           <span className={`relative text-xs font-semibold bg-black/60 text-white ${radius.full} px-3 py-1`}>{t(club.category)}</span>
           {club.status === 'pending' && (

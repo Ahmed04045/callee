@@ -20,7 +20,11 @@ export default function ClubCard({ club, joined = false }) {
     >
       <div className="relative h-20 p-3 flex items-end justify-between">
         <div className="absolute inset-0">
-          <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} />
+          {club.banner_image_url ? (
+            <img src={club.banner_image_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <PixelCover from={argbToHex(club.banner_gradient_start)} to={argbToHex(club.banner_gradient_end)} seed={club.id} />
+          )}
         </div>
         <span className={`relative text-[10px] font-semibold bg-black/60 text-white ${radius.full} px-2.5 py-1`}>
           {t(club.category)}

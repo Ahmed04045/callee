@@ -5,15 +5,22 @@
 // creator becomes its moderator. The WhatsApp / Discord links are stored
 // private: they are only ever shown to approved members, that group's
 // moderators and admins (see get_club_links()).
+//
+// The banner photo is picked here but uploaded only after create_group()
+// returns an id (same reason as GigForm's cover photo: Storage needs a
+// real, owned row; owners can't otherwise update their own club row at all,
+// only admins can — see 009_clubs.sql) — set_club_banner_image() attaches
+// it. Left unset, the club keeps its randomly-picked gradient banner.
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
+import { uploadImage, fileExtension } from '../../lib/imageUpload';
 import { CLUB_UNIVERSITIES } from '../../lib/education';
 import { DISCORD_LINK, GROUP_CATEGORIES, WEEKDAYS, WHATSAPP_LINK } from '../../lib/options';
-import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
+import { ChipPicker, Field, ImagePicker, SubmitButton, useFormStyles, useImagePicker } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
 import { cleanForSave } from '../../lib/questions';
@@ -54,6 +61,7 @@ export default function GroupForm({ profile, onDone }) {
   const [whatsapp, setWhatsapp] = useState('');
   const [discord, setDiscord] = useState('');
   const [questions, setQuestions] = useState([]);
+  const { files: banner, add: addBanner, remove: removeBanner, error: bannerError } = useImagePicker(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -85,15 +93,21 @@ export default function GroupForm({ profile, onDone }) {
       p_lng: place?.lng ?? null,
       p_who_can_join: whoCanJoin.trim() || null,
     });
-    const cleaned = cleanForSave(questions);
-    if (!rpcError && newId && cleaned.length) {
-      await supabase.rpc('set_join_questions', { p_club_id: newId, p_questions: cleaned });
-    }
-    setBusy(false);
     if (rpcError) {
+      setBusy(false);
       const key = Object.keys(ERRORS).find((k) => rpcError.message.includes(k));
       return setError(key ? t(ERRORS[key]) : rpcError.message);
     }
+
+    const cleaned = cleanForSave(questions);
+    if (cleaned.length) await supabase.rpc('set_join_questions', { p_club_id: newId, p_questions: cleaned });
+    if (banner[0]) {
+      const path = `${newId}/${Date.now()}.${fileExtension(banner[0].file)}`;
+      const { url } = await uploadImage('club-photos', path, banner[0].file);
+      if (url) await supabase.rpc('set_club_banner_image', { p_club_id: newId, p_url: url });
+    }
+
+    setBusy(false);
     onDone?.();
     navigate('/my-submissions');
   };
@@ -102,6 +116,11 @@ export default function GroupForm({ profile, onDone }) {
     <form onSubmit={submit} className="space-y-4">
       <Field label={t('Group name')}>
         <input className={input} required minLength={3} maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
+      </Field>
+
+      <Field label={t('Banner photo')} hint={t('(optional — otherwise a colour is picked for you)')}>
+        <ImagePicker files={banner} onAdd={addBanner} onRemove={removeBanner} max={1} />
+        {bannerError && <p className={`text-xs ${colors.error} mt-1.5`}>{bannerError}</p>}
       </Field>
 
       <div className="grid grid-cols-2 gap-2">

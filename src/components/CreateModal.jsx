@@ -7,6 +7,11 @@
 // forms, and everything they import, aren't in the tree at all until
 // someone opens it; there's nothing left running underneath.
 //
+// Opening it always shows a type picker first — full-width rows (icon,
+// title, one-line description), the same shape as CareerEntryModal's kind
+// picker — rather than a row of small tabs. Picking one swaps in that
+// form; "back" returns to the picker without closing the modal.
+//
 // Rendered once near the app root (see App.jsx) and controlled through
 // CreateModalContext, so any page can open it without a route change.
 
@@ -30,13 +35,19 @@ export default function CreateModal() {
   if (!isOpen || !user) return null;
 
   const isPersonal = profile?.account_type === 'personal';
-  const gigKind = isPersonal ? 'opportunity' : 'gig';
-  const tabs = [
-    { id: 'gig', label: isPersonal ? 'Opportunity' : 'Gig' },
-    { id: 'event', label: 'Event' },
-    { id: 'group', label: 'Group' },
+  const types = [
+    {
+      id: 'gig',
+      icon: 'work',
+      label: isPersonal ? 'Opportunity' : 'Gig',
+      hint: isPersonal
+        ? 'Offer something you need help with, or something you can do for someone else.'
+        : 'Post a role, freelance gig or paid opportunity for people to apply to.',
+    },
+    { id: 'event', icon: 'event_available', label: 'Event', hint: 'Something people RSVP to — a hackathon, workshop, meetup or social.' },
+    { id: 'group', icon: 'groups', label: 'Group', hint: 'Start a private club or student-run group people request to join.' },
   ];
-  const postType = tabs.some((tab) => tab.id === type) ? type : 'gig';
+  const current = types.find((tItem) => tItem.id === type);
   const postedBy = profile?.display_name?.trim() || (profile?.username ? `@${profile.username}` : user.email);
 
   return (
@@ -54,26 +65,35 @@ export default function CreateModal() {
           </button>
         </div>
 
-        <div className="flex gap-2">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => setType(tab.id)}
-              className={`text-xs font-bold px-3.5 py-1.5 ${radius.full} border transition ${
-                postType === tab.id
-                  ? `${colors.accentBg} ${colors.accentOn} border-transparent`
-                  : `${colors.textFaint} ${colors.borderStrong} ${colors.textHoverStrong}`
-              }`}
-            >
-              {t(tab.label)}
+        {!current ? (
+          <div className="space-y-2">
+            {types.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setType(item.id)}
+                className={`w-full flex items-start gap-4 text-start ${colors.bgCard} border ${colors.borderStrong} ${radius.lg} p-4 hover:border-md3-primary transition`}
+              >
+                <div className={`${colors.accentSoftBg} ${colors.accent} p-2.5 ${radius.md} shrink-0`}>
+                  <Icon name={item.icon} size={20} className="text-inherit" />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold ${colors.textWhite}`}>{t(item.label)}</p>
+                  <p className={`text-xs ${colors.textFaint} mt-0.5 leading-relaxed`}>{t(item.hint)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <button type="button" onClick={() => setType(null)} className={`flex items-center gap-1 text-xs font-semibold ${colors.accent}`}>
+              <Icon name="arrow_back" size={14} /> {t(current.label)}
             </button>
-          ))}
-        </div>
-
-        {postType === 'gig' && <GigForm key="gig" user={user} postedBy={postedBy} kind={gigKind} onDone={close} />}
-        {postType === 'event' && <EventForm key="event" user={user} postedBy={postedBy} onDone={close} />}
-        {postType === 'group' && <GroupForm key="group" profile={profile} onDone={close} />}
+            {current.id === 'gig' && <GigForm key="gig" user={user} postedBy={postedBy} kind={isPersonal ? 'opportunity' : 'gig'} onDone={close} />}
+            {current.id === 'event' && <EventForm key="event" user={user} postedBy={postedBy} onDone={close} />}
+            {current.id === 'group' && <GroupForm key="group" profile={profile} onDone={close} />}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -11,18 +11,17 @@
 // is cancelled, so there is nothing to clean up: the files just sit as
 // local previews until the event is actually created.
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
-import { uploadImage, fileExtension, validateImageFile } from '../../lib/imageUpload';
+import { uploadImage, fileExtension } from '../../lib/imageUpload';
 import { CONTACT_METHODS, EVENT_TYPES, validateContact } from '../../lib/options';
-import { Field, SubmitButton, todayISO, useFormStyles } from './formKit';
+import { Field, ImagePicker, SubmitButton, todayISO, useFormStyles, useImagePicker } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
 import { cleanForSave } from '../../lib/questions';
-import Icon from '../../components/Icon';
 import { useT } from '../../i18n';
 
 const DESCRIPTION_MIN = 50;
@@ -46,30 +45,10 @@ export default function EventForm({ user, postedBy, onDone }) {
   const [capacityHidden, setCapacityHidden] = useState(false);
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState('');
-  const [photos, setPhotos] = useState([]); // [{ file, previewUrl }]
+  const { files: photos, add: addPhotos, remove: removePhoto, error: photoError } = useImagePicker(MAX_PHOTOS);
   const [questions, setQuestions] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-
-  const addPhotos = (fileList) => {
-    const room = MAX_PHOTOS - photos.length;
-    const picked = Array.from(fileList).slice(0, room);
-    const problems = picked.map(validateImageFile).filter(Boolean);
-    if (problems[0]) return setError(problems[0]);
-    setPhotos((prev) => [...prev, ...picked.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))]);
-  };
-  const removePhoto = (index) => {
-    setPhotos((prev) => {
-      URL.revokeObjectURL(prev[index].previewUrl);
-      return prev.filter((_, i) => i !== index);
-    });
-  };
-  // Revokes whatever preview URLs exist when the form is closed without submitting
-  // (cancelling the Create modal unmounts this) — nothing was ever uploaded, this
-  // just frees the local object URLs.
-  const photosRef = useRef(photos);
-  photosRef.current = photos;
-  useEffect(() => () => photosRef.current.forEach((p) => URL.revokeObjectURL(p.previewUrl)), []);
 
   const method = CONTACT_METHODS.find((m) => m.id === contactMethod);
 
@@ -216,22 +195,8 @@ export default function EventForm({ user, postedBy, onDone }) {
       </Field>
 
       <Field label={t('Photos')} hint={t('(optional, up to {n})', { n: MAX_PHOTOS })}>
-        <div className="flex flex-wrap gap-2">
-          {photos.map((p, i) => (
-            <div key={p.previewUrl} className="relative w-16 h-16 shrink-0">
-              <img src={p.previewUrl} alt="" className="w-full h-full object-cover rounded-lg" />
-              <button type="button" onClick={() => removePhoto(i)} aria-label={t('Remove photo')} className="absolute -top-1.5 -end-1.5 bg-black/80 rounded-full p-0.5">
-                <Icon name="close" size={12} className="text-white" />
-              </button>
-            </div>
-          ))}
-          {photos.length < MAX_PHOTOS && (
-            <label className={`w-16 h-16 shrink-0 flex items-center justify-center rounded-lg border border-dashed ${colors.borderStrong} ${colors.textFaint} cursor-pointer`}>
-              <Icon name="add_photo_alternate" size={20} />
-              <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { addPhotos(e.target.files); e.target.value = ''; }} />
-            </label>
-          )}
-        </div>
+        <ImagePicker files={photos} onAdd={addPhotos} onRemove={removePhoto} max={MAX_PHOTOS} />
+        {photoError && <p className={`text-xs ${colors.error} mt-1.5`}>{photoError}</p>}
       </Field>
 
       <Field label={t('Questions for people who RSVP')} hint={t('(optional)')}>

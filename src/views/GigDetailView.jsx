@@ -140,7 +140,11 @@ export default function GigDetailView({ onOpenAuthModal }) {
 
       <div className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} overflow-hidden`}>
       <div className="h-20">
-        <PixelCover seed={gig.id} cols={72} rows={10} />
+        {gig.cover_image_url ? (
+          <img src={gig.cover_image_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <PixelCover seed={gig.id} cols={72} rows={10} />
+        )}
       </div>
       <div className="p-6">
         <div className="flex justify-between items-start gap-4">

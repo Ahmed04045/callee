@@ -11,13 +11,19 @@ const CreateModalContext = createContext(null);
 
 export function CreateModalProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [type, setType] = useState('gig');
+  // null = show the "what do you want to create" picker first. A caller that
+  // already knows (e.g. "Create the first group" on the Clubs page) can skip
+  // straight past it by passing a type to open().
+  const [type, setType] = useState(null);
 
   const open = useCallback((initialType) => {
-    if (initialType) setType(initialType);
+    setType(initialType ?? null);
     setIsOpen(true);
   }, []);
-  const close = useCallback(() => setIsOpen(false), []);
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setType(null);
+  }, []);
 
   const value = useMemo(() => ({ isOpen, type, open, close, setType }), [isOpen, type, open, close]);
 

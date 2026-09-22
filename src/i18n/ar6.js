@@ -68,4 +68,11 @@ export default {
   "Who can join?": "من يمكنه الانضمام؟",
   "e.g. Open to all UDST students, or Computer Science majors only": "مثال: متاح لجميع طلاب UDST، أو لطلاب علوم الحاسوب فقط",
   "Shown on the club page, before anyone sends a request.": "يظهر في صفحة النادي، قبل أن يرسل أحد طلب انضمام.",
+  "Cover photo": "صورة الغلاف",
+  "Banner photo": "صورة البانر",
+  "(optional — otherwise a colour is picked for you)": "(اختياري — وإلا سنختار لونًا لك)",
+  "Offer something you need help with, or something you can do for someone else.": "اعرض شيئاً تحتاج مساعدة فيه، أو شيئاً يمكنك تقديمه لشخص آخر.",
+  "Post a role, freelance gig or paid opportunity for people to apply to.": "انشر وظيفة أو عملاً حراً أو فرصة مدفوعة ليقدّم عليها الآخرون.",
+  "Something people RSVP to — a hackathon, workshop, meetup or social.": "شيء يؤكد الناس حضورهم له — هاكاثون أو ورشة عمل أو لقاء أو فعالية اجتماعية.",
+  "Start a private club or student-run group people request to join.": "أنشئ نادياً خاصاً أو مجموعة يديرها طلاب ويطلب الناس الانضمام إليها.",
 };
