@@ -49,6 +49,7 @@ export default function GroupForm({ profile, onDone }) {
   const [description, setDescription] = useState('');
   const [days, setDays] = useState([]);
   const [time, setTime] = useState('');
+  const [whoCanJoin, setWhoCanJoin] = useState('');
   const [place, setPlace] = useState(null);
   const [whatsapp, setWhatsapp] = useState('');
   const [discord, setDiscord] = useState('');
@@ -82,6 +83,7 @@ export default function GroupForm({ profile, onDone }) {
       p_place_id: place?.placeId ?? null,
       p_lat: place?.lat ?? null,
       p_lng: place?.lng ?? null,
+      p_who_can_join: whoCanJoin.trim() || null,
     });
     const cleaned = cleanForSave(questions);
     if (!rpcError && newId && cleaned.length) {
@@ -127,6 +129,11 @@ export default function GroupForm({ profile, onDone }) {
         right={<span className={`text-[10px] ${description.trim().length < DESCRIPTION_MIN ? colors.error : colors.success}`}>{description.trim().length}/{DESCRIPTION_MIN}</span>}
       >
         <textarea className={`${input} resize-none`} required rows={4} maxLength={600} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </Field>
+
+      <Field label={t('Who can join?')} hint={t('(optional)')}>
+        <input className={input} maxLength={140} value={whoCanJoin} onChange={(e) => setWhoCanJoin(e.target.value)} placeholder={t('e.g. Open to all UDST students, or Computer Science majors only')} />
+        <p className={`text-[10px] ${colors.textDim} mt-1`}>{t('Shown on the club page, before anyone sends a request.')}</p>
       </Field>
 
       <Field label={t('Meeting days')} hint={t('(optional)')}>

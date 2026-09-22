@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
-import { COMPENSATION_OPTIONS, GIG_TAGS, MAX_TAGS, PAID_COMPENSATIONS } from '../../lib/options';
+import { COMMITMENT_OPTIONS, COMPENSATION_OPTIONS, GIG_TAGS, MAX_TAGS, PAID_COMPENSATIONS } from '../../lib/options';
 import { ChipPicker, Field, SubmitButton, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
@@ -29,6 +29,7 @@ export default function GigForm({ user, postedBy, kind, onDone }) {
   const [compensation, setCompensation] = useState('');
   const [amount, setAmount] = useState('');
   const [tags, setTags] = useState([]);
+  const [commitment, setCommitment] = useState('');
   const [remote, setRemote] = useState(false);
   const [place, setPlace] = useState(null);
   const [details, setDetails] = useState('');
@@ -56,6 +57,7 @@ export default function GigForm({ user, postedBy, kind, onDone }) {
         posted_by_user_id: user.id,
         compensation: compensationLabel,
         tags,
+        commitment: commitment || null,
         details: details.trim(),
         kind,
         status: 'pending',
@@ -90,6 +92,15 @@ export default function GigForm({ user, postedBy, kind, onDone }) {
 
       <Field label={t('Tags')} hint={t('(up to {n})', { n: MAX_TAGS })}>
         <ChipPicker multiple max={MAX_TAGS} options={GIG_TAGS} value={tags} onChange={setTags} />
+      </Field>
+
+      <Field label={t('Time commitment')} hint={t('(optional)')}>
+        <select className={input} value={commitment} onChange={(e) => setCommitment(e.target.value)}>
+          <option value="">{t('Select…')}</option>
+          {COMMITMENT_OPTIONS.map((opt) => (
+            <option key={opt} value={opt}>{t(opt)}</option>
+          ))}
+        </select>
       </Field>
 
       <Field label={t('Location')}>

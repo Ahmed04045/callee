@@ -180,6 +180,12 @@ export default function GigDetailView({ onOpenAuthModal }) {
           ))}
         </div>
 
+        {gig.commitment && (
+          <p className={`mt-4 flex items-center gap-2 text-sm ${colors.textMuted}`}>
+            <Icon name="schedule" size={16} className={colors.textFaint} /> {t(gig.commitment)}
+          </p>
+        )}
+
         {gig.is_remote ? (
           <p className={`mt-4 flex items-center gap-2 text-sm ${colors.textMuted}`}>
             <Icon name="public" size={16} className={colors.textFaint} /> {t('Remote')}

@@ -269,6 +269,27 @@ a {
   image-rendering: pixelated;
 }
 
+/* Every full-screen dialog (Create, apply/join/RSVP, report) fades its
+   backdrop in and lets the panel settle up from just below rest — one
+   authored moment, not a different entrance per modal. */
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+.animate-modal-backdrop {
+  animation: modal-backdrop-in 0.18s ease-out;
+}
+.animate-modal-in {
+  animation: modal-panel-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Stepped (frame-by-frame) transitions instead of smooth easing. */
 .px-steps {
   transition-timing-function: steps(4, end);

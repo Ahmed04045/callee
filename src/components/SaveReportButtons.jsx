@@ -108,8 +108,8 @@ export function ReportButton({ kind, itemId, onNeedAuth }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-4" role="dialog" aria-modal="true" aria-label={t('Report')}>
-          <form onSubmit={send} className={`w-full max-w-sm ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-4`}>
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Report')}>
+          <form onSubmit={send} className={`w-full max-w-sm ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-4 animate-modal-in`}>
             <div className="flex items-center justify-between">
               <h2 className={`text-lg font-bold ${colors.textWhite}`}>{t('Report this {kind}', { kind: t(kind) })}</h2>
               <button type="button" onClick={() => setOpen(false)} aria-label={t('Close')} className={colors.textFaint}><Icon name="close" size={18} /></button>

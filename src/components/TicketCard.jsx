@@ -45,7 +45,9 @@ export default function TicketCard({ event, ticket, holderName, compact = false 
             <span className={`text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-1 ${used ? `${colors.bgPill} ${colors.textMuted}` : 'bg-md3-success/15 text-md3-success'}`}>
               {used ? t('Checked in') : t('Valid')}
             </span>
-            <span className={`text-[10px] font-mono uppercase tracking-wider ${colors.textFaint}`}>{t('Free entry')}</span>
+            <span className={`text-[10px] font-mono uppercase tracking-wider ${colors.textFaint}`}>
+              {event.is_free === false ? event.price || t('Paid entry') : t('Free entry')}
+            </span>
           </div>
         </div>
         <div className="mx-auto shrink-0 border-2 border-md3-onSurface/70 bg-white p-1">

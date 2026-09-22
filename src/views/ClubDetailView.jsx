@@ -153,6 +153,12 @@ export default function ClubDetailView({ onOpenAuthModal }) {
         <div className="p-6 space-y-5">
           <p className={`text-sm leading-relaxed ${colors.textMuted}`}>{club.description}</p>
 
+          {club.who_can_join && (
+            <p className={`flex items-start gap-2 text-xs ${colors.textMuted} ${colors.bgInset} ${radius.md} p-3`}>
+              <Icon name="how_to_reg" size={14} className={`mt-0.5 shrink-0 ${colors.textFaint}`} /> {club.who_can_join}
+            </p>
+          )}
+
           <div className="grid sm:grid-cols-3 gap-3">
             {[
               ['group', 'Members', club.member_count],

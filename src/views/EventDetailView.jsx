@@ -6,7 +6,7 @@ import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { logUserAction } from '../components/TelemetryLog';
-import { uploadImage, fileExtension } from '../lib/imageUpload';
+import { uploadImage, fileExtension, deleteImage, storagePathFromPublicUrl } from '../lib/imageUpload';
 import Icon from '../components/Icon';
 import LocationMap from '../components/LocationMap';
 import StickyAction from '../components/StickyAction';
@@ -255,13 +255,13 @@ export default function EventDetailView({ onOpenAuthModal }) {
   };
 
   const handlePhotoDelete = async (photo) => {
-    // Removes the DB row (and with it, public visibility) immediately.
-    // The underlying Storage file is left in place rather than also
-    // deleted here — an orphaned file costs a little storage space but
-    // keeping this action fast and simple was worth that tradeoff; worth
-    // revisiting if storage usage ever actually matters.
     await supabase.from('event_photos').delete().eq('id', photo.id);
     setPhotos((prev) => prev.filter((p) => p.id !== photo.id));
+    // The DB row is what controls visibility, so it comes off first — the
+    // Storage file underneath it is removed right after, best-effort, so a
+    // deleted photo doesn't just sit there taking up space indefinitely.
+    const path = storagePathFromPublicUrl(photo.url, 'event-photos');
+    if (path) deleteImage('event-photos', path);
   };
 
   if (status === 'loading') {
@@ -347,6 +347,10 @@ export default function EventDetailView({ onOpenAuthModal }) {
             {event.location}
           </div>
           <LocationMap name={event.location} lat={event.lat} lng={event.lng} placeId={event.place_id} />
+          <div className="flex items-center gap-2">
+            <Icon name="payments" size={16} className={colors.textFaint} />
+            {event.is_free === false ? event.price || t('Paid entry') : t('Free entry')}
+          </div>
           {showSpots && (
             <div className="flex items-center gap-2">
               <Icon name="group" size={16} className={colors.textFaint} />

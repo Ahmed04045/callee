@@ -20,9 +20,14 @@ import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { EDUCATION_OPTIONS } from '../lib/education';
 import { USERNAME_PATTERN, isUsernameAvailable, normalizeUsername } from '../lib/username';
+import { supabase } from '../lib/supabaseClient';
+import { GIG_TAGS } from '../lib/options';
+import { ChipPicker } from './create/formKit';
+import { CareerBookSection } from '../components/CareerBook';
 import { useT } from '../i18n';
 
 const BIO_MAX = 200;
+const MAX_LOOKING_FOR = 6;
 const todayISO = new Date().toISOString().split('T')[0];
 
 
@@ -43,12 +48,25 @@ export default function ProfileView() {
   const [username, setUsername] = useState('');
   const [usernameState, setUsernameState] = useState('idle'); // idle | checking | ok | taken | invalid
   const [isPublic, setIsPublic] = useState(true);
+  const [lookingFor, setLookingFor] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState(null);
   const avatarInputRef = useRef(null);
+
+  const loadEntries = () => {
+    if (!user) return;
+    supabase
+      .from('career_entries')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setEntries(data ?? []));
+  };
+  useEffect(loadEntries, [user]);
 
   useEffect(() => {
     if (profile) {
@@ -58,6 +76,7 @@ export default function ProfileView() {
       setDiscoverable(Boolean(profile.discoverable));
       setUsername(profile.username ?? '');
       setIsPublic(profile.is_public !== false);
+      setLookingFor(profile.looking_for ?? []);
 
       const storedUniversity = profile.university ?? '';
       if (storedUniversity && EDUCATION_OPTIONS.includes(storedUniversity)) {
@@ -150,6 +169,7 @@ export default function ProfileView() {
       discoverable,
       username: username || null,
       is_public: isPublic,
+      looking_for: lookingFor,
     });
 
     setIsSaving(false);
@@ -223,6 +243,14 @@ export default function ProfileView() {
           <p className={`text-xs ${colors.textFaint}`}>
             {displayName.trim() ? user.email : t('Signed in')}
           </p>
+          {profile?.account_type === 'personal' && (
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <span className={`text-[11px] font-bold px-2.5 py-1 ${radius.full} ${colors.accentSoftBg} ${colors.accent}`}>{t('{n} Aura', { n: profile?.aura ?? 0 })}</span>
+              <span className={`text-[11px] font-semibold px-2.5 py-1 ${radius.full} border ${colors.border} ${colors.textMuted} flex items-center gap-1`}>
+                <Icon name="visibility" size={12} /> {t('{n} profile views', { n: profile?.profile_views ?? 0 })}
+              </span>
+            </div>
+          )}
           {profileUrl && (
             <button
               type="button"
@@ -347,6 +375,16 @@ export default function ProfileView() {
           />
         </label>
 
+        {profile?.account_type === 'personal' && (
+          <div className="block text-start">
+            <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
+              {t('Looking for')} <span className={colors.textDim}>{t('(optional)')}</span>
+            </span>
+            <p className={`text-[11px] ${colors.textFaint} mt-0.5 mb-1.5`}>{t('Shown to posters who view your profile — pick what kind of gigs interest you.')}</p>
+            <ChipPicker options={GIG_TAGS} value={lookingFor} onChange={setLookingFor} multiple max={MAX_LOOKING_FOR} />
+          </div>
+        )}
+
         <label
           className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
         >
@@ -390,6 +428,55 @@ export default function ProfileView() {
           {t('Save profile')}
         </button>
       </form>
+
+      {profile?.account_type === 'personal' && (
+        <>
+          <ProfileReadiness profile={profile} hasEntry={entries.length > 0} />
+          <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-5`}>
+            <CareerBookSection userId={user.id} entries={entries} own onChanged={loadEntries} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ProfileReadiness({ profile, hasEntry }) {
+  const { t } = useT();
+  const { colors, radius } = themeConfig;
+  const [open, setOpen] = useState(false);
+
+  const criteria = [
+    { id: 'name', label: t('Your name'), done: Boolean(profile?.display_name) },
+    { id: 'username', label: t('A username'), done: Boolean(profile?.username) },
+    { id: 'university', label: t('Your university'), done: Boolean(profile?.university) },
+    { id: 'bio', label: t('A short bio'), done: Boolean(profile?.bio) },
+    { id: 'avatar', label: t('A profile photo'), done: Boolean(profile?.avatar_url) },
+    { id: 'looking_for', label: t('What you are looking for'), done: (profile?.looking_for?.length ?? 0) > 0 },
+    { id: 'entry', label: t('One Career Book entry'), done: hasEntry },
+  ];
+  const met = criteria.filter((c) => c.done).length;
+
+  return (
+    <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-5 space-y-2`}>
+      <button type="button" onClick={() => setOpen((o) => !o)} className="w-full flex items-center justify-between gap-3">
+        <span className={`text-sm font-bold ${colors.textWhite}`}>{t('Profile completeness')}</span>
+        <span className={`text-xs font-mono font-bold ${met === criteria.length ? colors.success : colors.textFaint} flex items-center gap-1`}>
+          {t('{met}/{total} criteria met', { met, total: criteria.length })}
+          <Icon name="expand_more" size={16} className={open ? 'rotate-180' : ''} />
+        </span>
+      </button>
+      <p className={`text-[11px] ${colors.textFaint}`}>{t('A complete profile is what a gig or event poster sees before they decide.')}</p>
+      {open && (
+        <ul className="space-y-1.5 pt-1">
+          {criteria.map((c) => (
+            <li key={c.id} className={`flex items-center gap-2 text-xs ${c.done ? colors.textMuted : colors.textFaint}`}>
+              <Icon name={c.done ? 'check_circle' : 'expand_more'} size={14} className={c.done ? colors.success : 'opacity-0'} />
+              {c.label}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

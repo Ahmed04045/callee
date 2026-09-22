@@ -43,6 +43,22 @@ export async function deleteImage(bucket, path) {
   return { error: error?.message ?? null };
 }
 
+/**
+ * The object path inside its bucket, recovered from the public URL saved on
+ * the row (uploadImage never stores the path separately) — used when
+ * something with a photo gets deleted and the Storage file should go with
+ * it, not just the database row.
+ * @param {string} url - e.g. `.../object/public/event-photos/{id}/{file}.jpg?t=…`
+ * @param {string} bucket - 'avatars' | 'event-photos'
+ */
+export function storagePathFromPublicUrl(url, bucket) {
+  if (!url) return null;
+  const marker = `/${bucket}/`;
+  const start = url.indexOf(marker);
+  if (start === -1) return null;
+  return url.slice(start + marker.length).split('?')[0];
+}
+
 export function fileExtension(file) {
   const parts = file.name.split('.');
   return parts.length > 1 ? parts.pop().toLowerCase() : 'jpg';

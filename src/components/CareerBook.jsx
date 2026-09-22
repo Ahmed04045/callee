@@ -1,0 +1,246 @@
+// src/components/CareerBook.jsx
+//
+// A personal profile's Career Book: structured proof-of-work entries
+// (projects, experience, achievements, competitions, leadership,
+// milestones). `CareerBookSection` renders the list — editable on your own
+// profile, read-only on someone else's — and owns the add/edit/delete
+// calls itself so a page just has to pass it the entries it already loaded.
+// `CareerEntryModal` is the two-step dialog (pick a type, then fill it in)
+// used to add or edit one entry.
+//
+// The people who actually read this are gig/event posters deciding on an
+// applicant, not a separate company-facing product — see
+// src/lib/careerBook.js for the type list.
+
+import { useState } from 'react';
+import themeConfig from '../theme/themeConfig';
+import { supabase } from '../lib/supabaseClient';
+import { CAREER_KINDS, kindMeta, dateRange } from '../lib/careerBook';
+import Icon from './Icon';
+import { useT } from '../i18n';
+
+const inputClass = (colors, radius) =>
+  `w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary`;
+
+export function CareerEntryModal({ entry, onSubmit, onClose }) {
+  const { t } = useT();
+  const { colors, radius } = themeConfig;
+  const [kind, setKind] = useState(entry?.kind ?? null);
+  const [title, setTitle] = useState(entry?.title ?? '');
+  const [organization, setOrganization] = useState(entry?.organization ?? '');
+  const [role, setRole] = useState(entry?.role ?? '');
+  const [description, setDescription] = useState(entry?.description ?? '');
+  const [link, setLink] = useState(entry?.link ?? '');
+  const [startDate, setStartDate] = useState(entry?.start_date ?? '');
+  const [endDate, setEndDate] = useState(entry?.end_date ?? '');
+  const [isOngoing, setIsOngoing] = useState(entry?.is_ongoing ?? false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const input = inputClass(colors, radius);
+  const meta = kind ? kindMeta(kind) : null;
+  const orgLabel =
+    {
+      experience: t('Company or organization'),
+      competition: t('Competition or event name'),
+      leadership: t('Team or organization'),
+      achievement: t('Awarded by'),
+    }[kind] ?? t('Organization (optional)');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!title.trim()) return setError(t('Give it a title.'));
+    setError('');
+    setBusy(true);
+    const problem = await onSubmit({
+      kind,
+      title: title.trim(),
+      organization: organization.trim() || null,
+      role: role.trim() || null,
+      description: description.trim() || null,
+      link: link.trim() || null,
+      start_date: startDate || null,
+      end_date: isOngoing ? null : endDate || null,
+      is_ongoing: isOngoing,
+    });
+    setBusy(false);
+    if (problem) setError(problem);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
+        <div className="flex items-start justify-between gap-4">
+          <h2 className={`text-lg font-bold ${colors.textWhite}`}>{entry?.id ? t('Edit entry') : t('Add to your Career Book')}</h2>
+          <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>
+            <Icon name="close" size={20} />
+          </button>
+        </div>
+
+        {!meta ? (
+          <div className="space-y-2">
+            <p className={`text-xs ${colors.textFaint}`}>{t('Document meaningful work so posters can see what you have actually done.')}</p>
+            {CAREER_KINDS.map((k) => (
+              <button
+                key={k.id}
+                type="button"
+                onClick={() => setKind(k.id)}
+                className={`w-full flex items-start gap-4 text-start ${colors.bgCard} border ${colors.borderStrong} ${radius.lg} p-3.5 hover:border-md3-primary transition`}
+              >
+                <div className={`${colors.accentSoftBg} ${colors.accent} p-2.5 ${radius.md} shrink-0`}>
+                  <Icon name={k.icon} size={18} className="text-inherit" />
+                </div>
+                <div>
+                  <p className={`text-sm font-bold ${colors.textWhite}`}>{t(k.label)}</p>
+                  <p className={`text-xs ${colors.textFaint} mt-0.5`}>{t(k.hint)}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4">
+            {!entry?.id && (
+              <button type="button" onClick={() => setKind(null)} className={`flex items-center gap-1 text-xs font-semibold ${colors.accent}`}>
+                <Icon name="arrow_back" size={14} /> {t(meta.label)}
+              </button>
+            )}
+
+            <label className="block">
+              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Title')}</span>
+              <input className={`${input} mt-1.5`} required maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('e.g. Campus food-delivery app')} />
+            </label>
+
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className={`text-xs font-semibold ${colors.textWhite}`}>{orgLabel}</span>
+                <input className={`${input} mt-1.5`} maxLength={100} value={organization} onChange={(e) => setOrganization(e.target.value)} />
+              </label>
+              <label className="block">
+                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Your role (optional)')}</span>
+                <input className={`${input} mt-1.5`} maxLength={100} value={role} onChange={(e) => setRole(e.target.value)} />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Started')}</span>
+                <input type="date" className={`${input} mt-1.5`} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+              </label>
+              <label className={`block ${isOngoing ? 'opacity-40' : ''}`}>
+                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Ended')}</span>
+                <input type="date" disabled={isOngoing} className={`${input} mt-1.5`} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+              </label>
+            </div>
+            <label className={`flex items-center gap-2 text-xs ${colors.textMuted}`}>
+              <input type="checkbox" checked={isOngoing} onChange={(e) => setIsOngoing(e.target.checked)} className="accent-md3-primary" /> {t('Still ongoing')}
+            </label>
+
+            <label className="block">
+              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Description (optional)')}</span>
+              <textarea className={`${input} mt-1.5 resize-none`} rows={3} maxLength={1000} value={description} onChange={(e) => setDescription(e.target.value)} />
+            </label>
+
+            <label className="block">
+              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Link to proof (optional)')}</span>
+              <input className={`${input} mt-1.5`} maxLength={300} placeholder="https://" value={link} onChange={(e) => setLink(e.target.value)} />
+            </label>
+
+            {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
+            <button disabled={busy} className={`w-full ${colors.accentBg} ${colors.accentOn} font-bold text-sm py-2.5 ${radius.full} disabled:opacity-50`}>
+              {busy ? t('Saving…') : entry?.id ? t('Save changes') : t('Add entry')}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function CareerBookSection({ userId, entries, own, onChanged }) {
+  const { t, locale } = useT();
+  const { colors, radius } = themeConfig;
+  const [modalEntry, setModalEntry] = useState(undefined); // undefined = closed, null = new, object = editing
+  const [busyId, setBusyId] = useState(null);
+
+  const save = async (payload) => {
+    if (modalEntry?.id) {
+      const { error } = await supabase.from('career_entries').update(payload).eq('id', modalEntry.id);
+      if (error) return error.message;
+    } else {
+      const { error } = await supabase.from('career_entries').insert({ user_id: userId, ...payload });
+      if (error) return error.message;
+    }
+    setModalEntry(undefined);
+    onChanged?.();
+    return null;
+  };
+
+  const remove = async (id) => {
+    if (!window.confirm(t('Remove this entry?'))) return;
+    setBusyId(id);
+    await supabase.from('career_entries').delete().eq('id', id);
+    setBusyId(null);
+    onChanged?.();
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
+          <Icon name="auto_stories" size={16} className={colors.accent} /> {t('Career Book')}
+        </h2>
+        {own && (
+          <button type="button" onClick={() => setModalEntry(null)} className={`flex items-center gap-1 text-xs font-bold ${colors.accent}`}>
+            <Icon name="add_circle" size={14} className="text-inherit" /> {t('Add entry')}
+          </button>
+        )}
+      </div>
+
+      {entries.length === 0 ? (
+        <p className={`text-xs ${colors.textFaint}`}>
+          {own ? t('Document meaningful work so posters can see what you have actually done.') : t('Nothing added yet.')}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {entries.map((entry) => {
+            const meta = kindMeta(entry.kind);
+            const range = dateRange(entry, t, locale);
+            return (
+              <div key={entry.id} className={`${colors.bgCardSoft} border ${colors.border} ${radius.md} p-3.5 flex gap-3`}>
+                <div className={`${colors.accentSoftBg} ${colors.accent} p-2 ${radius.md} shrink-0 h-fit`}>
+                  <Icon name={meta.icon} size={16} className="text-inherit" />
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <p className={`text-[10px] font-mono font-bold uppercase tracking-wider ${colors.textFaint}`}>{t(meta.label)}</p>
+                  <p className={`text-sm font-bold ${colors.textWhite}`}>{entry.title}</p>
+                  {(entry.role || entry.organization) && (
+                    <p className={`text-xs ${colors.textMuted}`}>{[entry.role, entry.organization].filter(Boolean).join(' · ')}</p>
+                  )}
+                  {range && <p className={`text-[11px] ${colors.textFaint}`}>{range}</p>}
+                  {entry.description && <p className={`text-xs ${colors.textMuted} mt-1 leading-relaxed`}>{entry.description}</p>}
+                  {entry.link && (
+                    <a href={entry.link} target="_blank" rel="noreferrer" className={`text-xs font-semibold ${colors.accent} inline-flex items-center gap-1 mt-1`}>
+                      <Icon name="open_in_new" size={12} className="text-inherit" /> {t('View proof')}
+                    </a>
+                  )}
+                </div>
+                {own && (
+                  <div className="flex flex-col gap-1 shrink-0">
+                    <button type="button" onClick={() => setModalEntry(entry)} aria-label={t('Edit')} className={colors.textFaint}>
+                      <Icon name="edit" size={15} />
+                    </button>
+                    <button type="button" disabled={busyId === entry.id} onClick={() => remove(entry.id)} aria-label={t('Remove')} className={colors.error}>
+                      <Icon name="delete" size={15} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {modalEntry !== undefined && <CareerEntryModal entry={modalEntry} onSubmit={save} onClose={() => setModalEntry(undefined)} />}
+    </div>
+  );
+}

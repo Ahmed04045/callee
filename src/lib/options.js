@@ -14,6 +14,8 @@ export const MAX_TAGS = 4;
 export const COMPENSATION_OPTIONS = ['Paid', 'Unpaid', 'Equity', 'Paid + equity', 'Profit share', 'Negotiable'];
 export const PAID_COMPENSATIONS = ['Paid', 'Paid + equity'];
 
+export const COMMITMENT_OPTIONS = ['One-time', 'A few days', 'A few weeks', 'A few months', 'Ongoing'];
+
 export const GROUP_CATEGORIES = [
   'Arts & Culture', 'Academic & Leadership', 'Sports & Athletics', 'Technology & Gaming', 'Service & Community',
   'Faith & Community', 'Cultural & Heritage', 'Media & Arts', 'Lifestyle & Skills', 'Social & Gaming', 'Other',

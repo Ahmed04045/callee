@@ -40,8 +40,8 @@ export default function CreateModal() {
   const postedBy = profile?.display_name?.trim() || (profile?.username ? `@${profile.username}` : user.email);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4" role="dialog" aria-modal="true" aria-label={t('Create')}>
-      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5`}>
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Create')}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className={`text-lg ${font.heading} ${colors.textWhite} flex items-center gap-2`}>

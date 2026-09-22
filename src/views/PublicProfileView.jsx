@@ -13,6 +13,7 @@ import { supabase } from '../lib/supabaseClient';
 import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
+import { CareerBookSection } from '../components/CareerBook';
 import { useT } from '../i18n';
 
 export default function PublicProfileView() {
@@ -21,6 +22,7 @@ export default function PublicProfileView() {
   const { username } = useParams();
   const { profile: myProfile } = useProfile();
   const [person, setPerson] = useState(null);
+  const [entries, setEntries] = useState([]);
   const [status, setStatus] = useState('loading'); // loading | ready | missing | error
   const [copied, setCopied] = useState(false);
 
@@ -33,6 +35,10 @@ export default function PublicProfileView() {
       if (!data?.length) return setStatus('missing');
       setPerson(data[0]);
       setStatus('ready');
+      supabase.rpc('record_profile_view', { p_username: username });
+    });
+    supabase.rpc('get_public_career_entries', { p_username: username }).then(({ data }) => {
+      if (active) setEntries(data ?? []);
     });
     return () => {
       active = false;
@@ -94,6 +100,25 @@ export default function PublicProfileView() {
           </div>
           {person.bio && <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{person.bio}</p>}
 
+          {person.account_type === 'personal' && (
+            <div className="flex flex-wrap justify-center gap-2">
+              <span className={`text-[11px] font-bold px-2.5 py-1 ${radius.full} ${colors.accentSoftBg} ${colors.accent}`}>{t('{n} Aura', { n: person.aura ?? 0 })}</span>
+              <span className={`text-[11px] font-semibold px-2.5 py-1 ${radius.full} border ${colors.border} ${colors.textMuted} flex items-center gap-1`}>
+                <Icon name="visibility" size={12} /> {t('{n} profile views', { n: person.profile_views ?? 0 })}
+              </span>
+            </div>
+          )}
+
+          {person.looking_for?.length > 0 && (
+            <div className="flex flex-wrap justify-center gap-1.5">
+              {person.looking_for.map((tag) => (
+                <span key={tag} className={`text-[10px] ${colors.textFaint} ${colors.bgPill} px-2 py-0.5 border ${colors.border}`}>
+                  <bdi>#{t(tag)}</bdi>
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="flex gap-2 justify-center pt-2">
             <button onClick={share} className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} px-4 py-2 ${radius.full}`}>
               <Icon name={copied ? 'check' : 'share'} size={14} className="text-inherit" /> {copied ? t('Link copied') : t('Share profile')}
@@ -102,6 +127,12 @@ export default function PublicProfileView() {
               <Link to="/profile" className={`text-xs font-bold ${colors.textWhite} border ${colors.borderStrong} px-4 py-2 ${radius.full}`}>{t('Edit')}</Link>
             )}
           </div>
+        </div>
+      )}
+
+      {status === 'ready' && person.account_type === 'personal' && (
+        <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-5 text-start`}>
+          <CareerBookSection entries={entries} own={false} />
         </div>
       )}
     </div>
