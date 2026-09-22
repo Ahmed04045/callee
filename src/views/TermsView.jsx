@@ -1,10 +1,11 @@
 // src/views/TermsView.jsx
 //
 // Real terms, written for what this app actually does today (private clubs,
-// reviewed events/gigs/groups, no payments processed on-site). Not a
-// substitute for a lawyer's review before a public launch, but no longer a
-// placeholder. Kept in English on purpose — see PrivacyView for the same
-// choice and why.
+// reviewed events/gigs/groups, no payments processed on-site), with Qatar
+// named as the governing jurisdiction since that's where the platform and
+// its users actually are. Not a substitute for a lawyer's review before a
+// public launch, but no longer a placeholder. Kept in English on purpose —
+// see PrivacyView for the same choice and why.
 
 import themeConfig from '../theme/themeConfig';
 import SubPageHeader from '../components/SubPageHeader';
@@ -34,6 +35,7 @@ export default function TermsView() {
 
         <Section heading="1. Who can use this">
           <p>You need an account to post, apply, RSVP or join a club. You’re responsible for what happens under your account — keep your password to yourself and tell us if you think someone else has access to it.</p>
+          <p>If you’re under 18, a parent or guardian should be aware of and involved in your use of {brand.name}; see the Privacy Policy for how we handle a younger user’s data.</p>
         </Section>
 
         <Section heading="2. What you post">
@@ -57,11 +59,19 @@ export default function TermsView() {
           <p>The platform is provided “as is.” We try to keep listings accurate and the service running, but we don’t guarantee it will be uninterrupted, error-free, or that any listing is accurate, safe or legitimate — that’s what moderation and reporting are for, not a guarantee.</p>
         </Section>
 
-        <Section heading="7. Changes">
+        <Section heading="7. Governing law">
+          <p>These terms are governed by the laws of Qatar, including its Personal Data Privacy Protection Law (Law No. 13 of 2016) for anything about your data — see the Privacy Policy for how that applies to you.</p>
+        </Section>
+
+        <Section heading="8. Ending your account">
+          <p>You can stop using {brand.name} at any time; email us (see the About page) to have your account and its data removed. We can suspend or remove an account that breaks these terms, tell you why when we do, and give you a chance to explain first except where the issue is serious or ongoing.</p>
+        </Section>
+
+        <Section heading="9. Changes">
           <p>We may update these terms as the platform changes. Continuing to use {brand.name} after an update means you accept the new terms.</p>
         </Section>
 
-        <Section heading="8. Contact">
+        <Section heading="10. Contact">
           <p>Questions about these terms are covered on the <a href="/about" className={colors.accent}>About page</a>.</p>
         </Section>
       </div>

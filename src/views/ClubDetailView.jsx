@@ -137,7 +137,7 @@ export default function ClubDetailView({ onOpenAuthModal }) {
   }
 
   return (
-    <div className="max-w-3xl space-y-5">
+    <div className="w-full max-w-3xl mx-auto space-y-5">
       <SubPageHeader title={club.name} fallbackTo="/clubs" />
 
       <div className={`overflow-hidden ${colors.bgCardStrong} border ${colors.border} ${radius.lg}`}>

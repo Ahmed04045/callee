@@ -18,7 +18,7 @@ import { useT } from '../../i18n';
 
 const DETAILS_MIN = 30;
 
-export default function GigForm({ user, postedBy, kind }) {
+export default function GigForm({ user, postedBy, kind, onDone }) {
   const { t } = useT();
   const { colors } = themeConfig;
   const { input } = useFormStyles();
@@ -71,6 +71,7 @@ export default function GigForm({ user, postedBy, kind }) {
       .single();
     setBusy(false);
     if (insertError) return setError(insertError.message);
+    onDone?.();
     navigate(`/gigs/${data.id}`);
   };
 

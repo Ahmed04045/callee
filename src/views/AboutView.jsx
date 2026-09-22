@@ -45,6 +45,9 @@ export default function AboutView() {
         <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
           {t('Anyone can start something. Post an event, open a club or put out a call for collaborators, and it goes live once it has been reviewed.')}
         </p>
+        <p className={`text-sm ${colors.textMuted} leading-relaxed`}>
+          {t('Clubs are live at UDST today, with more universities coming as students there request them.')}
+        </p>
       </section>
 
       <section className="grid sm:grid-cols-3 gap-4">
@@ -69,6 +72,9 @@ export default function AboutView() {
             </li>
           ))}
         </ul>
+        <p className={`text-xs ${colors.textFaint} pt-1`}>
+          {t('Your data is handled under Qatar’s Personal Data Privacy Protection Law — see our')} <Link to="/privacy" className={colors.accent}>{t('Privacy Policy')}</Link>.
+        </p>
       </section>
 
       {(brand.builtBy || brand.contactEmail) && (

@@ -1,11 +1,13 @@
 // src/App.jsx
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
+import { CreateModalProvider, useCreateModal } from './context/CreateModalContext';
+import CreateModal from './components/CreateModal';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
@@ -49,7 +51,6 @@ import OnboardingView from './views/OnboardingView';
 import PublicProfileView from './views/PublicProfileView';
 import GigDetailView from './views/GigDetailView';
 import EventDetailView from './views/EventDetailView';
-import CreateView from './views/CreateView';
 import MySubmissionsView from './views/MySubmissionsView';
 import ClubsView from './views/ClubsView';
 import ClubDetailView from './views/ClubDetailView';
@@ -63,13 +64,13 @@ const ONBOARDING_PATH = '/onboarding';
 // the primary nav — rendered as the desktop left rail / mobile bottom bar.
 // Everything else (Updates, Profile, Settings, Admin) lives in the header's
 // icon cluster or is unlisted entirely, and gets its own explicit <Route>
-// below instead of coming from this array. Create is a real page (was a
-// modal — that had real perf cost, see CreateView.jsx), so it needs a real
-// path like everything else in this array now.
+// below instead of coming from this array. Create has no `path`: it opens
+// CreateModal instead of navigating (see navigateToTab's special case
+// below); `/create?type=...` still works as a direct link via the small
+// CreateRedirect route further down, for anything that linked straight to it.
 const CREATE_NAV_ITEM = {
   id: 'create',
   label: 'Create',
-  path: '/create',
   iconType: 'material',
   iconSource: 'add_circle',
 };
@@ -134,8 +135,6 @@ function renderView(tabId, handlers) {
       return <ProfileView />;
     case 'settings':
       return <SettingsView />;
-    case 'create':
-      return <CreateView />;
     default:
       return null;
   }
@@ -168,13 +167,18 @@ function AppShell() {
   const { colors, layout, font } = themeConfig;
   const { status } = useAuth();
   const { profile, status: profileStatus, saveProfile } = useProfile();
+  const { open: openCreateModal } = useCreateModal();
   const navigate = useNavigate();
   const location = useLocation();
 
   const isAuthenticated = status === 'authenticated';
-  // Detail pages, profiles and the admin area bring their own header/nav.
+  // Landing has its own header/nav and stays full-bleed; nowhere else does —
+  // the rail stays up everywhere so a narrow detail page doesn't leave the
+  // rest of a wide screen empty. Detail pages and the admin area still bring
+  // their own in-content header (SubPageHeader) instead of the generic topbar.
   const isLanding = location.pathname === '/' && status !== 'authenticated';
   const isImmersive = isImmersivePath(location.pathname) || isLanding;
+  const showSidebar = !isLanding;
 
   const openAuthModal = (mode = 'signIn') => {
     setAuthModalMode(mode);
@@ -212,6 +216,11 @@ function AppShell() {
   const activeLabel = activeItem?.label ?? '';
 
   const navigateToTab = (tabId) => {
+    if (tabId === 'create') {
+      logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
+      openCreateModal();
+      return;
+    }
     const target = lookupItems.find((item) => item.id === tabId);
     if (!target) return;
     logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
@@ -258,7 +267,7 @@ function AppShell() {
 
   return (
     <div className={`min-h-screen ${colors.bgPage} ${colors.textPrimary} ${font.base} ${colors.selection}`}>
-      {!isImmersive && (
+      {showSidebar && (
         <SidebarNav
           activeTab={activeTab}
           onNavigate={navigateToTab}
@@ -269,7 +278,7 @@ function AppShell() {
 
       <div
         className={`flex flex-col min-h-screen ${
-          isImmersive ? '' : `${layout.sidebarOffset} ${layout.mobileNavOffset}`
+          showSidebar ? `${layout.sidebarOffset} ${layout.mobileNavOffset}` : ''
         }`}
       >
         {!isImmersive && (
@@ -379,14 +388,28 @@ function AppShell() {
             <Route path="/events/:id/scan" element={<EventScanView />} />
             <Route path="/tickets" element={<TicketsView onOpenAuthModal={openAuthModal} />} />
             <Route path="/ticket/:code" element={<TicketCheckView onOpenAuthModal={openAuthModal} />} />
+            <Route path="/create" element={<CreateRedirect onOpen={openCreateModal} />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
       </div>
 
       <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
+      <CreateModal />
     </div>
   );
+}
+
+// `/create?type=...` used to be a real page; anything that still links there
+// (an old bookmark, a saved share) opens the modal instead and bounces to `/`
+// rather than 404ing on the catch-all route.
+function CreateRedirect({ onOpen }) {
+  const [params] = useSearchParams();
+  useEffect(() => {
+    onOpen(params.get('type'));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -395,7 +418,9 @@ export default function App() {
       <AuthProvider>
         <ProfileProvider>
           <NotificationsProvider>
-            <AppShell />
+            <CreateModalProvider>
+              <AppShell />
+            </CreateModalProvider>
           </NotificationsProvider>
         </ProfileProvider>
       </AuthProvider>

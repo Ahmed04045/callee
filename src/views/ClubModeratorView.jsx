@@ -131,7 +131,7 @@ export default function ClubModeratorView() {
   }
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="w-full max-w-3xl mx-auto space-y-4">
       <SubPageHeader title={t('Moderator workspace')} fallbackTo="/clubs" />
       <div className="flex gap-2 overflow-x-auto pb-1">
         {mine.map((c) => (

@@ -2,11 +2,19 @@
 //
 // Real privacy policy, matching what the codebase actually collects today —
 // see supabase/schema.sql + migrations for the tables named below, and
-// src/components/TelemetryLog.js for the telemetry note. Not a substitute for
-// a lawyer's review before a public launch, but no longer a placeholder.
-// Kept in English on purpose: legal text is easy to mistranslate in a way
-// that changes its meaning, and this project's own translations aren't
-// reviewed by a native speaker yet.
+// src/components/TelemetryLog.js for the telemetry note. Written with Qatar's
+// Personal Data Privacy Protection Law (Law No. 13 of 2016, "PDPPL") in mind:
+// its data-subject rights (access, correction, deletion), its cross-border
+// transfer disclosure expectation, and its requirement of parental consent
+// for processing a child's data. That last one is a real gap: the app has no
+// age verification or parental-consent flow today, only an honesty-based
+// date-of-birth field. The "Young users" section below is written honestly
+// about that rather than claiming a compliance mechanism that doesn't exist —
+// flag this to the user before a public launch aimed at minors. Still not a
+// substitute for a lawyer's review, but grounded in the actual law rather
+// than generic boilerplate. Kept in English on purpose: legal text is easy
+// to mistranslate in a way that changes its meaning, and this project's own
+// translations aren't reviewed by a native speaker yet.
 
 import themeConfig from '../theme/themeConfig';
 import SubPageHeader from '../components/SubPageHeader';
@@ -50,12 +58,25 @@ export default function PrivacyView() {
           <p>We never sell your data.</p>
         </Section>
 
+        <Section heading="Where your data is processed">
+          <p>{brand.name} operates in Qatar, but Supabase, Google and Vercel run infrastructure in other countries, so your data may be processed outside Qatar as part of running the service. We only use processors that are contractually bound to protect your data at least as well as this policy describes.</p>
+        </Section>
+
+        <Section heading="Your rights and this policy's legal basis">
+          <p>This policy is written with Qatar’s Personal Data Privacy Protection Law (Law No. 13 of 2016) in mind. Under it, you have the right to access the personal data we hold about you, ask us to correct it, ask us to delete it, and withdraw consent for anything you previously agreed to. Creating a profile and submitting an application, RSVP or join request is how you give that consent for the data involved in each action.</p>
+          <p>To use any of these rights, email us (see the About page). If you believe we’ve mishandled your data, you can also raise it with Qatar’s National Cyber Security Agency, the authority responsible for the PDPPL.</p>
+        </Section>
+
         <Section heading="Your choices">
           <p>Edit or delete most of your profile any time from Account settings. Leave any club, cancel a pending join request, or turn off notification categories you don’t want. There’s no self-serve “delete my account” button yet — email us (see the About page) and we’ll remove your account and its data.</p>
         </Section>
 
         <Section heading="Young users">
-          <p>Many people on {brand.name} are teenagers. We don’t run targeted ads, don’t sell data, and keep private information (email, date of birth) hidden from other users by default. If you’re a parent or guardian with a concern about your child’s account, contact us via the About page.</p>
+          <p>Many people on {brand.name} are teenagers. We don’t run targeted ads, don’t sell data, and keep private information (email, date of birth) hidden from other users by default. Qatar’s data protection law calls for a parent or guardian’s consent before a child’s data is processed; today {brand.name} relies on the account holder to give an honest date of birth rather than a separate parental-consent step, so a parent or guardian should be aware of and involved in a younger user’s account. If you’re a parent or guardian with a concern about your child’s account, contact us via the About page and we’ll act on it directly.</p>
+        </Section>
+
+        <Section heading="If something goes wrong">
+          <p>If a security incident exposes your personal data, we’ll tell you what happened and what we’re doing about it without undue delay, and notify Qatar’s National Cyber Security Agency where the law requires it.</p>
         </Section>
 
         <Section heading="Security">
@@ -67,7 +88,7 @@ export default function PrivacyView() {
         </Section>
 
         <Section heading="Contact">
-          <p>Questions about this policy are covered on the <a href="/about" className={colors.accent}>About page</a>.</p>
+          <p>Questions about this policy, or a request to access, correct or delete your data, are covered on the <a href="/about" className={colors.accent}>About page</a>.</p>
         </Section>
       </div>
     </div>

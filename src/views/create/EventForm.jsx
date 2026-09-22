@@ -10,7 +10,7 @@ import themeConfig from '../../theme/themeConfig';
 import { supabase } from '../../lib/supabaseClient';
 import { logUserAction } from '../../components/TelemetryLog';
 import { CONTACT_METHODS, EVENT_TYPES, validateContact } from '../../lib/options';
-import { ChipPicker, Field, SubmitButton, todayISO, useFormStyles } from './formKit';
+import { Field, SubmitButton, todayISO, useFormStyles } from './formKit';
 import PlacePicker from './PlacePicker';
 import { QuestionBuilder } from '../../components/Questions';
 import { cleanForSave } from '../../lib/questions';
@@ -18,7 +18,7 @@ import { useT } from '../../i18n';
 
 const DESCRIPTION_MIN = 50;
 
-export default function EventForm({ user, postedBy }) {
+export default function EventForm({ user, postedBy, onDone }) {
   const { t } = useT();
   const { colors } = themeConfig;
   const { input } = useFormStyles();
@@ -82,6 +82,7 @@ export default function EventForm({ user, postedBy }) {
     setBusy(false);
     if (insertError) return setError(insertError.message);
     // Photos are added from the event's own page (needs a real event id for Storage permissions).
+    onDone?.();
     navigate(`/events/${data.id}`);
   };
 
@@ -92,7 +93,12 @@ export default function EventForm({ user, postedBy }) {
       </Field>
 
       <Field label={t('Event type')}>
-        <ChipPicker options={EVENT_TYPES} value={type} onChange={setType} />
+        <select className={input} required value={type} onChange={(e) => setType(e.target.value)}>
+          <option value="" disabled>{t('Select…')}</option>
+          {EVENT_TYPES.map((opt) => (
+            <option key={opt} value={opt}>{t(opt)}</option>
+          ))}
+        </select>
       </Field>
 
       <div className="grid grid-cols-2 gap-2">

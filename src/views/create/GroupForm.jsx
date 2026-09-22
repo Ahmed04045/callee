@@ -37,7 +37,7 @@ const ERRORS = {
   BAD_NAME: 'Group name must be 3–60 characters.',
 };
 
-export default function GroupForm({ profile }) {
+export default function GroupForm({ profile, onDone }) {
   const { t } = useT();
   const { colors } = themeConfig;
   const { input } = useFormStyles();
@@ -92,6 +92,7 @@ export default function GroupForm({ profile }) {
       const key = Object.keys(ERRORS).find((k) => rpcError.message.includes(k));
       return setError(key ? t(ERRORS[key]) : rpcError.message);
     }
+    onDone?.();
     navigate('/my-submissions');
   };
 
