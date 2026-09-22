@@ -28,3 +28,6 @@ dist-ssr
 # Claude Code: local skill installs and machine-local settings, not project source.
 .claude/skills/
 .claude/settings.local.json
+
+# Supabase CLI local cache (created by `npx supabase`), not project source.
+supabase/.temp/

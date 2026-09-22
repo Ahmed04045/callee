@@ -84,6 +84,7 @@ export const ICON_MAP = {
   shield_person: 'shield',
   star: 'star',
   storefront: 'store',
+  upload_file: 'upload',
   verified: 'check-double',
   visibility: 'eye',
   work: 'briefcase',
