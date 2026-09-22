@@ -17,7 +17,7 @@ create unique index if not exists idx_event_attendees_ticket_code on event_atten
 alter table event_attendees add column if not exists checked_in_at timestamptz;
 alter table event_attendees add column if not exists checked_in_by uuid references auth.users(id) on delete set null;
 
--- Scan / enter a ticket code. Only the event's organizer (or an admin) may check
+-- Scan / enter a ticket code. Only the event's organizer (or an admain) may check
 -- people in. Returns jsonb: { status: OK | ALREADY | OWN_TICKET | FORBIDDEN | NOT_FOUND, ... }
 -- Nothing about the holder is revealed unless the caller is allowed to see it.
 create or replace function public.check_in_ticket(p_code text) returns jsonb
