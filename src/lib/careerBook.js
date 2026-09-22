@@ -1,6 +1,6 @@
 // src/lib/careerBook.js
 //
-// The six entry types a personal profile's Career Book can hold. Kept to
+// The six entry types a personal profile's Receipts section can hold. Kept to
 // one shared field set (title, organization, role, dates, description,
 // link) across all six rather than a different form per type — the type
 // itself is the signal, the fields don't need to change with it.
@@ -15,8 +15,6 @@ export const CAREER_KINDS = [
 ];
 
 export const kindMeta = (id) => CAREER_KINDS.find((k) => k.id === id) ?? CAREER_KINDS[0];
-
-export const AURA_PER_ENTRY = 10;
 
 /** A short "Jan 2025 – Mar 2025" / "Jan 2025 – Present" range from what the entry has. */
 export function dateRange(entry, t, locale) {

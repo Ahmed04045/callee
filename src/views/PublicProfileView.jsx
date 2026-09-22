@@ -14,6 +14,7 @@ import SubPageHeader from '../components/SubPageHeader';
 import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { CareerBookSection } from '../components/CareerBook';
+import { IdentityWordBanner } from '../components/IdentityWord';
 import { useT } from '../i18n';
 
 export default function PublicProfileView() {
@@ -102,11 +103,14 @@ export default function PublicProfileView() {
 
           {person.account_type === 'personal' && (
             <div className="flex flex-wrap justify-center gap-2">
-              <span className={`text-[11px] font-bold px-2.5 py-1 ${radius.full} ${colors.accentSoftBg} ${colors.accent}`}>{t('{n} Aura', { n: person.aura ?? 0 })}</span>
               <span className={`text-[11px] font-semibold px-2.5 py-1 ${radius.full} border ${colors.border} ${colors.textMuted} flex items-center gap-1`}>
                 <Icon name="visibility" size={12} /> {t('{n} profile views', { n: person.profile_views ?? 0 })}
               </span>
             </div>
+          )}
+
+          {person.account_type === 'personal' && person.identity_word && (
+            <IdentityWordBanner word={person.identity_word} reason={person.identity_word_reason} own={false} />
           )}
 
           {person.looking_for?.length > 0 && (

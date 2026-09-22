@@ -24,6 +24,7 @@ import { supabase } from '../lib/supabaseClient';
 import { GIG_TAGS } from '../lib/options';
 import { ChipPicker } from './create/formKit';
 import { CareerBookSection } from '../components/CareerBook';
+import { IdentityWordBanner, IdentityWordQuiz } from '../components/IdentityWord';
 import { useT } from '../i18n';
 
 const BIO_MAX = 200;
@@ -50,6 +51,7 @@ export default function ProfileView() {
   const [isPublic, setIsPublic] = useState(true);
   const [lookingFor, setLookingFor] = useState([]);
   const [entries, setEntries] = useState([]);
+  const [wordQuizOpen, setWordQuizOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notice, setNotice] = useState(null);
@@ -245,7 +247,6 @@ export default function ProfileView() {
           </p>
           {profile?.account_type === 'personal' && (
             <div className="flex items-center justify-center gap-2 mt-2">
-              <span className={`text-[11px] font-bold px-2.5 py-1 ${radius.full} ${colors.accentSoftBg} ${colors.accent}`}>{t('{n} Aura', { n: profile?.aura ?? 0 })}</span>
               <span className={`text-[11px] font-semibold px-2.5 py-1 ${radius.full} border ${colors.border} ${colors.textMuted} flex items-center gap-1`}>
                 <Icon name="visibility" size={12} /> {t('{n} profile views', { n: profile?.profile_views ?? 0 })}
               </span>
@@ -262,6 +263,10 @@ export default function ProfileView() {
           )}
         </div>
 
+        {profile?.account_type === 'personal' && (
+          <IdentityWordBanner word={profile?.identity_word} reason={profile?.identity_word_reason} own onFind={() => setWordQuizOpen(true)} />
+        )}
+
         <button
           onClick={() => {
             logUserAction('SIGN_OUT_CLICK', {});
@@ -272,6 +277,16 @@ export default function ProfileView() {
           <Icon name="logout" size={14} /> {t('Sign out')}
         </button>
       </div>
+
+      {wordQuizOpen && (
+        <IdentityWordQuiz
+          onClose={() => setWordQuizOpen(false)}
+          onSaved={async (word, reason) => {
+            await saveProfile({ identity_word: word, identity_word_reason: reason });
+            setWordQuizOpen(false);
+          }}
+        />
+      )}
 
       {/* Editable profile */}
       {profileStatus === 'loading' && !profile && (
@@ -453,7 +468,7 @@ function ProfileReadiness({ profile, hasEntry }) {
     { id: 'bio', label: t('A short bio'), done: Boolean(profile?.bio) },
     { id: 'avatar', label: t('A profile photo'), done: Boolean(profile?.avatar_url) },
     { id: 'looking_for', label: t('What you are looking for'), done: (profile?.looking_for?.length ?? 0) > 0 },
-    { id: 'entry', label: t('One Career Book entry'), done: hasEntry },
+    { id: 'entry', label: t('One receipt'), done: hasEntry },
   ];
   const met = criteria.filter((c) => c.done).length;
 

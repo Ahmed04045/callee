@@ -53,7 +53,7 @@ function NavButton({ item, isActive, onSelect, orientation }) {
         <span className={`-mt-5 w-12 h-12 flex items-center justify-center ${colors.accentBg} ${colors.accentOn} rounded-[var(--r-md)] border-2 border-md3-surface`}>
           <Icon name={item.iconSource} size={26} className="text-inherit" />
         </span>
-        <span className={`text-[9px] font-mono font-bold uppercase tracking-wider mt-0.5 ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
+        <span className={`text-[9px] font-sans font-bold uppercase tracking-wider mt-0.5 ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
       </button>
     );
   }
@@ -76,7 +76,7 @@ function NavButton({ item, isActive, onSelect, orientation }) {
       <span className={isActive ? colors.accent : nav.itemText}>
         <NavGlyph item={item} active={isActive} size={22} />
       </span>
-      <span className={`text-[9px] font-mono font-bold uppercase tracking-wider ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
+      <span className={`text-[9px] font-sans font-bold uppercase tracking-wider ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
     </button>
   );
 }

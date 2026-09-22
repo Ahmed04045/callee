@@ -1,9 +1,10 @@
 // src/components/CareerBook.jsx
 //
-// A personal profile's Career Book: structured proof-of-work entries
+// A personal profile's Receipts: structured proof-of-work entries
 // (projects, experience, achievements, competitions, leadership,
-// milestones). `CareerBookSection` renders the list — editable on your own
-// profile, read-only on someone else's — and owns the add/edit/delete
+// milestones) — the name is on-screen only, the table underneath is still
+// career_entries. `CareerBookSection` renders the list — editable on your
+// own profile, read-only on someone else's — and owns the add/edit/delete
 // calls itself so a page just has to pass it the entries it already loaded.
 // `CareerEntryModal` is the two-step dialog (pick a type, then fill it in)
 // used to add or edit one entry.
@@ -76,7 +77,7 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
     <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')}>
       <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
         <div className="flex items-start justify-between gap-4">
-          <h2 className={`text-lg font-bold ${colors.textWhite}`}>{entry?.id ? t('Edit entry') : t('Add to your Career Book')}</h2>
+          <h2 className={`text-lg font-bold ${colors.textWhite}`}>{entry?.id ? t('Edit entry') : t('Add a receipt')}</h2>
           <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>
             <Icon name="close" size={20} />
           </button>
@@ -220,7 +221,7 @@ export function CVImportModal({ userId, onImported, onClose }) {
 
         {!proposals ? (
           <div className="space-y-4">
-            <p className={`text-xs ${colors.textFaint}`}>{t('Upload your CV and we’ll suggest Career Book entries from it — review and edit before anything is saved.')}</p>
+            <p className={`text-xs ${colors.textFaint}`}>{t('Upload your CV and we’ll suggest receipts from it — review and edit before anything is saved.')}</p>
             <label className={`flex items-center gap-3 p-3 ${colors.bgInset} border ${colors.border} ${radius.md} cursor-pointer`}>
               <Icon name="upload_file" size={18} className={colors.accent} />
               <span className={`text-sm ${colors.textWhite} truncate`}>{file ? file.name : t('Choose a PDF')}</span>
@@ -307,7 +308,7 @@ export function CareerBookSection({ userId, entries, own, onChanged }) {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 className={`text-sm font-bold ${colors.textWhite} flex items-center gap-2`}>
-          <Icon name="auto_stories" size={16} className={colors.accent} /> {t('Career Book')}
+          <Icon name="auto_stories" size={16} className={colors.accent} /> {t('Receipts')}
         </h2>
         {own && (
           <div className="flex items-center gap-3">

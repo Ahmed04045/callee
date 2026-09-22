@@ -14,6 +14,7 @@ export const ICON_MAP = {
   arrow_back: 'arrow-left',
   arrow_forward: 'arrow-right',
   arrow_upward: 'arrow-up',
+  auto_awesome: 'sparkles',
   auto_stories: 'book-open',
   badge: 'membercard',
   bolt: 'zap',
