@@ -63,20 +63,14 @@ function NavButton({ item, isActive, onSelect, orientation }) {
       onClick={() => onSelect(item.id)}
       aria-current={isActive ? 'page' : undefined}
       title={t(item.label)}
-      className={`relative flex flex-col items-center gap-1 ${nav.itemRadius} ${nav.itemHoverBg} ${
+      className={`relative flex flex-col items-center gap-1 ${nav.itemRadius} transition-all duration-200 ease-out active:scale-95 ${
         isVertical ? 'w-full py-2.5' : 'flex-1 py-1.5'
-      } ${isActive ? 'bg-md3-primary/10' : ''}`}
+      } ${isActive ? 'bg-md3-primary/12' : `${nav.itemHoverBg} hover:scale-[1.04]`}`}
     >
-      {isActive && (
-        <span
-          className={`absolute bg-md3-primary ${isVertical ? 'start-0 top-2 bottom-2 w-[3px]' : 'top-0 start-3 end-3 h-[3px]'}`}
-          aria-hidden="true"
-        />
-      )}
-      <span className={isActive ? colors.accent : nav.itemText}>
+      <span className={`transition-transform duration-200 ease-out ${isActive ? `scale-110 ${colors.accent}` : nav.itemText}`}>
         <NavGlyph item={item} active={isActive} size={22} />
       </span>
-      <span className={`text-[9px] font-sans font-bold uppercase tracking-wider ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
+      <span className={`text-[9px] font-sans font-bold uppercase tracking-wider transition-colors duration-200 ${isActive ? colors.accent : nav.itemText}`}>{t(item.label)}</span>
     </button>
   );
 }
@@ -89,7 +83,7 @@ export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, b
     <>
       {/* DESKTOP: fixed left icon rail */}
       <aside
-        className={`hidden md:flex flex-col fixed start-0 top-0 h-screen ${layout.sidebarWidth} ${colors.bgPanel} border-e ${colors.border} z-40`}
+        className={`hidden md:flex flex-col fixed left-0 top-0 h-screen ${layout.sidebarWidth} ${colors.bgPanel} border-r ${colors.border} z-40`}
       >
         <button
           onClick={() => onNavigate(items[0]?.id ?? 'main')}
@@ -114,7 +108,7 @@ export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, b
 
       {/* MOBILE: fixed bottom bar */}
       <nav
-        className={`flex md:hidden fixed bottom-0 start-0 end-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
+        className={`flex md:hidden fixed bottom-0 left-0 right-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
       >
         {items.map((item) => (
           <NavButton key={item.id} item={item} isActive={activeTab === item.id} onSelect={onNavigate} orientation="horizontal" />

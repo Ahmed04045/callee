@@ -15,6 +15,7 @@ import Icon from '../components/Icon';
 import { PixelAvatar, PixelCover } from '../components/Pixel';
 import { CareerBookSection } from '../components/CareerBook';
 import { IdentityWordBanner } from '../components/IdentityWord';
+import SocialLinksRow from '../components/SocialLinksRow';
 import { useT } from '../i18n';
 
 export default function PublicProfileView() {
@@ -112,6 +113,8 @@ export default function PublicProfileView() {
           {person.account_type === 'personal' && person.identity_word && (
             <IdentityWordBanner word={person.identity_word} reason={person.identity_word_reason} own={false} />
           )}
+
+          <SocialLinksRow profile={person} />
 
           {person.looking_for?.length > 0 && (
             <div className="flex flex-wrap justify-center gap-1.5">

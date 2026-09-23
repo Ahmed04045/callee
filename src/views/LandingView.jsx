@@ -17,7 +17,10 @@ import { useTheme } from '../theme/theme';
 import Icon from '../components/Icon';
 import { PixelCover, PixelSprite } from '../components/Pixel';
 import { EventCard } from '../components/FeedCards';
+import RotatingWord from '../components/RotatingWord';
 import { useT } from '../i18n';
+
+const HERO_ROTATING_WORDS = ['people.', 'clubs.', 'gigs.', 'events.', 'crew.'];
 
 const FEATURES = [
   { icon: 'event_available', title: 'Events near you', text: 'Find hackathons, workshops and meetups, RSVP in one tap, and see them on a map.' },
@@ -121,7 +124,7 @@ export default function LandingView({ onOpenAuthModal }) {
           <div className="relative max-w-6xl mx-auto px-4 pt-16 pb-28 md:pt-24 md:pb-36 grid md:grid-cols-[1fr_auto] gap-10 items-center">
             <div className="space-y-6">
               <h1 className={`text-4xl sm:text-6xl ${font.heading} ${colors.textWhite} leading-[1.05]`}>
-                {t(brand.tagline)}
+                {t('Find your')} <RotatingWord words={HERO_ROTATING_WORDS.map((w) => t(w))} />
                 <br />
                 <span className={colors.secondary}>{t(brand.subTagline)}</span>
               </h1>

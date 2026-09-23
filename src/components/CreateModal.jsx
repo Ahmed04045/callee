@@ -16,6 +16,7 @@
 // CreateModalContext, so any page can open it without a route change.
 
 import themeConfig from '../theme/themeConfig';
+import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
 import { useCreateModal } from '../context/CreateModalContext';
@@ -23,6 +24,7 @@ import Icon from './Icon';
 import GigForm from '../views/create/GigForm';
 import EventForm from '../views/create/EventForm';
 import GroupForm from '../views/create/GroupForm';
+import { CareerEntryModal } from './CareerBook';
 import { useT } from '../i18n';
 
 export default function CreateModal() {
@@ -46,13 +48,28 @@ export default function CreateModal() {
     },
     { id: 'event', icon: 'event_available', label: 'Event', hint: 'Something people RSVP to — a hackathon, workshop, meetup or social.' },
     { id: 'group', icon: 'groups', label: 'Group', hint: 'Start a private club or student-run group people request to join.' },
+    { id: 'receipt', icon: 'auto_stories', label: 'Receipt', hint: 'Add proof of work to your profile — a project, achievement or experience.' },
   ];
   const current = types.find((tItem) => tItem.id === type);
   const postedBy = profile?.display_name?.trim() || (profile?.username ? `@${profile.username}` : user.email);
 
+  if (current?.id === 'receipt') {
+    return (
+      <CareerEntryModal
+        onClose={() => setType(null)}
+        onSubmit={async (payload) => {
+          const { error } = await supabase.from('career_entries').insert({ user_id: user.id, ...payload });
+          if (error) return error.message;
+          close();
+          return null;
+        }}
+      />
+    );
+  }
+
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Create')}>
-      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Create')} onClick={close}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className={`text-lg ${font.heading} ${colors.textWhite} flex items-center gap-2`}>

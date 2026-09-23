@@ -25,6 +25,8 @@ import { GIG_TAGS } from '../lib/options';
 import { ChipPicker } from './create/formKit';
 import { CareerBookSection } from '../components/CareerBook';
 import { IdentityWordBanner, IdentityWordQuiz } from '../components/IdentityWord';
+import SocialLinksRow from '../components/SocialLinksRow';
+import { SOCIAL_LINKS } from '../lib/socialLinks';
 import { useT } from '../i18n';
 
 const BIO_MAX = 200;
@@ -50,6 +52,7 @@ export default function ProfileView() {
   const [usernameState, setUsernameState] = useState('idle'); // idle | checking | ok | taken | invalid
   const [isPublic, setIsPublic] = useState(true);
   const [lookingFor, setLookingFor] = useState([]);
+  const [socialLinks, setSocialLinks] = useState({});
   const [entries, setEntries] = useState([]);
   const [wordQuizOpen, setWordQuizOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -79,6 +82,7 @@ export default function ProfileView() {
       setUsername(profile.username ?? '');
       setIsPublic(profile.is_public !== false);
       setLookingFor(profile.looking_for ?? []);
+      setSocialLinks(Object.fromEntries(SOCIAL_LINKS.map((s) => [s.key, profile[s.key] ?? ''])));
 
       const storedUniversity = profile.university ?? '';
       if (storedUniversity && EDUCATION_OPTIONS.includes(storedUniversity)) {
@@ -172,6 +176,7 @@ export default function ProfileView() {
       username: username || null,
       is_public: isPublic,
       looking_for: lookingFor,
+      ...Object.fromEntries(SOCIAL_LINKS.map((s) => [s.key, socialLinks[s.key]?.trim() || null])),
     });
 
     setIsSaving(false);
@@ -201,24 +206,37 @@ export default function ProfileView() {
     invalid: ['3–20 characters: letters, numbers, underscore', colors.error],
   }[usernameState];
 
+  const isPersonal = profile?.account_type === 'personal';
+
   return (
-    <div className="w-full max-w-md mx-auto space-y-6">
+    <div className={`w-full ${isPersonal ? 'max-w-5xl' : 'max-w-lg'} mx-auto`}>
+    <div className={isPersonal ? 'grid md:grid-cols-[1fr_1.15fr] gap-6 lg:gap-8 items-start' : ''}>
+      {isPersonal && (
+        <div className="space-y-6 order-2 md:order-1">
+          <ProfileReadiness profile={profile} hasEntry={entries.length > 0} />
+          <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-6`}>
+            <CareerBookSection userId={user.id} entries={entries} own onChanged={loadEntries} />
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-6 order-1 md:order-2">
       {/* Identity */}
-      <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-6 text-center space-y-4`}>
-        <div className="-mx-6 -mt-6 h-24">
+      <div className={`${colors.bgCard} border ${colors.border} ${radius.lg} p-7 text-center space-y-4`}>
+        <div className="-mx-7 -mt-7 h-28">
           <PixelCover seed={profile?.username || user.id} cols={72} rows={10} />
         </div>
         <button
           type="button"
           onClick={() => avatarInputRef.current?.click()}
           disabled={isUploadingAvatar}
-          className={`relative -mt-14 w-20 h-20 mx-auto block rounded-[var(--r-md)] overflow-hidden group border-4 border-md3-surfaceContainer bg-md3-surfaceContainer`}
+          className={`relative -mt-16 w-24 h-24 mx-auto block rounded-[var(--r-md)] overflow-hidden group border-4 border-md3-surfaceContainer bg-md3-surfaceContainer`}
           title={t('Change photo')}
         >
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
           ) : (
-            <PixelAvatar seed={profile?.username || user.id} size={80} className="w-full h-full" />
+            <PixelAvatar seed={profile?.username || user.id} size={96} className="w-full h-full" />
           )}
           <div
             className={`absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center`}
@@ -240,7 +258,7 @@ export default function ProfileView() {
         {avatarError && <p className={`text-[11px] ${colors.error}`}>{avatarError}</p>}
 
         <div>
-          <h3 className={`text-lg font-bold ${colors.textWhite} break-all`}>{heading}</h3>
+          <h3 className={`text-xl font-bold ${colors.textWhite} break-all`}>{heading}</h3>
           {profile?.username && <p className={`text-sm ${colors.accent}`}>@{profile.username}</p>}
           <p className={`text-xs ${colors.textFaint}`}>
             {displayName.trim() ? user.email : t('Signed in')}
@@ -266,6 +284,8 @@ export default function ProfileView() {
         {profile?.account_type === 'personal' && (
           <IdentityWordBanner word={profile?.identity_word} reason={profile?.identity_word_reason} own onFind={() => setWordQuizOpen(true)} />
         )}
+
+        <SocialLinksRow profile={profile} />
 
         <button
           onClick={() => {
@@ -400,6 +420,25 @@ export default function ProfileView() {
           </div>
         )}
 
+        <div className="block text-start space-y-2.5">
+          <span className={`text-[11px] font-semibold ${colors.textFaint}`}>
+            {t('Social links')} <span className={colors.textDim}>{t('(optional)')}</span>
+          </span>
+          {SOCIAL_LINKS.map((s) => (
+            <div key={s.key} className="relative">
+              <Icon name={s.icon} size={16} className={`absolute start-3 top-1/2 -translate-y-1/2 ${colors.textFaint}`} />
+              <input
+                type="url"
+                maxLength={300}
+                value={socialLinks[s.key] ?? ''}
+                onChange={(e) => setSocialLinks((prev) => ({ ...prev, [s.key]: e.target.value }))}
+                placeholder={t(s.placeholder)}
+                className={`w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} ps-9 pe-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary ${colors.transition}`}
+              />
+            </div>
+          ))}
+        </div>
+
         <label
           className={`flex items-center justify-between p-3 ${colors.bgInset} ${radius.md} border ${colors.border}`}
         >
@@ -443,15 +482,8 @@ export default function ProfileView() {
           {t('Save profile')}
         </button>
       </form>
-
-      {profile?.account_type === 'personal' && (
-        <>
-          <ProfileReadiness profile={profile} hasEntry={entries.length > 0} />
-          <div className={`${colors.bgCardSoft} border ${colors.border} ${radius.lg} p-5`}>
-            <CareerBookSection userId={user.id} entries={entries} own onChanged={loadEntries} />
-          </div>
-        </>
-      )}
+      </div>
+    </div>
     </div>
   );
 }

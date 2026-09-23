@@ -103,7 +103,7 @@ const themeConfig = {
   layout: {
     sidebarWidth: 'w-[76px]',
     sidebarWidthLg: '',
-    sidebarOffset: 'md:ps-[76px]',
+    sidebarOffset: 'md:pl-[76px]',
     mobileNavHeight: 'h-14',
     mobileNavOffset: 'pb-14 md:pb-0',
     contentMaxWidth: 'w-full',

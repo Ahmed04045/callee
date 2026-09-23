@@ -78,9 +78,11 @@ export default function AuthModal({ isOpen, initialMode = 'signIn', onClose }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-modal-title"
+      onClick={resetAndClose}
     >
       <div
         className={`w-full max-w-sm ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} ${spacing.card} relative shadow-xl`}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={resetAndClose}

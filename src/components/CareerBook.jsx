@@ -21,7 +21,7 @@
 import { useState } from 'react';
 import themeConfig from '../theme/themeConfig';
 import { supabase } from '../lib/supabaseClient';
-import { CAREER_KINDS, kindMeta, dateRange } from '../lib/careerBook';
+import { CAREER_KINDS, kindMeta, kindFields, dateRange } from '../lib/careerBook';
 import Icon from './Icon';
 import { useT } from '../i18n';
 
@@ -45,13 +45,9 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
 
   const input = inputClass(colors, radius);
   const meta = kind ? kindMeta(kind) : null;
-  const orgLabel =
-    {
-      experience: t('Company or organization'),
-      competition: t('Competition or event name'),
-      leadership: t('Team or organization'),
-      achievement: t('Awarded by'),
-    }[kind] ?? t('Organization (optional)');
+  const fields = kind ? kindFields(kind) : null;
+  const showOrg = fields?.organization?.label != null;
+  const showRole = fields?.role?.label != null;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -74,8 +70,8 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')}>
-      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')} onClick={onClose}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <h2 className={`text-lg font-bold ${colors.textWhite}`}>{entry?.id ? t('Edit entry') : t('Add a receipt')}</h2>
           <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>
@@ -112,34 +108,44 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
             )}
 
             <label className="block">
-              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Title')}</span>
-              <input className={`${input} mt-1.5`} required maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('e.g. Campus food-delivery app')} />
+              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t(fields.title.label)}</span>
+              <input className={`${input} mt-1.5`} required maxLength={100} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t(fields.title.placeholder)} />
             </label>
 
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className={`text-xs font-semibold ${colors.textWhite}`}>{orgLabel}</span>
-                <input className={`${input} mt-1.5`} maxLength={100} value={organization} onChange={(e) => setOrganization(e.target.value)} />
-              </label>
-              <label className="block">
-                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Your role (optional)')}</span>
-                <input className={`${input} mt-1.5`} maxLength={100} value={role} onChange={(e) => setRole(e.target.value)} />
-              </label>
-            </div>
+            {(showOrg || showRole) && (
+              <div className="grid grid-cols-2 gap-2">
+                {showOrg && (
+                  <label className="block">
+                    <span className={`text-xs font-semibold ${colors.textWhite}`}>{t(fields.organization.label)}</span>
+                    <input className={`${input} mt-1.5`} maxLength={100} placeholder={t(fields.organization.placeholder ?? '')} value={organization} onChange={(e) => setOrganization(e.target.value)} />
+                  </label>
+                )}
+                {showRole && (
+                  <label className="block">
+                    <span className={`text-xs font-semibold ${colors.textWhite}`}>{t(fields.role.label)}</span>
+                    <input className={`${input} mt-1.5`} maxLength={100} placeholder={t(fields.role.placeholder ?? '')} value={role} onChange={(e) => setRole(e.target.value)} />
+                  </label>
+                )}
+              </div>
+            )}
 
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block">
-                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Started')}</span>
-                <input type="date" className={`${input} mt-1.5`} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-              </label>
-              <label className={`block ${isOngoing ? 'opacity-40' : ''}`}>
-                <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Ended')}</span>
-                <input type="date" disabled={isOngoing} className={`${input} mt-1.5`} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-              </label>
-            </div>
-            <label className={`flex items-center gap-2 text-xs ${colors.textMuted}`}>
-              <input type="checkbox" checked={isOngoing} onChange={(e) => setIsOngoing(e.target.checked)} className="accent-md3-primary" /> {t('Still ongoing')}
-            </label>
+            {fields.showDates && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Started')}</span>
+                    <input type="date" className={`${input} mt-1.5`} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                  </label>
+                  <label className={`block ${isOngoing ? 'opacity-40' : ''}`}>
+                    <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Ended')}</span>
+                    <input type="date" disabled={isOngoing} className={`${input} mt-1.5`} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                  </label>
+                </div>
+                <label className={`flex items-center gap-2 text-xs ${colors.textMuted}`}>
+                  <input type="checkbox" checked={isOngoing} onChange={(e) => setIsOngoing(e.target.checked)} className="accent-md3-primary" /> {t('Still ongoing')}
+                </label>
+              </>
+            )}
 
             <label className="block">
               <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Description (optional)')}</span>
@@ -147,8 +153,8 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
             </label>
 
             <label className="block">
-              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t('Link to proof (optional)')}</span>
-              <input className={`${input} mt-1.5`} maxLength={300} placeholder="https://" value={link} onChange={(e) => setLink(e.target.value)} />
+              <span className={`text-xs font-semibold ${colors.textWhite}`}>{t(fields.link.label)}</span>
+              <input className={`${input} mt-1.5`} maxLength={300} placeholder={t(fields.link.placeholder)} value={link} onChange={(e) => setLink(e.target.value)} />
             </label>
 
             {error && <p className={`text-xs ${colors.error}`}>{error}</p>}
@@ -210,8 +216,8 @@ export function CVImportModal({ userId, onImported, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[91] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Import from CV')}>
-      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`}>
+    <div className="fixed inset-0 z-[91] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Import from CV')} onClick={onClose}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`} onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <h2 className={`text-lg font-bold ${colors.textWhite}`}>{t('Import from CV')}</h2>
           <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>

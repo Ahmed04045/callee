@@ -290,6 +290,19 @@ a {
   animation: modal-panel-in 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Landing hero's rotating word — each new word rises in and settles,
+   the old one is simply gone (key-swapped by React, not cross-faded). */
+@keyframes word-rotate-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.4em);
+  }
+}
+.animate-word-rotate {
+  display: inline-block;
+  animation: word-rotate-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Stepped (frame-by-frame) transitions instead of smooth easing. */
 .px-steps {
   transition-timing-function: steps(4, end);

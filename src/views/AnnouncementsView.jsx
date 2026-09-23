@@ -1,8 +1,10 @@
 // src/views/AnnouncementsView.jsx
 
 import React, { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
+import { useAuth } from '../context/AuthContext';
 import Icon from '../components/Icon';
 import { useT } from '../i18n';
 
@@ -15,14 +17,17 @@ function formatDate(dateString) {
 
 function AnnouncementCard({ item }) {
   const { colors, radius } = themeConfig;
+  const { locale } = useT();
+  const title = (locale === 'ar' && item.title_ar?.trim()) || item.title;
+  const content = (locale === 'ar' && item.content_ar?.trim()) || item.content;
   return (
     <article className={`${colors.bgCardStrong} border ${colors.border} ${radius.lg} p-6 space-y-3`}>
       <div className={`flex justify-between items-center text-xs ${colors.textFaint}`}>
         <span className={`${colors.textWhite} font-bold`}>{item.author}</span>
         <span>{formatDate(item.published_at)}</span>
       </div>
-      <h3 className={`text-base font-bold ${colors.textWhite}`}>{item.title}</h3>
-      <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{item.content}</p>
+      <h3 className={`text-base font-bold ${colors.textWhite}`}>{title}</h3>
+      <p className={`text-sm ${colors.textMuted} leading-relaxed`}>{content}</p>
     </article>
   );
 }
@@ -30,6 +35,7 @@ function AnnouncementCard({ item }) {
 export default function AnnouncementsView() {
   const { t } = useT();
   const { colors } = themeConfig;
+  const { isAdmin } = useAuth();
   const { data: announcements, status } = useSupabaseTable('announcements', {
     orderBy: 'published_at',
     ascending: false,
@@ -46,11 +52,18 @@ export default function AnnouncementsView() {
 
   return (
     <div className="w-full space-y-8">
-      <div className={`border-b ${colors.border} pb-3`}>
-        <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Broadcast Announcements')}</h2>
-        <p className={`text-xs ${colors.textFaint} mt-1`}>
-          {t('Official platform updates and what\'s happening in the local youth ecosystem.')}
-        </p>
+      <div className={`border-b ${colors.border} pb-3 flex items-start justify-between gap-3`}>
+        <div>
+          <h2 className={`text-xl font-bold ${colors.textWhite}`}>{t('Broadcast Announcements')}</h2>
+          <p className={`text-xs ${colors.textFaint} mt-1`}>
+            {t('Official platform updates and what\'s happening in the local youth ecosystem.')}
+          </p>
+        </div>
+        {isAdmin && (
+          <Link to="/admin/announcements" className={`shrink-0 flex items-center gap-1.5 text-xs font-bold ${colors.accent}`}>
+            <Icon name="add_circle" size={14} className="text-inherit" /> {t('New announcement')}
+          </Link>
+        )}
       </div>
 
       {status === 'loading' && <p className={`text-xs ${colors.textFaint}`}>{t('Loading…')}</p>}

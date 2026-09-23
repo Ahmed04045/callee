@@ -38,6 +38,7 @@ import AdminOverview from './views/admin/AdminOverview';
 import AdminGigs from './views/admin/AdminGigs';
 import AdminEvents from './views/admin/AdminEvents';
 import AdminGroups from './views/admin/AdminGroups';
+import AdminAnnouncements from './views/admin/AdminAnnouncements';
 import AdminModerators from './views/admin/AdminModerators';
 import AdminPeople from './views/admin/AdminPeople';
 import AdminActivity from './views/admin/AdminActivity';
@@ -108,6 +109,10 @@ const SETTINGS_NAV_ITEM = {
 // is included for the same visual effect even though it's a different
 // kind of full-screen page (a forced interstitial, not a drill-down).
 const IMMERSIVE_PATHS = ['/account', '/theme', '/settings/notifications', '/terms', '/privacy', '/about', '/my-submissions', '/connect-discord', ONBOARDING_PATH];
+
+// Pages only reachable from Settings — the Settings rail icon should stay
+// highlighted on all of these, not just on /settings itself.
+const SETTINGS_SUB_PATHS = ['/account', '/theme', '/settings/notifications', '/terms', '/privacy', '/about'];
 const isImmersivePath = (pathname) =>
   IMMERSIVE_PATHS.includes(pathname) ||
   pathname.startsWith('/clubs/') ||
@@ -212,7 +217,7 @@ function AppShell() {
   const activeItem = lookupItems.find((item) =>
     item.path === '/' ? location.pathname === '/' : item.path && location.pathname.startsWith(item.path)
   );
-  const activeTab = activeItem?.id ?? 'main';
+  const activeTab = SETTINGS_SUB_PATHS.includes(location.pathname) ? 'settings' : (activeItem?.id ?? 'main');
   const activeLabel = activeItem?.label ?? '';
 
   const navigateToTab = (tabId) => {
@@ -362,6 +367,7 @@ function AppShell() {
               <Route path="gigs" element={<AdminGigs />} />
               <Route path="events" element={<AdminEvents />} />
               <Route path="groups" element={<AdminGroups />} />
+              <Route path="announcements" element={<AdminAnnouncements />} />
               <Route path="moderators" element={<AdminModerators />} />
               <Route path="people" element={<AdminPeople />} />
               <Route path="reports" element={<AdminReports />} />
