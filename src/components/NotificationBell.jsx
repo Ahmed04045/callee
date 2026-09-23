@@ -45,7 +45,7 @@ export default function NotificationBell() {
         aria-label={unread ? t('Notifications, {n} unread', { n: unread }) : t('Notifications')}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`relative p-2 ${radius.md} ${colors.bgHoverInset}`}
+        className={`relative h-9 w-9 flex items-center justify-center ${radius.md} ${colors.bgHoverInset}`}
       >
         <Icon name="notifications" size={20} />
         {unread > 0 && (

@@ -93,7 +93,7 @@ export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, b
           <LogoMark size={30} />
         </button>
 
-        <nav className="flex-1 flex flex-col gap-1 px-1.5 py-3">
+        <nav className="flex-1 flex flex-col gap-1 px-1.5 py-3 overflow-hidden">
           {items.map((item) => (
             <NavButton key={item.id} item={item} isActive={activeTab === item.id} onSelect={onNavigate} orientation="vertical" />
           ))}
@@ -108,7 +108,7 @@ export default function SidebarNav({ activeTab, onNavigate, items = NAV_ITEMS, b
 
       {/* MOBILE: fixed bottom bar */}
       <nav
-        className={`flex md:hidden fixed bottom-0 left-0 right-0 ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
+        className={`flex md:hidden fixed bottom-0 left-0 right-0 overflow-hidden ${layout.mobileNavHeight} ${colors.bgPanel} border-t ${colors.border} z-40 pb-[env(safe-area-inset-bottom)]`}
       >
         {items.map((item) => (
           <NavButton key={item.id} item={item} isActive={activeTab === item.id} onSelect={onNavigate} orientation="horizontal" />

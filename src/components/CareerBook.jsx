@@ -28,7 +28,7 @@ import { useT } from '../i18n';
 const inputClass = (colors, radius) =>
   `w-full ${colors.bgInset} border ${colors.borderStrong} ${radius.md} px-3 py-2.5 text-sm ${colors.textPrimary} focus:outline-none focus:border-md3-primary`;
 
-export function CareerEntryModal({ entry, onSubmit, onClose }) {
+export function CareerEntryModal({ entry, onSubmit, onClose, inline = false }) {
   const { t } = useT();
   const { colors, radius } = themeConfig;
   const [kind, setKind] = useState(entry?.kind ?? null);
@@ -69,14 +69,15 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
     if (problem) setError(problem);
   };
 
-  return (
-    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')} onClick={onClose}>
-      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`} onClick={(e) => e.stopPropagation()}>
+  const content = (
+    <>
         <div className="flex items-start justify-between gap-4">
           <h2 className={`text-lg font-bold ${colors.textWhite}`}>{entry?.id ? t('Edit entry') : t('Add a receipt')}</h2>
-          <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>
-            <Icon name="close" size={20} />
-          </button>
+          {onClose && (
+            <button type="button" onClick={onClose} aria-label={t('Close')} className={colors.textFaint}>
+              <Icon name="close" size={20} />
+            </button>
+          )}
         </div>
 
         {!meta ? (
@@ -163,6 +164,15 @@ export function CareerEntryModal({ entry, onSubmit, onClose }) {
             </button>
           </form>
         )}
+    </>
+  );
+
+  if (inline) return content;
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/60 sm:px-4 animate-modal-backdrop" role="dialog" aria-modal="true" aria-label={t('Add entry')} onClick={onClose}>
+      <div className={`w-full sm:max-w-lg max-h-[92vh] overflow-y-auto ${colors.bgCardStrong} border ${colors.borderStrong} ${radius.lg} p-5 space-y-5 animate-modal-in`} onClick={(e) => e.stopPropagation()}>
+        {content}
       </div>
     </div>
   );

@@ -45,7 +45,7 @@ export default function ThemeMenu() {
         title={t('Theme')}
         aria-haspopup="menu"
         aria-expanded={open}
-        className={`p-2 ${radius.md} ${colors.bgHoverInset}`}
+        className={`h-9 w-9 flex items-center justify-center ${radius.md} ${colors.bgHoverInset}`}
       >
         <Icon name="palette" size={20} />
       </button>

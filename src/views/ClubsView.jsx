@@ -7,11 +7,10 @@
 // your profile).
 
 import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import themeConfig from '../theme/themeConfig';
 import { useAuth } from '../context/AuthContext';
 import { useProfile } from '../context/ProfileContext';
-import { useCreateModal } from '../context/CreateModalContext';
 import { useSupabaseTable } from '../hooks/useSupabaseTable';
 import { CLUB_COLUMNS, MAX_CLUBS } from '../lib/clubUtil';
 import { CLUB_UNIVERSITIES } from '../lib/education';
@@ -36,7 +35,7 @@ export default function ClubsView() {
   const { t } = useT();
   const { colors, radius } = themeConfig;
   const { user } = useAuth();
-  const { open: openCreateModal } = useCreateModal();
+  const navigate = useNavigate();
   const { profile, saveProfile } = useProfile();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
@@ -160,7 +159,7 @@ export default function ClubsView() {
           {status === 'ready' && clubs.length === 0 && (
             <PixelEmpty sprite="ghost" title={t('No clubs at this university yet')}>
               {user ? (
-                <button type="button" onClick={() => openCreateModal('group')} className={`font-semibold ${colors.accent}`}>{t('Create the first group')}</button>
+                <button type="button" onClick={() => navigate('/create/group')} className={`font-semibold ${colors.accent}`}>{t('Create the first group')}</button>
               ) : (
                 t('Sign in to create the first group.')
               )}

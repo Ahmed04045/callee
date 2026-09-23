@@ -1,13 +1,11 @@
 // src/App.jsx
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import themeConfig from './theme/themeConfig';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProfileProvider, useProfile } from './context/ProfileContext';
-import { CreateModalProvider, useCreateModal } from './context/CreateModalContext';
-import CreateModal from './components/CreateModal';
 import { logUserAction } from './components/TelemetryLog';
 import AuthModal from './components/AuthModal';
 import SidebarNav, { NAV_ITEMS } from './components/SidebarNav';
@@ -32,6 +30,7 @@ import RecruitView from './views/RecruitView';
 import DiscoverView from './views/DiscoverView';
 import AnnouncementsView from './views/AnnouncementsView';
 import ProfileView from './views/ProfileView';
+import CreateView from './views/create/CreateView';
 import SettingsView from './views/SettingsView';
 import AdminLayout from './components/AdminLayout';
 import AdminOverview from './views/admin/AdminOverview';
@@ -65,13 +64,12 @@ const ONBOARDING_PATH = '/onboarding';
 // the primary nav — rendered as the desktop left rail / mobile bottom bar.
 // Everything else (Updates, Profile, Settings, Admin) lives in the header's
 // icon cluster or is unlisted entirely, and gets its own explicit <Route>
-// below instead of coming from this array. Create has no `path`: it opens
-// CreateModal instead of navigating (see navigateToTab's special case
-// below); `/create?type=...` still works as a direct link via the small
-// CreateRedirect route further down, for anything that linked straight to it.
+// below instead of coming from this array. Create is a real page
+// (/create, /create/:type) like everything else — see CreateView.
 const CREATE_NAV_ITEM = {
   id: 'create',
   label: 'Create',
+  path: '/create',
   iconType: 'material',
   iconSource: 'add_circle',
 };
@@ -140,6 +138,8 @@ function renderView(tabId, handlers) {
       return <ProfileView />;
     case 'settings':
       return <SettingsView />;
+    case 'create':
+      return <CreateView />;
     default:
       return null;
   }
@@ -156,7 +156,7 @@ function HeaderIconButton({ item, isActive, onClick, className = '' }) {
       onClick={onClick}
       title={t(item.label)}
       aria-current={isActive ? 'page' : undefined}
-      className={`p-2 rounded-full transition-colors ${
+      className={`h-9 w-9 flex items-center justify-center rounded-full transition-colors ${
         isActive ? colors.accentSoftBg : colors.bgHoverInset
       } ${className}`}
     >
@@ -172,7 +172,6 @@ function AppShell() {
   const { colors, layout, font } = themeConfig;
   const { status } = useAuth();
   const { profile, status: profileStatus, saveProfile } = useProfile();
-  const { open: openCreateModal } = useCreateModal();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -221,11 +220,6 @@ function AppShell() {
   const activeLabel = activeItem?.label ?? '';
 
   const navigateToTab = (tabId) => {
-    if (tabId === 'create') {
-      logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
-      openCreateModal();
-      return;
-    }
     const target = lookupItems.find((item) => item.id === tabId);
     if (!target) return;
     logUserAction('NAVIGATE_TAB', { from: activeTab, to: tabId });
@@ -236,7 +230,11 @@ function AppShell() {
     // Admin area: no visible nav entry, and no redirect either — AdminLayout shows
     // an "access required" screen (with a diagnostic) for non-admins. The real
     // gate is is_admin() in Postgres either way.
-    if (location.pathname === PROFILE_NAV_ITEM.path && status !== 'loading' && !isAuthenticated) {
+    if (
+      (location.pathname === PROFILE_NAV_ITEM.path || location.pathname.startsWith(CREATE_NAV_ITEM.path)) &&
+      status !== 'loading' &&
+      !isAuthenticated
+    ) {
       navigate(NAV_ITEMS[0].path, { replace: true });
     }
 
@@ -311,7 +309,7 @@ function AppShell() {
                   onClick={() => navigateToTab('profile')}
                   title={t('Your profile')}
                   aria-current={activeTab === 'profile' ? 'page' : undefined}
-                  className={`flex items-center gap-2 ps-1 pe-3 py-1 rounded-full transition-colors ${
+                  className={`h-9 flex items-center gap-2 ps-1 pe-3 rounded-full transition-colors ${
                     activeTab === 'profile' ? colors.accentSoftBg : colors.bgHoverInset
                   }`}
                 >
@@ -340,7 +338,7 @@ function AppShell() {
                     logUserAction('OPEN_AUTH_MODAL', { source: 'topbar' });
                     openAuthModal();
                   }}
-                  className={`flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 py-2 transition ms-1 whitespace-nowrap shrink-0`}
+                  className={`h-9 flex items-center gap-1.5 text-xs font-bold ${colors.accentOn} ${colors.accentBg} ${colors.accentBgHover} rounded-lg px-3 transition ms-1 whitespace-nowrap shrink-0`}
                 >
                   <Icon name="login" size={14} className="text-inherit" /> {t('Sign in')}
                 </button>
@@ -394,28 +392,15 @@ function AppShell() {
             <Route path="/events/:id/scan" element={<EventScanView />} />
             <Route path="/tickets" element={<TicketsView onOpenAuthModal={openAuthModal} />} />
             <Route path="/ticket/:code" element={<TicketCheckView onOpenAuthModal={openAuthModal} />} />
-            <Route path="/create" element={<CreateRedirect onOpen={openCreateModal} />} />
+            <Route path="/create/:type" element={<CreateView />} />
             <Route path="*" element={<Navigate to={NAV_ITEMS[0].path} replace />} />
           </Routes>
         </main>
       </div>
 
       <AuthModal isOpen={isAuthModalOpen} initialMode={authModalMode} onClose={closeAuthModal} />
-      <CreateModal />
     </div>
   );
-}
-
-// `/create?type=...` used to be a real page; anything that still links there
-// (an old bookmark, a saved share) opens the modal instead and bounces to `/`
-// rather than 404ing on the catch-all route.
-function CreateRedirect({ onOpen }) {
-  const [params] = useSearchParams();
-  useEffect(() => {
-    onOpen(params.get('type'));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return <Navigate to="/" replace />;
 }
 
 export default function App() {
@@ -424,9 +409,7 @@ export default function App() {
       <AuthProvider>
         <ProfileProvider>
           <NotificationsProvider>
-            <CreateModalProvider>
-              <AppShell />
-            </CreateModalProvider>
+            <AppShell />
           </NotificationsProvider>
         </ProfileProvider>
       </AuthProvider>

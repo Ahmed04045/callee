@@ -18,7 +18,7 @@ export default function LanguageSwitch() {
       title={t('Language')}
       aria-label={`${t('Language')}: ${other.label}`}
       lang={other.id}
-      className={`px-2.5 py-2 text-xs font-bold ${radius.md} ${colors.textMuted} ${colors.bgHoverInset}`}
+      className={`h-9 px-2.5 flex items-center justify-center text-xs font-bold ${radius.md} ${colors.textMuted} ${colors.bgHoverInset}`}
     >
       <span className="sm:hidden">{other.short}</span>
       <span className="hidden sm:inline">{other.label}</span>
