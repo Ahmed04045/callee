@@ -1,5 +1,7 @@
 # Contributing
 
+This project is released under the [MIT License](./LICENSE). The original creator is no longer actively developing it, and another student is welcome to carry it forward. Forks are encouraged; ongoing maintenance and prompt pull-request reviews are not promised. Read the [creator's note and migration guide](./README.md) for the project's background and setup details.
+
 Follow [README.md](./README.md) to configure your own Supabase project, apply the SQL files in order, and start the app. Copy `.env.example` to `.env.local` and use your own public credentials. Do not use production data for development.
 
 Before opening a pull request:
@@ -16,7 +18,7 @@ For a suspected security issue, do not include secrets, ticket codes, or persona
 
 ## Before the public release
 
-The maintainer still needs to choose and add a `LICENSE`, publish a security contact, review repository history for secrets, and arrange a native-speaker review of the Arabic copy. No license has been selected by this change.
+Before launching your own instance, publish a security contact, review repository history for secrets, and arrange a native-speaker review of the Arabic copy. The MIT license is included in `LICENSE`; keep its notice when reusing the code.
 
 ## Useful next features
 

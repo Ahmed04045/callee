@@ -2,6 +2,10 @@
 
 For setup steps, see [README.md](./README.md). This is how the app is built.
 
+The project is released under the [MIT License](./LICENSE). Its original creator is no longer actively developing it and welcomes students continuing the work in their own forks. See the [creator's note](./README.md#a-note-from-the-creator) and [live demo](https://callee-sooty.vercel.app/).
+
+The README's [database setup guide](./README.md#2-database-setup-supabase-sql-editor) explains every migration and separates essential schema changes from historical repairs and optional service setup. In particular, keep 008 for the current profile/account UI even without a running Discord bot, and keep 017's schema changes even without Gemini. Run repairs before later migrations that extend the same functions.
+
 ## What it is
 
 A community platform for university students in Qatar (currently UDST, more to follow):
