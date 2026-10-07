@@ -66,6 +66,7 @@ export default function MyHome() {
       <section className="space-y-4">
         <div>
           <h2 className={`text-2xl sm:text-3xl font-display font-bold ${colors.textWhite}`}>{t('Welcome back, {name}.', { name })}</h2>
+          <Link to="/organizer" className={`inline-block mt-2 text-xs font-semibold ${colors.accent}`}>{t('Organizer hub')} →</Link>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <StatTile icon="event_available" value={loading ? '–' : going.length} label={t('Tickets')} to="/tickets" />

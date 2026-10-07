@@ -9,5 +9,6 @@ import part4 from './ar4';
 import part5 from './ar5';
 import part6 from './ar6';
 import part7 from './ar7';
+import part8 from './ar8';
 
-export default { ...part1, ...part2, ...part3, ...part4, ...part5, ...part6, ...part7 };
+export default { ...part1, ...part2, ...part3, ...part4, ...part5, ...part6, ...part7, ...part8 };

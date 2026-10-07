@@ -360,6 +360,12 @@ a {
 
 /* Arabic: a font with real Arabic glyphs, and no uppercase/letter-spacing
    (both break Arabic letter joining). */
+/* Let text determine its bidi paragraph order without changing flex/grid
+   direction, navigation placement, or logical spacing. */
+html[lang='ar'] :is(p, h1, h2, h3, h4, input, textarea) {
+  unicode-bidi: plaintext;
+}
+
 html[lang='ar'] body,
 html[lang='ar'] h1,
 html[lang='ar'] h2,

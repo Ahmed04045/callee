@@ -1,6 +1,6 @@
 // src/i18n/index.js
 //
-// Circosodal translations (English + Arabic with right-to-left layout).
+// Circosodal translations (English + Arabic with a stable layout).
 //
 // How it works: every user-facing string in the code is written in English and
 // passed through t('English text'). English is the fallback, so a string that has
@@ -9,7 +9,7 @@
 // {name} placeholders: t('Welcome back, {name}.', { name }).
 //
 // The language is remembered per device, defaults to the browser language, and
-// sets <html lang> and <html dir> so the whole layout flips for Arabic.
+// sets <html lang>. Layout stays LTR; dir/isRtl describe the text language.
 // To add a language: add it to LANGUAGES, create its dictionary, register it below.
 
 import { useMemo, useSyncExternalStore } from 'react';
@@ -41,7 +41,7 @@ function applyToDocument() {
   if (typeof document === 'undefined') return;
   const meta = LANGUAGES.find((l) => l.id === lang);
   document.documentElement.setAttribute('lang', meta.id);
-  document.documentElement.setAttribute('dir', meta.dir);
+  document.documentElement.setAttribute('dir', 'ltr');
 }
 applyToDocument();
 

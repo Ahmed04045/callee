@@ -10,7 +10,7 @@ This README is the setup checklist. See **[DOCUMENTATION.md](./DOCUMENTATION.md)
 npm install
 ```
 
-Create `.env.local` in this folder (git-ignored, never commit it):
+Copy `.env.example` to `.env.local` in this folder (git-ignored, never commit it), then fill in your public configuration:
 
 ```
 VITE_SUPABASE_URL=...              # Supabase dashboard -> Project Settings -> API
@@ -95,5 +95,16 @@ Vercel, pointed at this folder, with the four `VITE_*` env vars above set in the
 
 ## Notes
 
-- **Languages:** English and Arabic (right-to-left). Every string goes through `t('English text')`; the Arabic dictionary is `src/i18n/ar*.js`. A string missing from the dictionary just shows in English — it never breaks the page.
+- **Languages:** English and Arabic. Switching languages preserves the layout, sidebar, topbar and mobile navigation positions. Arabic text keeps its natural reading order. Every string goes through `t('English text')`; the Arabic dictionary is `src/i18n/ar*.js`. A missing translation falls back to English.
 - **Themes:** four color palettes and two visual styles (plain, pixel) — see DOCUMENTATION.md.
+
+## Organizer and ticket tools
+
+- **Organizer hub:** open `/organizer`, or follow the link from Home or Settings. Search and filter your events, see review status and reserved seats, and jump to attendee management or QR scanning. Existing per-event management includes check-in, CSV export and RSVP charts.
+- **Offline QR:** each ticket has a **Download QR code** button for a PNG you can save on your phone. The QR contains a ticket credential; keep it private. Saved images remain subject to server-side validity and cancellation checks.
+- **Calendar export:** **Add to calendar** downloads an `.ics` file with event details and the public event link, without your ticket code. Times are interpreted as Qatar local time (UTC+03:00); events without a start time export as all-day entries. No end time is invented. Imported entries do not automatically update when an event changes.
+- These features use the existing schema; no additional migration or email provider is required. Ticket email delivery is not implemented.
+
+## Contributing and release preparation
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development checks, release prerequisites and proposed follow-up features. Run `npm test` for calendar export regression tests. A license still needs to be chosen before the public release.

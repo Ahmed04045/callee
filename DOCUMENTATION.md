@@ -30,10 +30,10 @@ src/
   context/          React context providers: Auth, Profile, Notifications, CreateModal
   lib/              pure helpers: options lists, validation, image upload, i18n-adjacent utilities
   theme/            themeConfig.js (design tokens), theme.js (the store), iconMap.js (Material name -> Pixelarticons glyph)
-  i18n/             ar1.js … ar7.js (the Arabic dictionary, split into files by feature added), index.js (the t() machinery)
+  i18n/             ar1.js … ar8.js (the Arabic dictionary, split into files by feature added), index.js (the t() machinery)
 supabase/
   schema.sql          base tables
-  migrations/         002 … 017, run in order — see README's table
+  migrations/         002 … 021, run in order — see README's table
   functions/          parse-cv, identity-word (Deno Edge Functions)
 ```
 
@@ -63,7 +63,7 @@ Four color palettes (electric/ultraviolet/acid/paper) × two visual styles (plai
 
 ## Internationalization
 
-English is the key: every string goes through `t('English text', { placeholders })`. The Arabic dictionary is a plain object, `src/i18n/ar.js` merging `ar1.js` … `ar7.js` (split by when a feature was added, not by topic — check all of them before assuming a string has no translation). A key missing from the dictionary just renders in English; nothing throws. `useT()` gives `{ t, lang, dir, isRtl, setLanguage }`; switching language flips `<html dir>` and the whole layout mirrors via Tailwind's logical properties (`ms-`/`me-`/`ps-`/`pe-`/`start-`/`end-`) rather than `left`/`right`.
+English is the key: every string goes through `t('English text', { placeholders })`. The Arabic dictionary is `src/i18n/ar.js`, merging `ar1.js` … `ar8.js`. Missing translations fall back to English. `useT()` gives `{ t, lang, dir, isRtl, setLanguage }`; switching language updates `<html lang>` while `<html dir="ltr">` stays fixed. Navigation, flex/grid order and logical spacing stay in place. The hook's `dir` and `isRtl` still describe the language for explicitly directional text fields. Arabic paragraphs/headings and text inputs use `unicode-bidi: plaintext` for natural text ordering without mirroring containers; existing explicitly RTL announcement fields remain RTL.
 
 **The Arabic text has not been reviewed by a native speaker.** Treat it as a solid first pass, not a final translation, before a real launch.
 
@@ -77,4 +77,12 @@ Both `supabase/functions/parse-cv` and `supabase/functions/identity-word` follow
 - **No formal age verification or parental consent** for minors, despite Qatar's PDPPL calling for it — the Privacy Policy says this plainly rather than claiming a compliance mechanism that doesn't exist.
 - **Arabic translations are unreviewed.**
 - **The Android app** (`../app`) still targets an older, app-only backend design and has not been migrated onto this Supabase schema.
-- **No automated tests.** Every change in this project has been verified by build + lint + manual/scripted browser checks, not a test suite.
+- **Limited automated tests.** `npm test` covers calendar timezone conversion, date-only events, escaping, invalid input and UTF-8 line folding. Auth, RLS, RSVP and check-in still need integration coverage. There is an existing lint backlog.
+
+## Organizer hub and ticket downloads
+
+`/organizer` (`OrganizerView.jsx`) lists only events owned by the current user, with search and status/date filters, a refresh action, and links to the existing management/scanner pages. It reads event metadata, capacity and trigger-maintained remaining seats, without fetching attendee identities or QR credentials. Loading, signed-out, error, empty and no-match states are explicit. Home and Settings link to it. Existing RLS remains authoritative.
+
+`TicketCard.jsx` exports a PNG using the existing local `qrcode` dependency, with four quiet-zone modules and a white background. `src/lib/eventCalendar.js` generates [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545) calendar files with stable event UIDs, UTC timestamps, escaped text and UTF-8-safe line folding. Start times are interpreted as Qatar time (UTC+03:00); missing times produce date-only entries. Calendar files contain a public event URL, never the private ticket code, and are snapshots rather than subscriptions. No mail is sent.
+
+`.env.example` documents public frontend configuration. See [CONTRIBUTING.md](./CONTRIBUTING.md) for release preparation and remaining feature ideas, including transactional ticket email and self-serve deletion.

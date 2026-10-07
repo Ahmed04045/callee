@@ -20,6 +20,7 @@ const ALWAYS_VISIBLE_ITEMS = [
 ];
 
 const ACCOUNT_ITEM = { id: 'account', label: 'Account', path: '/account', icon: 'manage_accounts' };
+const ORGANIZER_ITEM = { id: 'organizer', label: 'Organizer hub', path: '/organizer', icon: 'event' };
 const NOTIFICATIONS_ITEM = { id: 'notifications', label: 'Notifications', path: '/settings/notifications', icon: 'notifications' };
 const MY_SUBMISSIONS_ITEM = {
   id: 'my-submissions',
@@ -35,7 +36,7 @@ export default function SettingsView() {
   const aboutItem = { id: 'about', label: t('About {name}', { name: brand.name }), path: '/about', icon: 'info' };
   const menuItems =
     status === 'authenticated'
-      ? [ACCOUNT_ITEM, MY_SUBMISSIONS_ITEM, NOTIFICATIONS_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
+      ? [ACCOUNT_ITEM, ORGANIZER_ITEM, MY_SUBMISSIONS_ITEM, NOTIFICATIONS_ITEM, ...ALWAYS_VISIBLE_ITEMS, aboutItem]
       : [...ALWAYS_VISIBLE_ITEMS, aboutItem];
 
   return (

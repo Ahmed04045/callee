@@ -1,0 +1,11 @@
+export function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  // Let the browser begin reading the object URL before releasing it.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

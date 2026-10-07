@@ -20,6 +20,7 @@ import ActivityView from './views/ActivityView';
 import TicketsView from './views/TicketsView';
 import TicketCheckView from './views/TicketCheckView';
 import EventManageView from './views/EventManageView';
+import OrganizerView from './views/OrganizerView';
 import EventScanView from './views/EventScanView';
 import ApplicantsView from './views/ApplicantsView';
 import AdminReports from './views/admin/AdminReports';
@@ -118,7 +119,7 @@ const isImmersivePath = (pathname) =>
   pathname.startsWith('/ticket/') ||
   /^\/events\/[^/]+\/(manage|scan)$/.test(pathname) ||
   /^\/gigs\/[^/]+\/applicants$/.test(pathname) ||
-  pathname.startsWith('/admin');
+  pathname.startsWith('/admin') || pathname === '/organizer';
 
 function renderView(tabId, handlers) {
   switch (tabId) {
@@ -389,6 +390,7 @@ function AppShell() {
             <Route path="/gigs/:id/applicants" element={<ApplicantsView />} />
             <Route path="/events/:id" element={<EventDetailView onOpenAuthModal={openAuthModal} />} />
             <Route path="/events/:id/manage" element={<EventManageView />} />
+            <Route path="/organizer" element={<OrganizerView />} />
             <Route path="/events/:id/scan" element={<EventScanView />} />
             <Route path="/tickets" element={<TicketsView onOpenAuthModal={openAuthModal} />} />
             <Route path="/ticket/:code" element={<TicketCheckView onOpenAuthModal={openAuthModal} />} />
