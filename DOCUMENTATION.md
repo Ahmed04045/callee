@@ -39,6 +39,8 @@ supabase/
   schema.sql          base tables
   migrations/         002 … 021, run in order — see README's table
   functions/          parse-cv, identity-word (Deno Edge Functions)
+app/                  separate Android/Gradle prototype; see app/README.md
+discord-bot/          separate Node.js bot; see discord-bot/README.md
 ```
 
 ## Data model (the load-bearing tables)
@@ -80,7 +82,7 @@ Both `supabase/functions/parse-cv` and `supabase/functions/identity-word` follow
 - **No self-serve account deletion** — a user has to be emailed and removed manually today.
 - **No formal age verification or parental consent** for minors, despite Qatar's PDPPL calling for it — the Privacy Policy says this plainly rather than claiming a compliance mechanism that doesn't exist.
 - **Arabic translations are unreviewed.**
-- **The Android app** (`../app`) still targets an older, app-only backend design and has not been migrated onto this Supabase schema.
+- **The Android app** ([app/](./app/README.md)) has not been tried by its creator and may have bugs. It still targets an older, app-only backend design and has not been migrated onto this Supabase schema. Its README documents missing build bootstrap files and local setup; the migration brief is proposed work, not completed functionality.
 - **Limited automated tests.** `npm test` covers calendar timezone conversion, date-only events, escaping, invalid input and UTF-8 line folding. Auth, RLS, RSVP and check-in still need integration coverage. There is an existing lint backlog.
 
 ## Organizer hub and ticket downloads

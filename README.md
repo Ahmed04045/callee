@@ -20,6 +20,18 @@ This README is the setup checklist. See **[DOCUMENTATION.md](./DOCUMENTATION.md)
 
 ## 1. Install and configure
 
+### What is in this repository?
+
+| Location | Purpose and importance | How to start |
+|---|---|---|
+| Repository root (`src/`, `supabase/`) | The main React website and shared backend schema; the most complete version of the platform. | Follow the website setup below. |
+| [`app/`](./app/README.md) | Earlier Kotlin/Jetpack Compose Android prototype. Preserves the mobile work for a student to continue. **I haven't tried it, so it may have bugs**, and it still needs migration to the website's backend. | Open `app/` in Android Studio and follow its README, including the missing-wrapper and local debug-key setup. |
+| [`discord-bot/`](./discord-bot/README.md) | A separate Node.js Discord process that brings community browsing, account linking and startup interactions into a Discord server. | Install its own dependencies, configure its own `.env`, register commands, and start the bot. |
+
+The app and bot are optional companion projects. They have separate toolchains and configuration; running `npm install` or `npm run build` at the root only prepares/builds the website. The Android app is a prototype, not a ready-to-use second client of the shared backend. The bot uses the shared database and requires a trusted server process.
+
+### Website setup
+
 ```
 npm install
 ```
@@ -111,7 +123,7 @@ To turn them on:
 
 ## 6. Discord bot (optional)
 
-The bot was developed as a separate sibling project, `../discord-bot` (a long-lived Node process, not deployable to Vercel). It is not included in this repository. If you have that project, see its own README for setup and `.env`. Running the bot is optional; keep migration 008 for the website's existing profile/account fields even if you do not run it.
+The bot is included in [`discord-bot/`](./discord-bot/README.md). It runs as a separate long-lived Node process, with its own dependencies and server-only credentials; the website's Vercel deployment does not start it. Follow its README to create a Discord application, configure the shared Supabase backend, register slash commands and run it. Running the bot is optional; keep migration 008 for the website's existing profile/account fields even if you do not run it.
 
 ## 7. Deploying the site
 

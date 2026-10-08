@@ -4,6 +4,8 @@ This project is released under the [MIT License](./LICENSE). The original creato
 
 Follow [README.md](./README.md) to configure your own Supabase project, apply the SQL files in order, and start the app. Copy `.env.example` to `.env.local` and use your own public credentials. Do not use production data for development.
 
+The root commands apply to the website. The [Android prototype](./app/README.md) and [Discord bot](./discord-bot/README.md) have their own setup and checks. Android is untested and not yet migrated to the shared backend. The website's ESLint configuration excludes these independent projects; validate bot JavaScript separately and use Gradle for Android. Never copy bot service-role credentials into either frontend.
+
 Before opening a pull request:
 
 - Explain the problem, the resulting behavior, and how you checked it.

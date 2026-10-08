@@ -5,7 +5,8 @@ import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
-  { ignores: ['dist'] },
+  // The bot is an independent CommonJS/Node package, not React browser code.
+  { ignores: ['dist', 'app/**', 'discord-bot/**'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {

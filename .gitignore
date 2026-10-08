@@ -33,3 +33,18 @@ dist-ssr
 
 # Supabase CLI local cache (created by `npx supabase`), not project source.
 supabase/.temp/
+
+# Android/local signing and build artifacts.
+**/.gradle/
+**/.kotlin/
+**/build/
+**/.cxx/
+**/.externalNativeBuild/
+**/local.properties
+**/google-services.json
+*.keystore
+*.jks
+*.p12
+*.pfx
+*.apk
+*.aab
